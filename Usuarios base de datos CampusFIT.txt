@@ -1,0 +1,8 @@
+link database: mongodb+srv://<db_username>:<db_password>@campusfit.xih68.mongodb.net/
+
+user: Juanfra ; password: EXpabwjwNvCw15kj
+user: Fernando ; password: tt5SfhUFFBQ3rsbS
+user: Francisco ; password: KxaAO8nOxoOnFcMY
+user: Meguita ; password: NifFnJgUstX6LaA2
+user: Andrews ; password: o5XK9JQlOxffu5wH
+user: Martin ; password: wnL9Q2Ruwf4WJGE0
