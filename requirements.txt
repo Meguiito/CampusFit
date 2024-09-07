@@ -1,3 +1,5 @@
 bcrypt
 pymongo
 flask
+PyPDF2
+magic 
