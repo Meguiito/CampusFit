@@ -1,0 +1,17 @@
+.animated-error {
+    animation: fadeIn 0.5s ease-in-out;
+    color: red;
+    font-size: 0.9em;
+    margin-top: 0.25rem;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

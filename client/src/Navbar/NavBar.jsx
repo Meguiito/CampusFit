@@ -11,7 +11,7 @@ function Navbar() {
         </Portada>
         <NavBar>
           <ul>
-            <li><a href="/Inicio">Inicio</a></li>
+            <li><a href="/">Inicio</a></li>
             <li><a href="/Perfil">Perfil</a></li>
             <li><a href="/ReservaEspecial">Reserva Especial</a></li>
           </ul>

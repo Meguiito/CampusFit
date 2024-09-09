@@ -5,16 +5,18 @@ import Inicio from './Paginas/Inicio';
 import Perfil from './Paginas/Perfil';
 import ReservaEspecial from './Paginas/ReservaEspecial';
 import ReservayEquipo from './Paginas/ReservayEquipo';
+import Register from './Paginas/FormularioRegister';
 
 function App() {
   return (
     <Router>
       <Navbar />
       <Routes>
-        <Route path="/Inicio" element={<Inicio />} />
+        <Route path="/" element={<Inicio />} />
         <Route path="/Perfil" element={<Perfil />} />
         <Route path="/ReservaEspecial" element={<ReservaEspecial />} />
         <Route path="/ReservayEquipo" element={<ReservayEquipo />} />
+        <Route path="/Register" element={<Register />} />
       </Routes>
     </Router>
   );
