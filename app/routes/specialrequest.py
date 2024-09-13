@@ -1,10 +1,15 @@
 from flask import Blueprint, request, jsonify
 import os
-from PyPDF2 import PdfReader
-import magic 
+import magic
+from pymongo import MongoClient
+from datetime import datetime
+
+cliente = MongoClient("mongodb+srv://vicentealvarez2023:1000Hppower.@campusfit.xih68.mongodb.net/")
+db = cliente["CampusFIT_DB"]
+reservas_collection= db["Reservas_especiales"]
+
 
 special_requests = Blueprint('special_requests', __name__)
-
 
 @special_requests.route('/special_request', methods=['POST'])
 def handle_special_request():
@@ -13,28 +18,33 @@ def handle_special_request():
 
     file = request.files['file']
 
+    
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
 
-  
+   
     mime_type = magic.from_buffer(file.read(1024), mime=True)
     file.seek(0)  
 
     if mime_type != 'application/pdf':
         return jsonify({"error": "File is not a valid PDF"}), 400
 
-    try:
-
-        reader = PdfReader(file)
-        if not reader.pages:  
-            return jsonify({"error": "The PDF file might be corrupt or empty"}), 400
-    except Exception as e:
-        print(f"Error al procesar el archivo: {e}")
-        return jsonify({"error": "The PDF file might be corrupt or unsafe"}), 400
-
-
     filepath = os.path.join('uploads', file.filename)
-    file.seek(0)  
     file.save(filepath)
 
-    return jsonify({"message": "PDF uploaded and processed successfully", "file_path": filepath}), 200
+    
+    reserva_data = {
+        "filename": file.filename,
+        "filepath": filepath,
+        "upload_date": datetime.utcnow(),
+    }
+
+    
+    result = reservas_collection.insert_one(reserva_data)
+
+    
+    return jsonify({
+        "message": "PDF uploaded successfully",
+        "file_path": filepath,
+        "mongo_id": str(result.inserted_id)  
+    }), 200
