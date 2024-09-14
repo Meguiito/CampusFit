@@ -3,21 +3,64 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from 'react-router-dom'; 
 import "../Estilos/Login.css";
 
-
 const FormularioLogin = () => {
     const [isRegistered, setIsRegistered] = useState(true); 
     const { register, formState: { errors }, handleSubmit, watch } = useForm();
     const navigate = useNavigate(); 
 
-    const onSubmit = (data) => {
-        if (isRegistered) {
-            console.log("Inicio de sesión exitoso:", data);
-        } else {
-            console.log("Registro exitoso:", data);
+    const onSubmit = async (data) => {
+        try {
+            let response;
+
+            if (isRegistered) {
+                response = await fetch('http://localhost:5000/users/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: data.correo,
+                        password: data.contraseña
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log("Inicio de sesión exitoso:", result);
+
+                } else {
+                    const errorData = await response.json();
+                    console.error("Error en el inicio de sesión:", errorData);
+                }
+            } else {
+
+                response = await fetch('http://localhost:5000/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: data.nombres + ' ' + data.apellidos,
+                        rut: data.rut,
+                        password: data.contraseña,
+                        email: data.correo
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log("Registro exitoso:", result);
+                    navigate("/Login");
+                } else {
+                    const errorData = await response.json();
+                    console.error("Error en el registro:", errorData);
+                }
+            }
+        } catch (error) {
+            console.error("Error en la conexión:", error);
         }
     }
 
- 
     const handleRegisterClick = () => {
         setIsRegistered(false); 
         navigate("/Register");  
@@ -27,6 +70,46 @@ const FormularioLogin = () => {
         <div>
             <h2>{isRegistered ? "Iniciar Sesión" : "Registrarse"}</h2>
             <form onSubmit={handleSubmit(onSubmit)}>
+                {!isRegistered && (
+                    <>
+                        <div>
+                            <label>Nombres</label>
+                            <input
+                                type="text"
+                                {...register('nombres', {
+                                    required: "El campo nombres es requerido",
+                                    maxLength: { value: 30, message: "Máximo 30 caracteres" }
+                                })}
+                            />
+                            {errors.nombres && <p className="error-message animated-error">{errors.nombres.message}</p>}
+                        </div>
+
+                        <div>
+                            <label>Apellidos</label>
+                            <input
+                                type="text"
+                                {...register('apellidos', {
+                                    required: "El campo apellidos es requerido",
+                                    maxLength: { value: 30, message: "Máximo 30 caracteres" }
+                                })}
+                            />
+                            {errors.apellidos && <p className="error-message animated-error">{errors.apellidos.message}</p>}
+                        </div>
+
+                        <div>
+                            <label>Rut</label>
+                            <input
+                                type="text"
+                                {...register('rut', {
+                                    required: "El campo RUT es requerido",
+                                    maxLength: { value: 9, message: "Máximo 9 caracteres" }
+                                })}
+                            />
+                            {errors.rut && <p className="error-message animated-error">{errors.rut.message}</p>}
+                        </div>
+                    </>
+                )}
+
                 <div>
                     <label>Correo</label>
                     <input
