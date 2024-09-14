@@ -1,22 +1,23 @@
 import React from 'react';
 import { useForm } from "react-hook-form";
+import { useNavigate } from 'react-router-dom'; 
 import "../Estilos/Register.css";
 
-
-const Formulario = () => {
-
+const FormularioRegister = () => {
     const { register, formState: { errors }, handleSubmit, watch } = useForm();
+    const navigate = useNavigate(); 
 
     const onSubmit = (data) => {
-        console.log(data);
+        console.log("Registro exitoso:", data);
+     
     }
 
-    // Observa el valor del campo "contraseña"
+   
     const contraseña = watch("contraseña");
 
     return (
         <div>
-            <h2>Formulario</h2>
+            <h2>Registrarse</h2>
             <form onSubmit={handleSubmit(onSubmit)}>
                 <div>
                     <label>Nombres</label>
@@ -24,7 +25,7 @@ const Formulario = () => {
                         type="text"
                         {...register('nombres', {
                             required: "El campo nombres es requerido",
-                            maxLength: { value: 30, message: "Máximo 30 caracteres" }
+                            maxLength: { value: 40, message: "Máximo 40 caracteres" }
                         })}
                     />
                     {errors.nombres && <p className="error-message animated-error">{errors.nombres.message}</p>}
@@ -94,9 +95,21 @@ const Formulario = () => {
                 </div>
 
                 <input type="submit" value="Registrarse" />
+
+            
+                <div style={{ marginTop: '20px' }}>
+                    <p>¿Ya tienes cuenta? 
+                        <span 
+                            style={{ color: 'blue', cursor: 'pointer', marginLeft: '5px' }} 
+                            onClick={() => navigate("/Login")} 
+                        >
+                            Inicia sesión
+                        </span>
+                    </p>
+                </div>
             </form>
         </div>
     );
 }
 
-export default Formulario;
+export default FormularioRegister;
