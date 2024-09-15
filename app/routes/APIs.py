@@ -4,8 +4,12 @@ from flask_cors import CORS
 import bcrypt
 import os
 import magic
-from datetime import datetime
+from datetime import datetime 
 from pymongo.errors import PyMongoError, ServerSelectionTimeoutError
+from flask_jwt_extended import JWTManager, create_access_token
+from pymongo.errors import PyMongoError
+import bcrypt
+from datetime import timedelta
 
 app = Flask(__name__)
 CORS(app)
@@ -67,7 +71,13 @@ def delete_user(username):
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
 
-# Ruta para verificar usuarios
+
+app.config['JWT_SECRET_KEY'] = 'franciscobenavides'  
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Opcional: Token expira en 1 hora
+
+jwt = JWTManager(app)
+
+# Ruta para verificar usuarios y generar token
 @app.route('/users/verify', methods=['POST'])
 def verify_user():
     try:
@@ -76,14 +86,34 @@ def verify_user():
 
         user = mongo.db.Usuarios.find_one({'email': email})
         
+
         if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
-            return jsonify({"message": "Verificación exitosa"}), 200
+            # Obtén los datos del usuario en el orden requerido
+            rut = user.get('rut')  # RUT del usuario
+            username = user.get('username')  # Nombre de usuario
+            email = user.get('email')  # Correo electrónico
+
+            # Genera el token JWT con los datos requeridos
+            access_token = create_access_token(identity={'rut': rut, 'username': username, 'email': email})
+            
+            return jsonify({
+                "message": "Verificación exitosa",
+                "access_token": access_token,
+                "user": {
+                    "rut": rut,
+                    "username": username,
+                    "email": email
+                }
+            }), 200
         else:
             return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
     except PyMongoError as e:
         return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
 
 
 # Ruta para manejar solicitudes de reserva especial
@@ -160,3 +190,8 @@ if __name__ == '__main__':
         app.run(debug=True)
     except ServerSelectionTimeoutError as e:
         print(f"Error de conexión a MongoDB: {e}")
+
+
+
+
+
