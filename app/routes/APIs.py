@@ -90,40 +90,46 @@ def verify_user():
 @app.route('/special_request', methods=['POST'])
 def handle_special_request():
     try:
+        # Verificar si hay un archivo en la solicitud
         if 'file' not in request.files:
-            return jsonify({"error": "No se ha proporcionado un archivo"}), 400
+            return jsonify({"error": "No se encontró el archivo en la solicitud"}), 400
 
         file = request.files['file']
 
         if file.filename == '':
-            return jsonify({"error": "No se ha seleccionado un archivo"}), 400
+            return jsonify({"error": "No se seleccionó ningún archivo"}), 400
 
-        # Verifica si el archivo es un PDF
+        # Verificar si el directorio 'uploads' existe, y si no, crearlo
+        upload_folder = 'uploads'
+        if not os.path.exists(upload_folder):
+            os.makedirs(upload_folder)
+
+        # Verificar que el archivo sea un PDF
         mime_type = magic.from_buffer(file.read(1024), mime=True)
-        file.seek(0)  # Regresa el puntero del archivo al principio
+        file.seek(0)  # Vuelve al principio del archivo después de leer su contenido
 
         if mime_type != 'application/pdf':
             return jsonify({"error": "El archivo no es un PDF válido"}), 400
 
-        # Guardar archivo en el servidor
-        filepath = os.path.join('uploads', file.filename)
+        # Guardar el archivo en la carpeta 'uploads'
+        filepath = os.path.join(upload_folder, file.filename)
         file.save(filepath)
 
-        # Inserta la reserva en la base de datos
+        # Almacenar la información de la reserva en la base de datos
         reserva_data = {
             "filename": file.filename,
             "filepath": filepath,
             "upload_date": datetime.utcnow(),
         }
+
         result = mongo.db.Reservas_especiales.insert_one(reserva_data)
 
         return jsonify({
-            "message": "PDF subido con éxito",
+            "message": "PDF subido exitosamente",
             "file_path": filepath,
             "mongo_id": str(result.inserted_id)
         }), 200
-    except PyMongoError as e:
-        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
+
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
