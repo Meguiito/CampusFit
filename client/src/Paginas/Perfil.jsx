@@ -1,7 +1,15 @@
 import React from 'react'; 
 import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 
 function Perfil() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token'); // Elimina el token de localStorage
+    navigate('/login'); // Redirige al usuario a la página de inicio de sesión
+  };
+
   return (
     <Main>
       <h2>Tu Perfil</h2>
@@ -21,6 +29,7 @@ function Perfil() {
             </ul>
           </Datos>
         </DatosPersonales>
+        <LogoutButton onClick={handleLogout}>Cerrar sesión</LogoutButton>
       </Contenedor>
     </Main>
   );
@@ -97,5 +106,21 @@ const Datos = styled.div`
     color: #FFD700;
     margin-bottom: 10px;
     font-size: 1.5rem;
+  }
+`;
+
+const LogoutButton = styled.button`
+  background-color: #FF4B4B;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 10px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #FF3B3B;
   }
 `;
