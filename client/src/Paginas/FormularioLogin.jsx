@@ -28,12 +28,14 @@ const FormularioLogin = () => {
                     const result = await response.json();
                     console.log("Inicio de sesión exitoso:", result);
 
+                    localStorage.setItem('token', result.token);
+
+                    navigate("/Inicio");
                 } else {
                     const errorData = await response.json();
                     console.error("Error en el inicio de sesión:", errorData);
                 }
             } else {
-
                 response = await fetch('http://localhost:5000/users', {
                     method: 'POST',
                     headers: {
@@ -59,7 +61,7 @@ const FormularioLogin = () => {
         } catch (error) {
             console.error("Error en la conexión:", error);
         }
-    }
+    };
 
     const handleRegisterClick = () => {
         setIsRegistered(false); 
