@@ -30,7 +30,7 @@ const FormularioLogin = () => {
 
                     localStorage.setItem('token', result.token);
 
-                    navigate("/Inicio");
+                    navigate("/");
                 } else {
                     const errorData = await response.json();
                     console.error("Error en el inicio de sesión:", errorData);
