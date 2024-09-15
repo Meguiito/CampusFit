@@ -1,14 +1,63 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 
-const ReservayEquipo = () => {
+function ReservayEquipo() {
+  const [time, setTime] = useState('08:00');
+  const [message, setMessage] = useState('');
+
+  // Define el rango de horas
+  const minTime = "08:00";
+  const maxTime = "20:00";
+
+  const handleTimeChange = (event) => {
+    const newTime = event.target.value;
+    // Verifica que el tiempo esté dentro del rango permitido
+    if (newTime >= minTime && newTime <= maxTime) {
+      setTime(newTime);
+    } else {
+      // Ajusta el tiempo a los límites si está fuera de rango
+      setTime(minTime);
+    }
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    // Mostrar notificación de reserva de 2 horas
+    setMessage('¡Reserva confirmada! Tu tiempo de reservación es de 2 horas.');
+  };
+
+  const currentYear = new Date().getFullYear();
+  const minDate = `${currentYear}-01-01`;
+  const maxDate = `${currentYear}-12-31`;
+
   return (
     <FormularioContainer>
       <h2>Reserva tu Hora y Equipo</h2>
-      <form>
+      <form onSubmit={handleSubmit}>
+        <Fecha>
+          <Label htmlFor="fecha">Selecciona el Día:</Label>
+          <Input
+            type="date"
+            id="fecha"
+            name="fecha"
+            min={minDate}
+            max={maxDate}
+            required
+          />
+        </Fecha>
         <Hora>
           <Label htmlFor="hora">Selecciona la Hora:</Label>
-          <Input type="time" id="hora" name="hora" required />
+          <Input
+            type="time"
+            id="hora"
+            name="hora"
+            value={time}
+            min={minTime}
+            max={maxTime}
+            step="1800" // Intervalo de 30 minutos
+            onChange={handleTimeChange}
+            required
+          />
         </Hora>
         <Cancha>
           <Label htmlFor="cancha">Selecciona la Cancha:</Label>
@@ -32,6 +81,7 @@ const ReservayEquipo = () => {
         </Equipo>
         <Button type="submit">Reservar</Button>
       </form>
+      {message && <Notification>{message}</Notification>}
     </FormularioContainer>
   );
 }
@@ -59,20 +109,24 @@ const FormularioContainer = styled.div`
     display: flex;
     flex-direction: column;
     gap: 15px;
-      max-width: 90%;
+    max-width: 90%;
     width: 600px;
     background-color: #2985ec;
     border-radius: 15px;
     padding: 20px;
     color: #FFD700;
+  }
+`;
 
-    @media (max-width: 768px) {
-      padding: 15px;
-    }
+const Fecha = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 
-    @media (max-width: 480px) {
-      padding: 10px;
-    }
+  label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: white;
   }
 `;
 
@@ -149,4 +203,15 @@ const Button = styled.button`
     background-color: #1e6bb8;
     color: white;
   }
+`;
+
+const Notification = styled.div`
+  margin-top: 20px;
+  background-color: #00CED1;
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+  width: 100%;
+  max-width: 600px;
 `;

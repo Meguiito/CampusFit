@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'; 
 import styled from 'styled-components';
 
 function Perfil() {
@@ -14,24 +14,13 @@ function Perfil() {
             <h2>Datos Personales</h2>
             <ul>
               <li><strong>Rut:</strong> </li>
+              <li><strong>Nombres:</strong> </li>
               <li><strong>Apellido Paterno:</strong> </li>
               <li><strong>Apellido Materno:</strong> </li>
-              <li><strong>Nombres:</strong> </li>
               <li><strong>E-Mail UCT:</strong> </li>
             </ul>
           </Datos>
         </DatosPersonales>
-        <Reservaciones>
-          <Reservas>
-            <h2>Reservaciones</h2>
-            <ul>
-              <li><strong>Cancha: </strong></li>
-              <li><strong>Equipo: </strong></li>
-              <li><strong>Dia: </strong></li>
-              <li><strong>Hora: </strong></li>
-            </ul>
-          </Reservas>
-        </Reservaciones>
       </Contenedor>
     </Main>
   );
@@ -51,8 +40,8 @@ const Main = styled.div`
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
   transition: transform 0.3s ease;
 
-  h2{
-  color: white;
+  h2 {
+    color: white;
   }
 `;
 
@@ -70,14 +59,16 @@ const Persona = styled.img`
 
 const Contenedor = styled.div`
   display: flex;
+  flex-direction: column;
   width: 100%;
-  gap: 20px; /* Espacio entre los divs */
+  gap: 20px;
+  align-items: center;
 `;
 
 const DatosPersonales = styled.div`
   display: flex;
   justify-content: center;
-  width: 50%;
+  width: 100%;
   background-color: #2985ec;
   border-radius: 15px;
   padding: 20px;
@@ -99,41 +90,6 @@ const DatosPersonales = styled.div`
 `;
 
 const Datos = styled.div`
-  width: 100%;
-  text-align: center;
-
-  h2 {
-    color: #FFD700;
-    margin-bottom: 10px;
-    font-size: 1.5rem;
-  }
-`;
-
-const Reservaciones = styled.div`
-  display: flex;
-  justify-content: center;
-  width: 50%;
-  background-color: #2985ec;
-  border-radius: 15px;
-  padding: 20px;
-  color: white;
-
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  li {
-    margin: 10px 0;
-  }
-
-  strong {
-    color: #ffffff;
-  }
-`;
-
-const Reservas = styled.div`
   width: 100%;
   text-align: center;
 
