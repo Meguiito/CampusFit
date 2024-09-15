@@ -2,16 +2,36 @@ import React from 'react';
 import { useForm } from "react-hook-form";
 import "../Estilos/Register.css";
 
-
 const Formulario = () => {
-
     const { register, formState: { errors }, handleSubmit, watch } = useForm();
 
-    const onSubmit = (data) => {
-        console.log(data);
-    }
+    const onSubmit = async (data) => {
+        try {
+            const response = await fetch('http://localhost:5000/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: data.nombres + ' ' + data.apellidos, 
+                    rut: data.rut,
+                    password: data.contraseña,
+                    email: data.correo
+                })
+            });
 
-    // Observa el valor del campo "contraseña"
+            if (response.ok) {
+                const result = await response.json();
+                console.log("Usuario registrado:", result);
+            } else {
+                const errorData = await response.json();
+                console.error("Error:", errorData);
+            }
+        } catch (error) {
+            console.error("Error en la conexión:", error);
+        }
+    };
+
     const contraseña = watch("contraseña");
 
     return (
@@ -19,8 +39,9 @@ const Formulario = () => {
             <h2>Formulario</h2>
             <form onSubmit={handleSubmit(onSubmit)}>
                 <div>
-                    <label>Nombres</label>
+                    <label htmlFor="nombres">Nombres</label>
                     <input
+                        id="nombres"
                         type="text"
                         {...register('nombres', {
                             required: "El campo nombres es requerido",
@@ -31,8 +52,9 @@ const Formulario = () => {
                 </div>
 
                 <div>
-                    <label>Apellidos</label>
+                    <label htmlFor="apellidos">Apellidos</label>
                     <input
+                        id="apellidos"
                         type="text"
                         {...register('apellidos', {
                             required: "El campo apellidos es requerido",
@@ -43,20 +65,25 @@ const Formulario = () => {
                 </div>
 
                 <div>
-                    <label>Rut</label>
+                    <label htmlFor="rut">Rut</label>
                     <input
+                        id="rut"
                         type="text"
                         {...register('rut', {
                             required: "El campo RUT es requerido",
-                            maxLength: { value: 9, message: "Máximo 9 caracteres" }
+                            pattern: {
+                                value: /^[0-9]+-[0-9kK]{1}$/, // RegEx para RUT sin puntos y con guion
+                                message: 'El formato del RUT es incorrecto. Ej: 12345678-9'
+                            }
                         })}
                     />
                     {errors.rut && <p className="error-message animated-error">{errors.rut.message}</p>}
                 </div>
 
                 <div>
-                    <label>Correo</label>
+                    <label htmlFor="correo">Correo</label>
                     <input
+                        id="correo"
                         type="text"
                         {...register('correo', {
                             required: "El campo correo es requerido",
@@ -70,8 +97,9 @@ const Formulario = () => {
                 </div>
 
                 <div>
-                    <label>Contraseña</label>
+                    <label htmlFor="contraseña">Contraseña</label>
                     <input
+                        id="contraseña"
                         type="password"
                         {...register('contraseña', {
                             required: "El campo contraseña es requerido",
@@ -81,8 +109,9 @@ const Formulario = () => {
                 </div>
 
                 <div>
-                    <label>Repetir Contraseña</label>
+                    <label htmlFor="repcontraseña">Repetir Contraseña</label>
                     <input
+                        id="repcontraseña"
                         type="password"
                         {...register('repcontraseña', {
                             required: "El campo repetir contraseña es requerido",
