@@ -2,6 +2,9 @@ from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
 from flask_cors import CORS
 import bcrypt
+import os
+import magic
+from datetime import datetime
 from pymongo.errors import PyMongoError, ServerSelectionTimeoutError
 
 app = Flask(__name__)
@@ -10,6 +13,7 @@ app.config['MONGO_URI'] = 'mongodb+srv://Vicente:ap4STCRZXhetOIjA@campusfit.xih6
 
 mongo = PyMongo(app)
 
+# Ruta para crear usuarios
 @app.route('/users', methods=['POST'])
 def create_user():
     try:
@@ -47,6 +51,7 @@ def create_user():
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
 
+# Ruta para eliminar usuarios
 @app.route('/users/<username>', methods=['DELETE'])
 def delete_user(username):
     try:
@@ -61,6 +66,8 @@ def delete_user(username):
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
+
+# Ruta para verificar usuarios
 @app.route('/users/verify', methods=['POST'])
 def verify_user():
     try:
@@ -78,6 +85,50 @@ def verify_user():
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
+
+# Ruta para manejar solicitudes de reserva especial
+@app.route('/special_request', methods=['POST'])
+def handle_special_request():
+    try:
+        if 'file' not in request.files:
+            return jsonify({"error": "No se ha proporcionado un archivo"}), 400
+
+        file = request.files['file']
+
+        if file.filename == '':
+            return jsonify({"error": "No se ha seleccionado un archivo"}), 400
+
+        # Verifica si el archivo es un PDF
+        mime_type = magic.from_buffer(file.read(1024), mime=True)
+        file.seek(0)  # Regresa el puntero del archivo al principio
+
+        if mime_type != 'application/pdf':
+            return jsonify({"error": "El archivo no es un PDF válido"}), 400
+
+        # Guardar archivo en el servidor
+        filepath = os.path.join('uploads', file.filename)
+        file.save(filepath)
+
+        # Inserta la reserva en la base de datos
+        reserva_data = {
+            "filename": file.filename,
+            "filepath": filepath,
+            "upload_date": datetime.utcnow(),
+        }
+        result = mongo.db.Reservas_especiales.insert_one(reserva_data)
+
+        return jsonify({
+            "message": "PDF subido con éxito",
+            "file_path": filepath,
+            "mongo_id": str(result.inserted_id)
+        }), 200
+    except PyMongoError as e:
+        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
+
+# Manejadores de errores
 @app.errorhandler(404)
 def not_found(error=None):
     message = {
