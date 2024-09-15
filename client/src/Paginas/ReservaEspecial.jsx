@@ -8,26 +8,7 @@ function ReservaEspecial() {
 
   const [error, setError] = useState("");
 
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: files ? files[0] : value,
-    }));
-    if (name === "archivo") {
-      if (files && files[0]) {
-        if (files[0].type !== "application/pdf") {
-          setError("El archivo debe ser un PDF.");
-        } else if (files[0].size > 5000000) {
-          setError("El archivo no debe exceder los 5MB.");
-        } else {
-          setError("");
-        }
-      }
-    }
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (formData.archivo) {
@@ -41,9 +22,45 @@ function ReservaEspecial() {
         setError("");
       }
 
-      alert("Formulario enviado con éxito.");
+      const formDataToSend = new FormData();
+      formDataToSend.append("file", formData.archivo);
+
+      try {
+        const response = await fetch("http://localhost:5000/special_request", {
+          method: "POST",
+          body: formDataToSend,
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          alert("Formulario enviado con éxito: " + result.message);
+        } else {
+          const errorResponse = await response.json();
+          setError(errorResponse.error);
+        }
+      } catch (err) {
+        console.error("Error en la petición", err);
+        setError("Ocurrió un error en la solicitud.");
+      }
     } else {
       setError("Archivo es requerido.");
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, files } = e.target;
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: files ? files[0] : null,
+    }));
+    if (files && files[0]) {
+      if (files[0].type !== "application/pdf") {
+        setError("El archivo debe ser un PDF.");
+      } else if (files[0].size > 5000000) {
+        setError("El archivo no debe exceder los 5MB.");
+      } else {
+        setError("");
+      }
     }
   };
 
@@ -133,7 +150,7 @@ const FormularioContainer = styled.div`
   @media (max-width: 768px) {
     padding: 15px;
     max-width: 90%;
-    
+
     h2 {
       font-size: 1.25rem;
     }
@@ -156,7 +173,7 @@ const FormularioContainer = styled.div`
 
   @media (max-width: 480px) {
     padding: 10px;
-    
+
     h2 {
       font-size: 1rem;
     }
