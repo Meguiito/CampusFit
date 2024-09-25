@@ -1,0 +1,141 @@
+/* Inicio.css */
+
+.cuerpo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    flex-wrap: wrap;
+  }
+  
+  @media (max-width: 768px) {
+    .cuerpo {
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+  
+  .circulo {
+    width: 300px;
+    height: 150px;
+    background-color: #3498DB;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5em;
+    margin-top: 10px;
+  }
+  
+  .circulo a {
+    text-decoration: none;
+    color: white;
+  }
+  
+  .auth-button {
+    margin: 0 10px;
+  }
+  
+  @media (max-width: 768px) {
+    .circulo {
+      width: 250px;
+      height: 170px;
+      font-size: 1.2em;
+    }
+  }
+  
+  .canchas {
+    width: 450px;
+    height: auto;
+  }
+  
+  @media (max-width: 768px) {
+    .canchas {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+  }
+  
+  .pie {
+    background-color: #424949;
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    color: white;
+  }
+  
+  .direcciones {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+  }
+  
+  .direcciones ul {
+    list-style: none;
+    padding: 20px;
+    margin: 0 0 20px;
+  }
+  
+  .direcciones > div {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .highlight {
+    color: #3498DB;
+    font-weight: bold;
+  }
+  
+  .campus1, .campus2, .campus3, .campus4 {
+    width: 45%;
+  }
+  
+  .telefonos {
+    width: 50%;
+    text-align: right;
+  }
+  
+  .telefonos ul {
+    list-style: none;
+    padding: 20px;
+    margin: 0 0 20px;
+  }
+  
+  .telefonos li {
+    margin-bottom: 5px;
+  }
+  
+  .icon {
+    margin-right: 8px; 
+    color: white;
+  }
+
+  /* Añade estilos específicos para alinear los botones */
+.auth-buttons {
+    display: flex;
+    flex-direction: column; /* Apilar verticalmente los botones */
+    align-items: center; /* Centrar los botones horizontalmente */
+    margin-top: 10px;
+  }
+  
+  .auth-button {
+    background-color: #3498db;
+    color: white;
+    padding: 10px 20px;
+    margin-bottom: 10px; /* Espacio entre los botones */
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 1.2em;
+    width: 200px; /* Ancho fijo para los botones */
+    text-align: center;
+  }
+  
+  .auth-button:hover {
+    background-color: #2980b9;
+  }
+  
+  

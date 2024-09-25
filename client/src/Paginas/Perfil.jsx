@@ -6,8 +6,8 @@ function Perfil() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('token'); // Elimina el token de localStorage
-    navigate('/login'); // Redirige al usuario a la página de inicio de sesión
+    localStorage.removeItem('token'); 
+    navigate('/'); 
   };
 
   return (

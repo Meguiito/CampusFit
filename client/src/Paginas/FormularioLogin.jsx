@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useForm } from "react-hook-form";
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate, Link } from 'react-router-dom'; 
 import "../Estilos/Login.css";
 
 const FormularioLogin = () => {
-    const [isRegistered, setIsRegistered] = useState(true); 
+    const [isRegistered] = useState(true); 
     const { register, formState: { errors }, handleSubmit, watch } = useForm();
     const navigate = useNavigate(); 
 
@@ -61,11 +61,6 @@ const FormularioLogin = () => {
         } catch (error) {
             console.error("Error en la conexión:", error);
         }
-    };
-
-    const handleRegisterClick = () => {
-        setIsRegistered(false); 
-        navigate("/Register");  
     };
 
     return (
@@ -155,14 +150,8 @@ const FormularioLogin = () => {
 
                 <input type="submit" value={isRegistered ? "Iniciar Sesión" : "Registrarse"} />
 
-                <p>
-                    {isRegistered ? "¿No tienes una cuenta?" : "¿Ya tienes una cuenta?"}
-                    <span
-                        style={{ color: 'blue', cursor: 'pointer', marginLeft: '5px' }}
-                        onClick={isRegistered ? handleRegisterClick : () => setIsRegistered(true)} 
-                    >
-                        {isRegistered ? "Regístrate" : "Inicia sesión"}
-                    </span>
+                <p className="redirect-message">
+                    ¿No tienes una cuenta? <Link to="/Register">Regístrate</Link>
                 </p>
             </form>
         </div>

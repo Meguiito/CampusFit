@@ -1,5 +1,6 @@
 import React from 'react';
 import { useForm } from "react-hook-form";
+import { Link } from 'react-router-dom'; // Importa Link para la redirección
 import "../Estilos/Register.css";
 
 const Formulario = () => {
@@ -38,6 +39,7 @@ const Formulario = () => {
         <div>
             <h2>Formulario</h2>
             <form onSubmit={handleSubmit(onSubmit)}>
+                {/* Campos del formulario */}
                 <div>
                     <label htmlFor="nombres">Nombres</label>
                     <input
@@ -123,6 +125,10 @@ const Formulario = () => {
                 </div>
 
                 <input type="submit" value="Registrarse" />
+
+                <p className="redirect-message">       
+                    ¿Ya tienes una cuenta? <Link to="/Login">Inicia Sesión</Link>
+                </p>
             </form>
         </div>
     );

@@ -1,206 +1,87 @@
 import React from 'react';
-import styled from 'styled-components';
 import { Link } from 'react-router-dom';
+import '../Estilos/Inicio.css'; 
 
 function Inicio() {
+  const token = localStorage.getItem('token');
+
   return (
     <div>
       <main>
-      <Cuerpo>
-          <Canchas src="/imgUCT/CanchasUCT.jpg" alt="Canchas UCT" />
-          <Circulo>
-            <Link to="/ReservayEquipo">Reserva tu hora y Equipo</Link>
-          </Circulo>
-        </Cuerpo>
+        <div className="cuerpo">
+          <img className="canchas" src="/imgUCT/CanchasUCT.jpg" alt="Canchas UCT" />
+          <div className="circulo">
+            {token ? (
+              <Link to="/ReservayEquipo">Reserva tu hora y Equipo</Link>
+            ) : (
+              <>
+                <Link to="/Login" className="auth-button">Iniciar Sesión</Link>
+                <Link to="/Register" className="auth-button">Registrarse</Link>
+              </>
+            )}
+          </div>
+        </div>
       </main>
       <footer>
-        <Pie>
-          <Direcciones>
+        <div className="pie">
+          <div className="direcciones">
             <h3>DIRECCIONES <span className="highlight">CAMPUS</span></h3>
             <div>
-              <Campus1>
+              <div className="campus1">
                 <ul>
                   <li>CAMPUS SAN FRANCISCO</li>
-                  <li><Icon className='bx bx-map' /> Manuel Montt 56</li>
-                  <li><Icon className='bx bxs-phone' /> Fono: +56 45 2 205 470</li>
+                  <li><i className="icon bx bx-map" /> Manuel Montt 56</li>
+                  <li><i className="icon bx bxs-phone" /> Fono: +56 45 2 205 470</li>
                 </ul>
-              </Campus1>
-              <Campus2>
+              </div>
+              <div className="campus2">
                 <ul>
                   <li>CAMPUS SAN JUAN PABLO II</li>
-                  <li><Icon className='bx bx-map' /> Rudecindo Ortega 02950</li>
-                  <li><Icon className='bx bxs-phone' /> Fono: +56 45 2 553 978</li>
+                  <li><i className="icon bx bx-map" /> Rudecindo Ortega 02950</li>
+                  <li><i className="icon bx bxs-phone" /> Fono: +56 45 2 553 978</li>
                 </ul>
-              </Campus2>
+              </div>
             </div>
             <div>
-              <Campus3>
+              <div className="campus3">
                 <ul>
                   <li>CAMPUS MENCHACA LIRA</li>
-                  <li><Icon className='bx bx-map' /> Avenida Alemania 0422</li>
-                  <li><Icon className='bx bxs-phone' /> Fono: +56 45 2 203 822</li>
+                  <li><i className="icon bx bx-map" /> Avenida Alemania 0422</li>
+                  <li><i className="icon bx bxs-phone" /> Fono: +56 45 2 203 822</li>
                 </ul>
-              </Campus3>
-              <Campus4>
+              </div>
+              <div className="campus4">
                 <ul>
                   <li>CAMPUS LUIS RIVAS DEL CANTO</li>
-                  <li><Icon className='bx bx-map' /> Callejón Las Mariposas s/n</li>
-                  <li><Icon className='bx bxs-phone' /> Fono: +56 45 2 205 596</li>
+                  <li><i className="icon bx bx-map" /> Callejón Las Mariposas s/n</li>
+                  <li><i className="icon bx bxs-phone" /> Fono: +56 45 2 205 596</li>
                 </ul>
-              </Campus4>
+              </div>
             </div>
-          </Direcciones>
-          <Telefonos>
+          </div>
+          <div className="telefonos">
             <h3>TELÉFONOS DE <span className="highlight">UTILIDAD</span></h3>
-            <Numeros>
-              <Numero1>
+            <div className="numeros">
+              <div className="numero1">
                 <ul>
                   <li>PRENSA INSTITUCIONAL</li>
-                  <li><Icon className='bx bx-map' /> Avenida Alemania 0211</li>
-                  <li><Icon className='bx bxs-phone' /> Fono: +56 45 2 205 428</li>
+                  <li><i className="icon bx bx-map" /> Avenida Alemania 0211</li>
+                  <li><i className="icon bx bxs-phone" /> Fono: +56 45 2 205 428</li>
                 </ul>
-              </Numero1>
-              <Numero2>
+              </div>
+              <div className="numero2">
                 <ul>
                   <li>BIENESTAR ESTUDIANTIL</li>
-                  <li><Icon className='bx bx-map' /> Manuel Montt 56</li>
-                  <li><Icon className='bx bxs-phone' /> Fono: +56 45 2 205 424</li>
+                  <li><i className="icon bx bx-map" /> Manuel Montt 56</li>
+                  <li><i className="icon bx bxs-phone" /> Fono: +56 45 2 205 424</li>
                 </ul>
-              </Numero2>
-            </Numeros>
-          </Telefonos>
-        </Pie>
+              </div>
+            </div>
+          </div>
+        </div>
       </footer>
     </div>
   );
 }
 
 export default Inicio;
-
-const Cuerpo = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  padding: 10px;
-  border-radius: 5px;
-  flex-wrap: wrap;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: center;
-  }
-`;
-
-const Circulo = styled.div`
-  width: 300px; 
-  height: 150px;
-  background-color: #3498DB;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.5em;
-  margin-top: 10px;
-
-  a {
-    text-decoration: none;
-    color: white;
-  }
-
-  @media (max-width: 768px) {
-    width: 250px;
-    height: 170px;
-    font-size: 1.2em;
-  }
-`;
-
-const Canchas = styled.img`
-  width: 450px;
-  height: auto;
-
-  @media (max-width: 768px) {
-    width: 100%;
-    margin-bottom: 10px;
-  }
-`;
-
-const Pie = styled.div`
-  background-color: #424949;
-  display: flex;
-  justify-content: space-between;
-  padding: 20px;
-  color: white;
-`;
-
-const Direcciones = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 50%;
-
-  ul {
-    list-style: none;
-    padding: 20px;
-    margin: 0 0 20px;
-  }
-
-  > div {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-  }
-
-  .highlight {
-  color: #3498DB;
-  font-weight: bold;
-}
-
-`;
-
-const Campus1 = styled.div`
-  width: 45%;
-`;
-
-const Campus2 = styled.div`
-  width: 45%;
-`;
-
-const Campus3 = styled.div`
-  width: 45%;
-`;
-
-const Campus4 = styled.div`
-  width: 45%;
-`;
-
-const Telefonos = styled.div`
-  width: 50%;
-  text-align: right;
-
-  ul {
-    list-style: none;
-    padding: 20px;
-    margin: 0 0 20px;
-  }
-
-  li {
-    margin-bottom: 5px;
-  }
-
-  .highlight {
-  color: #3498DB;
-  font-weight: bold;
-}
-`;
-
-const Numeros = styled.div``;
-
-const Numero1 = styled.div``;
-
-const Numero2 = styled.div``;
-
-const Icon = styled.i`
-  margin-right: 8px; 
-  color: white;
-`;
