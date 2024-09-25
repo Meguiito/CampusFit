@@ -37,9 +37,8 @@ const Formulario = () => {
 
     return (
         <div>
-            <h2>Formulario</h2>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                {/* Campos del formulario */}
+            <form id="register-container" onSubmit={handleSubmit(onSubmit)}>
+                <h2>Registro</h2>
                 <div>
                     <label htmlFor="nombres">Nombres</label>
                     <input

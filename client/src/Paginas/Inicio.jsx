@@ -15,8 +15,15 @@ function Inicio() {
               <Link to="/ReservayEquipo">Reserva tu hora y Equipo</Link>
             ) : (
               <>
-                <Link to="/Login" className="auth-button">Iniciar Sesión</Link>
-                <Link to="/Register" className="auth-button">Registrarse</Link>
+                <div className='auth-buttons'>
+                  <div className="auth-button1">
+                    <Link to="/Login">Iniciar Sesión</Link>
+                  </div>
+
+                  <div className="auth-button2">
+                    <Link to="/Register">Registrarse</Link>
+                  </div>
+                </div>
               </>
             )}
           </div>

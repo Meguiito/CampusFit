@@ -15,3 +15,52 @@
         transform: translateY(0);
     }
 }
+
+/* Login.css */
+
+/* Login.css */
+
+#login-container {
+    position: relative;
+    width: 350px;
+    margin: 100px auto;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.3); /* Fondo gris con transparencia */
+    border-radius: 10px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  #login-container input {
+    display: block;
+    width: 90%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: none;
+    background-color: #f1f1f1;
+  }
+  
+  #login-container input[type="submit"] {
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+  }
+  
+  #login-container input[type="submit"]:hover {
+    background-color: #45a049;
+  }
+  
+  #login-container .redirect-message {
+    text-align: center;
+    margin-top: 10px;
+  }
+  
+  #login-container .redirect-message a {
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  #login-container .redirect-message a:hover {
+    text-decoration: underline;
+  }
+  

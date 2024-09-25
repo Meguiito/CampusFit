@@ -64,9 +64,9 @@ const FormularioLogin = () => {
     };
 
     return (
-        <div>
-            <h2>{isRegistered ? "Iniciar Sesión" : "Registrarse"}</h2>
-            <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="form-container">
+            <form id ="login-container"onSubmit={handleSubmit(onSubmit)}>
+                <h2>{isRegistered ? "Iniciar Sesión" : "Registrarse"}</h2>
                 {!isRegistered && (
                     <>
                         <div>
