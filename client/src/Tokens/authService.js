@@ -17,6 +17,8 @@ export const login = async (email, password) => {
   try {
     const response = await axios.post('http://localhost:5000/users/verify', { email, password });
     localStorage.setItem('token', response.data.access_token);
+    console.log("Token:", response.data.access_token);
+
     return response.data;
   } catch (error) {
     console.error('Error al iniciar sesión', error);
@@ -26,7 +28,7 @@ export const login = async (email, password) => {
 
 export const logout = () => {
   localStorage.removeItem('token');
-  window.location.href = '/Login';
+  window.location.href = '/';
 };
 
 export const getToken = () => {

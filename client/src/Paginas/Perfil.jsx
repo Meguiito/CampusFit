@@ -1,5 +1,4 @@
 // src/components/Perfil.js
-
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
@@ -27,7 +26,6 @@ function Perfil() {
             rut: response.data.rut || '',
             username: response.data.username || '',
             email: response.data.email || '',
-            tipo_de_usuario: response.data.tipo_de_usuario || ''
           });
           setLoading(false);
         } catch (error) {
@@ -78,7 +76,6 @@ function Perfil() {
               <li><strong>Rut:</strong> {userData.rut}</li>
               <li><strong>Nombre:</strong> {userData.username}</li>
               <li><strong>E-Mail UCT:</strong> {userData.email}</li>
-              <li><strong>Tipo de Usuario:</strong> {userData.tipo_de_usuario}</li>
             </ul>
           </Datos>
         </DatosPersonales>
