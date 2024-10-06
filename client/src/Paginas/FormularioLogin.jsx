@@ -10,13 +10,21 @@ const FormularioLogin = () => {
 
     const onSubmit = async (data) => {
         try {
+            // Intentar hacer login con los datos proporcionados (correo y contraseña)
             const result = await login(data.correo, data.contraseña);
             console.log("Inicio de sesión exitoso:", result);
+    
+            // Si el login es exitoso, redirigir a la página principal
             navigate("/");
-            alert("Usuario no registrado")
+        } catch (error) {
+            // Capturar y manejar cualquier error que ocurra en la autenticación
             console.error("Error en la conexión:", error);
+    
+            // Mostrar alerta solo si la autenticación falla
+            alert("Usuario no registrado");
         }
     };
+    
 
     return (
         <div className="form-container">
