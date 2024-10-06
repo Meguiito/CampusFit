@@ -76,41 +76,58 @@ app.config['JWT_SECRET_KEY'] = 'franciscobenavides'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Opcional: Token expira en 1 hora
 
 jwt = JWTManager(app)
-
-# Ruta para verificar usuarios y generar token
+#ruta para generar y verificar usuarios mediante token 
 @app.route('/users/verify', methods=['POST'])
 def verify_user():
     try:
         email = request.json.get("email")
         password = request.json.get("password")
 
+        # Primero, busca en la colección de Usuarios
         user = mongo.db.Usuarios.find_one({'email': email})
-        
 
         if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
-            # Obtén los datos del usuario en el orden requerido
-            rut = user.get('rut')  # RUT del usuario
-            username = user.get('username')  # Nombre de usuario
-            email = user.get('email')  # Correo electrónico
-
-            # Genera el token JWT con los datos requeridos
-            access_token = create_access_token(identity={'rut': rut, 'username': username, 'email': email})
-            
-            return jsonify({
-                "message": "Verificación exitosa",
-                "access_token": access_token,
-                "user": {
-                    "rut": rut,
-                    "username": username,
-                    "email": email
-                }
-            }), 200
+            # Usuario encontrado en colección de Usuarios
+            tipo_usuario = "client"
         else:
-            return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
+            # Si no está en Usuarios, busca en la colección de Administradores
+            user = mongo.db.Admin.find_one({'email': email})
+            if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
+                # Usuario encontrado en colección de Admin
+                tipo_usuario = "admin"
+            else:
+                # Usuario no encontrado en ninguna colección o contraseña incorrecta
+                return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
+
+        # Obtén los datos del usuario
+        rut = user.get('rut')  # RUT del usuario
+        username = user.get('username')  # Nombre de usuario
+        email = user.get('email')  # Correo electrónico
+
+        # Genera el token JWT con el campo "tipo de usuario"
+        access_token = create_access_token(identity={
+            'rut': rut,
+            'username': username,
+            'email': email,
+            'tipo de usuario': tipo_usuario
+        })
+        
+        return jsonify({
+            "message": "Verificación exitosa",
+            "access_token": access_token,
+            "user": {
+                "rut": rut,
+                "username": username,
+                "email": email,
+                "tipo de usuario": tipo_usuario
+            }
+        }), 200
+
     except PyMongoError as e:
         return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
