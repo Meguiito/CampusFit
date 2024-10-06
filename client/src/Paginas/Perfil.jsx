@@ -34,7 +34,6 @@ function Perfil() {
           console.error('Error al obtener el perfil:', error);
           setError('No se pudo obtener la información del perfil. Por favor, inicia sesión nuevamente.');
           setLoading(false);
-          logout(); // Cerrar sesión si hay un error
         }
       } else {
         // Si no hay token, redirigir al inicio de sesión
