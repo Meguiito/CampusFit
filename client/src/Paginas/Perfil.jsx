@@ -1,14 +1,69 @@
-import React from 'react'; 
+// src/components/Perfil.js
+
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { logout } from '../Tokens/authService'; // Asegúrate de que la ruta sea correcta
 
 function Perfil() {
   const navigate = useNavigate();
+  const [userData, setUserData] = useState({
+    rut: '',
+    username: '',
+    email: '',
+    tipo_de_usuario: ''
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await axios.get('http://localhost:5000/profile'); // Asegúrate de que la URL sea correcta
+          setUserData({
+            rut: response.data.rut || '',
+            username: response.data.username || '',
+            email: response.data.email || '',
+            tipo_de_usuario: response.data.tipo_de_usuario || ''
+          });
+          setLoading(false);
+        } catch (error) {
+          console.error('Error al obtener el perfil:', error);
+          setError('No se pudo obtener la información del perfil. Por favor, inicia sesión nuevamente.');
+          setLoading(false);
+          logout(); // Cerrar sesión si hay un error
+        }
+      } else {
+        // Si no hay token, redirigir al inicio de sesión
+        navigate('/Login');
+      }
+    };
+
+    fetchProfile();
+  }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token'); 
-    navigate('/'); 
+    logout();
   };
+
+  if (loading) {
+    return (
+      <Main>
+        <p>Cargando...</p>
+      </Main>
+    );
+  }
+
+  if (error) {
+    return (
+      <Main>
+        <p>{error}</p>
+      </Main>
+    );
+  }
 
   return (
     <Main>
@@ -21,11 +76,10 @@ function Perfil() {
           <Datos>
             <h2>Datos Personales</h2>
             <ul>
-              <li><strong>Rut:</strong> </li>
-              <li><strong>Nombres:</strong> </li>
-              <li><strong>Apellido Paterno:</strong> </li>
-              <li><strong>Apellido Materno:</strong> </li>
-              <li><strong>E-Mail UCT:</strong> </li>
+              <li><strong>Rut:</strong> {userData.rut}</li>
+              <li><strong>Nombre:</strong> {userData.username}</li>
+              <li><strong>E-Mail UCT:</strong> {userData.email}</li>
+              <li><strong>Tipo de Usuario:</strong> {userData.tipo_de_usuario}</li>
             </ul>
           </Datos>
         </DatosPersonales>
@@ -36,6 +90,8 @@ function Perfil() {
 }
 
 export default Perfil;
+
+// Estilos utilizando styled-components
 
 const Main = styled.div`
   background: linear-gradient(135deg, #3498DB, #ffffff);
@@ -51,6 +107,11 @@ const Main = styled.div`
 
   h2 {
     color: white;
+  }
+
+  p {
+    color: white;
+    font-size: 1.2rem;
   }
 `;
 
