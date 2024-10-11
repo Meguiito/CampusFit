@@ -248,25 +248,40 @@ def server_error(error=None):
     }
     return jsonify(message), 500
 
+# Endpoint para manejar reservas y guardar el correo de la sesión
 @app.route('/api/reservas', methods=['POST'])
+@jwt_required()
 def crear_reserva():
-    data = request.json
     try:
+        # Obtener el correo del usuario autenticado mediante el token
+        identity = get_jwt_identity()
+        email = identity.get('email')
+
+        # Obtener datos de la solicitud
+        data = request.get_json()
+        fecha = data.get("fecha")
+        hora = data.get("hora")
+        cancha = data.get("cancha")
+        equipo = data.get("equipo")
+
+        # Crear objeto de reserva incluyendo el correo del usuario
         reserva = {
-            "fecha": data.get("fecha"),
-            "hora": data.get("hora"),
-            "cancha": data.get("cancha"),
-            "equipo": data.get("equipo"),
-            "duracion": "2 horas",
-            "creado_en": datetime.now()
+            "fecha": fecha,
+            "hora": hora,
+            "cancha": cancha,
+            "equipo": equipo,
+            "email_usuario": email  # Almacena el correo del usuario autenticado
         }
-        
-        # Insertar la reserva en la colección "reservas"
+
+        # Insertar reserva en la colección Reservas
         mongo.db.Reservas.insert_one(reserva)
-        
-        return jsonify({"mensaje": "Reserva guardada con éxito"}), 201
+        return jsonify({"message": "Reserva guardada con éxito"}), 201
+
+    except PyMongoError as e:
+        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
-        return jsonify({"error": str(e)}), 50
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
     
 @app.errorhandler(Exception)
 def handle_exception(e):
