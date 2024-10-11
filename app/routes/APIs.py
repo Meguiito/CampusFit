@@ -262,7 +262,7 @@ def crear_reserva():
         }
         
         # Insertar la reserva en la colección "reservas"
-        mongo.db.reservas.insert_one(reserva)
+        mongo.db.Reservas.insert_one(reserva)
         
         return jsonify({"mensaje": "Reserva guardada con éxito"}), 201
     except Exception as e:
