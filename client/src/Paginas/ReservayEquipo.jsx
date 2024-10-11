@@ -4,14 +4,11 @@ import styled from 'styled-components';
 function ReservayEquipo() {
   const [time, setTime] = useState('08:00');
   const [message, setMessage] = useState('');
-
-  // Define el rango de horas
   const minTime = "08:00";
   const maxTime = "20:00";
 
   const handleTimeChange = (event) => {
     const newTime = event.target.value;
-    // Verifica que el tiempo esté dentro del rango permitido
     if (newTime >= minTime && newTime <= maxTime) {
       setTime(newTime);
     } else {
@@ -29,10 +26,12 @@ function ReservayEquipo() {
     };
 
     try {
+      const token = localStorage.getItem('token'); // Obtén el token JWT desde el almacenamiento local
       const response = await fetch("http://localhost:5000/api/reservas", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`, // Añade el token en los encabezados
         },
         body: JSON.stringify(reservaData),
       });
