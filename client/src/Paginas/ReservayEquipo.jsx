@@ -15,15 +15,37 @@ function ReservayEquipo() {
     if (newTime >= minTime && newTime <= maxTime) {
       setTime(newTime);
     } else {
-      // Ajusta el tiempo a los límites si está fuera de rango
       setTime(minTime);
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    // Mostrar notificación de reserva de 2 horas
-    setMessage('¡Reserva confirmada! Tu tiempo de reservación es de 2 horas.');
+    const reservaData = {
+      fecha: document.getElementById("fecha").value,
+      hora: time,
+      cancha: document.getElementById("cancha").value,
+      equipo: document.getElementById("equipo").value,
+    };
+
+    try {
+      const response = await fetch("http://localhost:5000/api/reservas", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(reservaData),
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        setMessage("¡Reserva confirmada! Tu tiempo de reservación es de 2 horas.");
+      } else {
+        setMessage(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      setMessage(`Error de red: ${error.message}`);
+    }
   };
 
   const currentYear = new Date().getFullYear();
