@@ -248,6 +248,26 @@ def server_error(error=None):
     }
     return jsonify(message), 500
 
+@app.route('/api/reservas', methods=['POST'])
+def crear_reserva():
+    data = request.json
+    try:
+        reserva = {
+            "fecha": data.get("fecha"),
+            "hora": data.get("hora"),
+            "cancha": data.get("cancha"),
+            "equipo": data.get("equipo"),
+            "duracion": "2 horas",
+            "creado_en": datetime.now()
+        }
+        
+        # Insertar la reserva en la colección "reservas"
+        mongo.db.reservas.insert_one(reserva)
+        
+        return jsonify({"mensaje": "Reserva guardada con éxito"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 50
+    
 @app.errorhandler(Exception)
 def handle_exception(e):
     return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
