@@ -20,9 +20,8 @@ function Navbar() {
           </button>
           <ul className={isOpen ? 'open' : ''}>
             <li><a href="/Inicio">Inicio</a></li>
-            <li><a href="/Perfil">Tu Perfil</a></li>
             <li><a href="/ReservasEspeciales">Reservas Especiales</a></li>
-            <li><a href="/Reservas">Reservas</a></li>
+            <li><a href="/Usuario">Usuario</a></li>
           </ul>
         </nav>
       </header>
