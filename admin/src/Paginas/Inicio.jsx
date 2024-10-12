@@ -1,46 +1,38 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import '../Styles/Inicio.css';
+import React, { useState, useEffect } from 'react';
+import '../Styles/Inicio.css'; // Importamos el archivo CSS para estilos
 
 function Inicio() {
-  const navigate = useNavigate();
+  // Estado para el número de reservas diarias
+  const [reservasDiarias, setReservasDiarias] = useState(0);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
+  // Simulamos la obtención de datos (podrías reemplazar esto con una llamada a una API)
+  useEffect(() => {
+    const obtenerReservasDiarias = () => {
+      // Aquí podrías hacer una llamada a una API para obtener las reservas reales
+      setReservasDiarias(5); // Simulamos 5 reservas para este ejemplo
+    };
+
+    obtenerReservasDiarias();
+  }, []);
 
   return (
-    <div className="container">
-      <header className="header">
-        <h1 className="inicio-title">Panel de Administración</h1>
-      </header>
-      <main className="main">
-        <nav className="sidebar">
-          <a href="/Usuarios" className="nav-link">Usuarios</a>
-          <a href="/ReservasEspeciales" className="nav-link">Reservas Especiales</a>
-          <a href="/Reservas" className="nav-link">Reservas</a>
-          <button className="logout-button" onClick={handleLogout}>Cerrar Sesión</button>
-        </nav>
-        <div className="content">
-          <div className="card">
-            <h2 className="card-title">Usuarios Activos</h2>
-            <p className="card-value">X-X</p>
+    <div className="inicio">
+      <div className="inicio-content">
+        <div className="card">
+          <h2>Reservas</h2>
+          <p>Administra las reservas de los usuarios.</p>
+          {/* Contador de reservas */}
+          <div className="contador-reservas">
+            <span>Reservas diarias: {reservasDiarias}</span>
           </div>
-          <div className="card">
-            <h2 className="card-title">Reservas Especiales Pendientes</h2>
-            <p className="card-value">X-X</p>
-          </div>
-          <div className="card">
-            <h2 className="card-title">Reservas Pendientes</h2>
-            <p className="card-value">X-X</p>
-          </div>
-          <div className="card">
-            <h2 className="card-title">Usuarios Retirados</h2>
-            <p className="card-value">X-X</p>
-          </div>
+          <button className="inicio-button">Ver Reservas</button>
         </div>
-      </main>
+        <div className="card">
+          <h2>Reserva Especial</h2>
+          <p>Gestiona las reservas especiales.</p>
+          <button className="inicio-button">Ver Reservas Especiales</button>
+        </div>
+      </div>
     </div>
   );
 }
