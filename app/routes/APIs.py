@@ -248,7 +248,6 @@ def server_error(error=None):
     }
     return jsonify(message), 500
 
-# Endpoint para manejar reservas y guardar el correo de la sesión
 @app.route('/api/reservas', methods=['POST'])
 @jwt_required()
 def crear_reserva():
@@ -263,6 +262,22 @@ def crear_reserva():
         hora = data.get("hora")
         cancha = data.get("cancha")
         equipo = data.get("equipo")
+
+        # Verificar si ya existe una reserva en el mismo horario
+        conflicto_reserva = mongo.db.Reservas.find_one({
+            "fecha": fecha,
+            "hora": hora,
+            "cancha": cancha
+        })
+        
+        conflicto_reserva_especial = mongo.db.Reserva_especial.find_one({
+            "fecha": fecha,
+            "hora": hora,
+            "cancha": cancha
+        })
+
+        if conflicto_reserva or conflicto_reserva_especial:
+            return jsonify({"error": "El horario seleccionado ya está reservado."}), 409
 
         # Crear objeto de reserva incluyendo el correo del usuario
         reserva = {
