@@ -1,29 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
 function ReservayEquipo() {
   const [time, setTime] = useState('08:00');
   const [message, setMessage] = useState('');
+  const [error, setError] = useState(null);
 
-  // Define el rango de horas
   const minTime = "08:00";
   const maxTime = "20:00";
 
   const handleTimeChange = (event) => {
     const newTime = event.target.value;
-    // Verifica que el tiempo esté dentro del rango permitido
     if (newTime >= minTime && newTime <= maxTime) {
       setTime(newTime);
     } else {
-      // Ajusta el tiempo a los límites si está fuera de rango
       setTime(minTime);
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    // Mostrar notificación de reserva de 2 horas
-    setMessage('¡Reserva confirmada! Tu tiempo de reservación es de 2 horas.');
+    setMessage('');
+    setError(null);
+
+    const token = localStorage.getItem('token');
+    const formData = {
+      fecha: document.getElementById('fecha').value,
+      hora: time,
+      cancha: document.getElementById('cancha').value,
+      equipo: document.getElementById('equipo').value,
+    };
+
+    try {
+      const response = await fetch('http://localhost:5000/api/reservas', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.status === 201) {
+        setMessage('¡Reserva confirmada! Tu tiempo de reservación es de 2 horas.');
+      } else if (response.status === 409) {
+        const result = await response.json();
+        setError(result.error); // Muestra el mensaje de conflicto de horario
+      } else {
+        setError('Ocurrió un error al realizar la reserva.');
+      }
+    } catch (error) {
+      setError('Error al conectar con el servidor.');
+    }
   };
 
   const currentYear = new Date().getFullYear();
@@ -54,7 +82,7 @@ function ReservayEquipo() {
             value={time}
             min={minTime}
             max={maxTime}
-            step="1800" // Intervalo de 30 minutos
+            step="1800"
             onChange={handleTimeChange}
             required
           />
@@ -82,6 +110,7 @@ function ReservayEquipo() {
         <Button type="submit">Reservar</Button>
       </form>
       {message && <Notification>{message}</Notification>}
+      {error && <ErrorNotification>{error}</ErrorNotification>}
     </FormularioContainer>
   );
 }
@@ -208,6 +237,17 @@ const Button = styled.button`
 const Notification = styled.div`
   margin-top: 20px;
   background-color: #00CED1;
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+  width: 100%;
+  max-width: 600px;
+`;
+
+const ErrorNotification = styled.div`
+  margin-top: 20px;
+  background-color: #ff6347;
   color: white;
   padding: 10px;
   border-radius: 5px;
