@@ -1,11 +1,221 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import es from 'date-fns/locale/es'; // Importa la localización en español
+import es from 'date-fns/locale/es'; 
+registerLocale('es', es); 
 
-// Registra la localización en español
-registerLocale('es', es);
+function ReservayEquipo() {
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [time, setTime] = useState(null);
+  const [error, setError] = useState(null);
+  const [cancha, setCancha] = useState('');
+  const [canchaTipo, setCanchaTipo] = useState('');
+  const [equipo, setEquipo] = useState('');
+  const [canchasDisponibles, setCanchasDisponibles] = useState([]);
+  const [equiposDisponibles, setEquiposDisponibles] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCanchasYEquipos = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('No se encontró el token de autenticación.');
+        return;
+      }
+
+      try {
+        const response = await fetch('http://localhost:5000/api/equipo_and_canchas', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ fecha: selectedDate.toISOString().split('T')[0], hora: time }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setCanchasDisponibles(data.canchas_disponibles);
+          setEquiposDisponibles(data.equipos_disponibles);
+        } else {
+          const errorData = await response.json();
+          setError(errorData.error || 'Error al obtener los datos.');
+        }
+      } catch (error) {
+        console.error('Error de red:', error);
+        setError('Error al conectar con el servidor.');
+      }
+    };
+
+    fetchCanchasYEquipos();
+  }, [selectedDate, time]);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError(null);
+
+    const token = localStorage.getItem('token');
+    const formData = {
+      fecha: selectedDate.toISOString().split('T')[0], // Format YYYY-MM-DD
+      hora: time,
+      cancha: cancha,
+      equipo: equipo,
+    };
+
+    try {
+      const response = await fetch('http://localhost:5000/api/reservas', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.status === 201) {
+        alert("Se ha reservado con éxito");
+        navigate("/TuReservacion");
+      } else if (response.status === 409) {
+        const result = await response.json();
+        setError(result.error); // Show conflict message
+      } else {
+        setError('Ocurrió un error al realizar la reserva.');
+      }
+    } catch (error) {
+      setError('Error al conectar con el servidor.');
+    }
+  };
+
+  const generarOpcionesTiempo = () => {
+    const opciones = [];
+    for (let hora = 8; hora <= 18; hora += 2) {
+      const horaFormateada = hora.toString().padStart(2, '0') + ':00';
+      opciones.push(horaFormateada);
+    }
+    return opciones;
+  };
+
+  // Función para determinar si una hora ya pasó (solo si la fecha seleccionada es hoy)
+  const esHoraPasada = (horaSeleccionada) => {
+    const hoy = new Date();
+    const fechaSeleccionada = selectedDate.toDateString() === hoy.toDateString();
+
+    if (!fechaSeleccionada) return false;
+
+    const [hora, minuto] = horaSeleccionada.split(':').map(Number);
+    const ahora = new Date();
+    return hora < ahora.getHours() || (hora === ahora.getHours() && minuto < ahora.getMinutes());
+  };
+
+  const handleCanchaChange = (e) => {
+    const canchaNombre = e.target.value;
+    setCancha(canchaNombre);
+
+    const canchaSeleccionada = canchasDisponibles.find(c => c.nombre === canchaNombre);
+    if (canchaSeleccionada) {
+      setCanchaTipo(canchaSeleccionada.tipo);
+    } else {
+      setCanchaTipo('');
+    }
+  };
+
+  const equiposFiltrados = canchaTipo
+    ? equiposDisponibles.filter(equipo => equipo.tipo === canchaTipo)
+    : equiposDisponibles;
+
+  return (
+    <Wrapper>
+      <FormularioContainer>
+        <h2>Reserva tu Hora y Equipo</h2>
+        <form onSubmit={handleSubmit}>
+          <Fecha>
+            <Label>Selecciona el Día:</Label>
+            <DatePickerWrapper>
+              <DatePicker
+                selected={selectedDate}
+                onChange={(date) => setSelectedDate(date)}
+                inline
+                minDate={new Date()} // Make sure this is defined
+                dateFormat="P" // Formato de fecha adaptado al locale
+                locale="es" // Establece el locale a español
+                required
+              />
+            </DatePickerWrapper>
+          </Fecha>
+          <Hora>
+            <Label htmlFor="hora">Selecciona la Hora:</Label>
+            <Select
+              id="hora"
+              name="hora"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              required
+            >
+              <option value="">Selecciona una hora</option>
+              {generarOpcionesTiempo().map((hora) => (
+                <option key={hora} value={hora} disabled={esHoraPasada(hora)}>
+                  {hora}
+                </option>
+              ))}
+            </Select>
+          </Hora>
+          <Cancha>
+            <Label htmlFor="cancha">Selecciona la Cancha:</Label>
+            <Select
+              id="cancha"
+              name="cancha"
+              value={cancha}
+              onChange={handleCanchaChange}
+              required
+              disabled={!time} // Deshabilitar si no hay una hora seleccionada
+            >
+              <option value="">Selecciona una cancha</option>
+              {canchasDisponibles.map((c) => (
+                <option key={c._id} value={c.nombre}>{c.nombre}</option>
+              ))}
+            </Select>
+          </Cancha>
+          <Equipo>
+            <Label htmlFor="equipo">Selecciona tu Equipo:</Label>
+            <Select
+              id="equipo"
+              name="equipo"
+              value={equipo}
+              onChange={(e) => setEquipo(e.target.value)}
+              required
+              disabled={!time || !canchaTipo} // Deshabilitar si no hay una hora seleccionada
+            >
+              <option value="">Selecciona un equipo</option>
+              {equiposFiltrados.map((e) => (
+                <option key={e._id} value={e.nombre}>{e.nombre}</option>
+              ))}
+            </Select>
+          </Equipo>
+          <Button type="submit">Reservar</Button>
+        </form>
+        {error && <ErrorNotification>{error}</ErrorNotification>}
+      </FormularioContainer>
+    </Wrapper>
+  );
+}
+
+export default ReservayEquipo;
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*---------------------------------------------------------Estilo----------------------------------------------------- */
 
 const Wrapper = styled.div`
   display: flex;
@@ -167,171 +377,6 @@ const DatePickerWrapper = styled.div`
   }
 `;
 
-function ReservayEquipo() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [time, setTime] = useState('08:00');
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState(null);
-  const [cancha, setCancha] = useState('');
-  const [equipo, setEquipo] = useState('');
-  const [canchasDisponibles, setCanchasDisponibles] = useState([]);
-  const [equiposDisponibles, setEquiposDisponibles] = useState([]);
-
-  const minTime = '08:00';
-  const maxTime = '20:00';
-
-  useEffect(() => {
-    const fetchCanchasYEquipos = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setError('No se encontró el token. Por favor, inicia sesión.');
-        return;
-      }
-
-      try {
-        const response = await fetch('http://localhost:5000/api/equipo_and_canchas', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({ fecha: selectedDate.toISOString().split('T')[0], hora: time }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Datos recibidos:', data); // Este log te dirá qué datos has recibido.
-          setCanchasDisponibles(data.canchas_disponibles);
-          setEquiposDisponibles(data.equipos_disponibles);
-        } else {
-          const errorData = await response.json();
-          setError(errorData.error);
-        }
-      } catch (error) {
-        setError('Error al conectar con el servidor. Usando datos locales de ejemplo.');
-      }
-    };
-
-    fetchCanchasYEquipos();
-  }, [selectedDate, time]);
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setMessage('');
-    setError(null);
-
-    const token = localStorage.getItem('token');
-    const formData = {
-      fecha: selectedDate.toISOString().split('T')[0],
-      hora: time,
-      cancha: cancha,
-      equipo: equipo,
-    };
-
-    try {
-      const response = await fetch('http://localhost:5000/api/reservas', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.status === 201) {
-        setMessage('¡Reserva confirmada! Tu tiempo de reservación es de 2 horas.');
-      } else if (response.status === 409) {
-        const result = await response.json();
-        setError(result.error);
-      } else {
-        setError('Ocurrió un error al realizar la reserva.');
-      }
-    } catch (error) {
-      setError('Error al conectar con el servidor.');
-    }
-  };
-
-  
-  const handleTimeChange = (event) => {
-    setTime(event.target.value);
-  };
-
-  return (
-    <Wrapper>
-      <FormularioContainer>
-        <h2>Reserva tu Hora y Equipo</h2>
-        <form onSubmit={handleSubmit}>
-          <Fecha>
-            <Label>Selecciona el Día:</Label>
-            <DatePickerWrapper>
-              <DatePicker
-                selected={selectedDate}
-                onChange={(date) => setSelectedDate(date)}
-                inline
-                minDate={new Date()}
-                dateFormat="P"
-                locale="es"
-                required
-              />
-            </DatePickerWrapper>
-          </Fecha>
-          <Hora>
-            <Label htmlFor="hora">Selecciona la Hora:</Label>
-            <Input
-              type="time"
-              id="hora"
-              name="hora"
-              value={time}
-              min={minTime}
-              max={maxTime}
-              step="1800"
-              onChange={handleTimeChange}
-              required
-            />
-          </Hora>
-          <Cancha>
-            <Label htmlFor="cancha">Selecciona la Cancha:</Label>
-            <Select
-              id="cancha"
-              name="cancha"
-              value={cancha}
-              onChange={(e) => setCancha(e.target.value)}
-              required
-            >
-              <option value="">Selecciona una cancha</option>
-              {canchasDisponibles.map((c) => (
-                <option key={c._id} value={c.nombre}>{c.nombre}</option>
-              ))}
-            </Select>
-          </Cancha>
-          <Equipo>
-            <Label htmlFor="equipo">Selecciona tu Equipo:</Label>
-            <Select
-              id="equipo"
-              name="equipo"
-              value={equipo}
-              onChange={(e) => setEquipo(e.target.value)}
-              required
-            >
-              <option value="">Selecciona un equipo</option>
-              {equiposDisponibles.map((e) => (
-                <option key={e._id} value={e.nombre}>{e.nombre}</option>
-              ))}
-            </Select>
-          </Equipo>
-          <Button type="submit">Reservar</Button>
-        </form>
-        {message && <Notification>{message}</Notification>}
-        {error && <ErrorNotification>{error}</ErrorNotification>}
-      </FormularioContainer>
-    </Wrapper>
-  );
-}
-
-export default ReservayEquipo;
-
-
-// Estilos
 const FormularioContainer = styled.div`
   background: linear-gradient(135deg, #3498DB, #ffffff);
   display: flex;
@@ -416,15 +461,6 @@ const Label = styled.label`
   font-weight: bold;
 `;
 
-const Input = styled.input`
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 14px;
-  box-sizing: border-box;
-  width: 100%;
-`;
-
 const Select = styled.select`
   padding: 10px;
   border: 1px solid #ddd;
@@ -449,17 +485,6 @@ const Button = styled.button`
     background-color: #1e6bb8;
     color: white;
   }
-`;
-
-const Notification = styled.div`
-  margin-top: 20px;
-  background-color: #00CED1;
-  color: white;
-  padding: 10px;
-  border-radius: 5px;
-  text-align: center;
-  width: 100%;
-  max-width: 600px; 
 `;
 
 const ErrorNotification = styled.div`
