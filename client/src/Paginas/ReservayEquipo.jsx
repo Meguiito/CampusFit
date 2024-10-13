@@ -7,7 +7,7 @@ import es from 'date-fns/locale/es';
 registerLocale('es', es); 
 
 function ReservayEquipo() {
-  const [time, setTime] = useState(null);
+  const [time, setTime] = useState('');
   const [error, setError] = useState(null);
   const [cancha, setCancha] = useState('');
   const [canchaTipo, setCanchaTipo] = useState('');
