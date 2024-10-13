@@ -7,6 +7,8 @@ import magic
 from datetime import datetime, timedelta
 from pymongo.errors import PyMongoError, ServerSelectionTimeoutError
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from bson import json_util
+
 
 app = Flask(__name__)
 
@@ -224,11 +226,11 @@ def obtener_equipos_y_canchas_disponibles():
         canchas = mongo.db.Espacios.find()
         equipos = mongo.db.Equipos.find()
 
-        # Filtrar las canchas y equipos no reservados
+        # Convertir a JSON utilizando json_util
         canchas_disponibles = [cancha for cancha in canchas if cancha.get("nombre") not in canchas_reservadas]
         equipos_disponibles = [equipo for equipo in equipos if equipo.get("nombre") not in equipos_reservados]
 
-        return jsonify({
+        return json_util.dumps({
             "canchas_disponibles": canchas_disponibles,
             "equipos_disponibles": equipos_disponibles
         }), 200
