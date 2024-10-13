@@ -356,6 +356,31 @@ def crear_reserva():
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
+
+@app.route('/api/usuarios', methods=['GET'])
+@jwt_required()
+def get_usuarios():
+    try:
+        # Obtener la identidad del token JWT
+        identity = get_jwt_identity()
+        email = identity.get('email')
+
+        # Verificar si el usuario es admin
+        admin_user = mongo.db.Admin.find_one({'email': email})
+        if not admin_user:
+            return jsonify({"error": "Acceso denegado: solo administradores"}), 403
+
+        # Obtener todos los usuarios
+        usuarios = mongo.db.Usuarios.find({}, {"_id": 0, "username": 1, "email": 1, "rut": 1})
+        usuarios_list = list(usuarios)  # Convertir a lista para JSON
+
+        return jsonify(usuarios_list), 200
+
+    except PyMongoError as e:
+        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
     
 @app.errorhandler(Exception)
 def handle_exception(e):
