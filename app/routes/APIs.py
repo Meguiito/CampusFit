@@ -381,6 +381,25 @@ def get_usuarios():
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
+@app.route('/reservas', methods=['GET'])
+@jwt_required()
+def get_reservas():
+    try:
+        identity = get_jwt_identity()
+        email = identity.get('email')
+        user = mongo.db.Admin.find_one({'email': email})
+        if not user:
+            return jsonify({"error": "Acceso no autorizado"}), 403
+
+        reservas = mongo.db.Reservas.find()
+        lista_reservas = [{"id": str(reserva["_id"]), "fecha": reserva["fecha"], "hora": reserva["hora"], "cancha": reserva["cancha"], "equipo": reserva["equipo"]} for reserva in reservas]
+
+        return jsonify(lista_reservas), 200
+
+    except PyMongoError as e:
+        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
     
 @app.errorhandler(Exception)
 def handle_exception(e):
