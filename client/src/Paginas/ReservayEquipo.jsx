@@ -183,6 +183,11 @@ function ReservayEquipo() {
   useEffect(() => {
     const fetchCanchasYEquipos = async () => {
       const token = localStorage.getItem('token');
+      if (!token) {
+        setError('No se encontró el token. Por favor, inicia sesión.');
+        return;
+      }
+
       try {
         const response = await fetch('http://localhost:5000/api/equipo_and_canchas', {
           method: 'POST',
@@ -202,7 +207,7 @@ function ReservayEquipo() {
           setError(errorData.error);
         }
       } catch (error) {
-        setError('Error al conectar con el servidor.');
+        setError('Error al conectar con el servidor. Usando datos locales de ejemplo.');
       }
     };
 
@@ -216,7 +221,7 @@ function ReservayEquipo() {
 
     const token = localStorage.getItem('token');
     const formData = {
-      fecha: selectedDate.toISOString().split('T')[0], // Format YYYY-MM-DD
+      fecha: selectedDate.toISOString().split('T')[0],
       hora: time,
       cancha: cancha,
       equipo: equipo,
@@ -236,7 +241,7 @@ function ReservayEquipo() {
         setMessage('¡Reserva confirmada! Tu tiempo de reservación es de 2 horas.');
       } else if (response.status === 409) {
         const result = await response.json();
-        setError(result.error); // Show conflict message
+        setError(result.error);
       } else {
         setError('Ocurrió un error al realizar la reserva.');
       }
@@ -261,9 +266,9 @@ function ReservayEquipo() {
                 selected={selectedDate}
                 onChange={(date) => setSelectedDate(date)}
                 inline
-                minDate={new Date()} // Make sure this is defined
-                dateFormat="P" // Formato de fecha adaptado al locale
-                locale="es" // Establece el locale a español
+                minDate={new Date()}
+                dateFormat="P"
+                locale="es"
                 required
               />
             </DatePickerWrapper>
@@ -322,6 +327,7 @@ function ReservayEquipo() {
 }
 
 export default ReservayEquipo;
+
 
 // Estilos
 const FormularioContainer = styled.div`
