@@ -179,6 +179,65 @@ def get_profile():
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
+@app.route('/api/equipo_and_canchas', methods=['POST'])
+@jwt_required()
+def obtener_equipos_y_canchas_disponibles():
+    try:
+        data = request.get_json()
+        fecha = data.get("fecha")
+        hora = data.get("hora")
+
+        # Validar que se proporcionaron fecha y hora
+        if not all([fecha, hora]):
+            return jsonify({"error": "Se requieren fecha y hora"}), 400
+
+        # Filtrar reservas existentes para la fecha y hora seleccionadas
+        reservas_existentes = mongo.db.Reservas.find({
+            "$or": [
+                {"fecha": fecha, "hora": hora},
+                {"fecha": fecha, "hora": {"$gte": hora}},  # Reservas que comienzan después de la hora seleccionada
+                {"fecha": fecha, "hora": {"$lte": hora}}   # Reservas que comienzan antes de la hora seleccionada
+            ]
+        })
+
+        reservas_especiales_existentes = mongo.db.Reservas_especiales.find({
+            "$or": [
+                {"fecha": fecha, "hora": hora},
+                {"fecha": fecha, "hora": {"$gte": hora}},  # Reservas que comienzan después de la hora seleccionada
+                {"fecha": fecha, "hora": {"$lte": hora}}   # Reservas que comienzan antes de la hora seleccionada
+            ]
+        })
+
+        # Convertir las reservas a una lista para facilitar la comprobación
+        equipos_reservados = []
+        canchas_reservadas = []
+
+        for reserva in reservas_existentes:
+            canchas_reservadas.append(reserva.get("cancha"))
+            equipos_reservados.append(reserva.get("equipo"))
+
+        for reserva_especial in reservas_especiales_existentes:
+            canchas_reservadas.append(reserva_especial.get("cancha"))
+            equipos_reservados.append(reserva_especial.get("equipo"))
+
+        # Obtener todas las canchas y equipos
+        canchas = mongo.db.Canchas.find()
+        equipos = mongo.db.Equipos.find()
+
+        # Filtrar las canchas y equipos no reservados
+        canchas_disponibles = [cancha for cancha in canchas if cancha.get("nombre") not in canchas_reservadas]
+        equipos_disponibles = [equipo for equipo in equipos if equipo.get("nombre") not in equipos_reservados]
+
+        return jsonify({
+            "canchas_disponibles": canchas_disponibles,
+            "equipos_disponibles": equipos_disponibles
+        }), 200
+
+    except PyMongoError as e:
+        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
 # Ruta para manejar solicitudes de reserva especial
 @app.route('/special_request', methods=['POST'])
 @jwt_required()
