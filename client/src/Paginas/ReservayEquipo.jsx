@@ -7,7 +7,6 @@ import es from 'date-fns/locale/es';
 registerLocale('es', es); 
 
 function ReservayEquipo() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
   const [time, setTime] = useState(null);
   const [error, setError] = useState(null);
   const [cancha, setCancha] = useState('');
@@ -16,7 +15,25 @@ function ReservayEquipo() {
   const [canchasDisponibles, setCanchasDisponibles] = useState([]);
   const [equiposDisponibles, setEquiposDisponibles] = useState([]);
   const navigate = useNavigate();
+  
 
+  // Función para calcular el primer día hábil disponible
+  const calcularPrimerDiaHabil = () => {
+    const hoy = new Date();
+    
+    // Si hoy es sábado, mover a lunes
+    if (hoy.getDay() === 6) {
+        hoy.setDate(hoy.getDate() + 2); // Mover a lunes
+    } 
+    // Si hoy es domingo, mover a lunes
+    else if (hoy.getDay() === 0) {
+        hoy.setDate(hoy.getDate() + 1); // Mover a lunes
+    }
+
+    return hoy;
+  };
+
+  const [selectedDate, setSelectedDate] = useState(calcularPrimerDiaHabil());
   useEffect(() => {
     const fetchCanchasYEquipos = async () => {
       const token = localStorage.getItem('token');
@@ -125,6 +142,26 @@ function ReservayEquipo() {
     ? equiposDisponibles.filter(equipo => equipo.tipo === canchaTipo)
     : equiposDisponibles;
 
+
+    const calcularFechaMaxima = () => {
+      const hoy = new Date();
+      
+      // Si hoy es sábado, mover a lunes
+      if (hoy.getDay() === 6) { // 6 es sábado
+        hoy.setDate(hoy.getDate() + 2); // Mover a lunes
+      } else if (hoy.getDay() === 0) { // 0 es domingo
+        hoy.setDate(hoy.getDate() + 1); // Mover a lunes
+      }
+    
+      const finDeSemana = new Date(hoy);
+      finDeSemana.setDate(hoy.getDate() + (1 - hoy.getDay() + 7) % 7 + 7); // Moverse al lunes de la próxima semana
+      finDeSemana.setDate(finDeSemana.getDate() + 4); // Sumar 4 días para llegar al viernes
+    
+      return finDeSemana;
+    };
+    
+  
+
   return (
     <Wrapper>
       <FormularioContainer>
@@ -132,17 +169,22 @@ function ReservayEquipo() {
         <form onSubmit={handleSubmit}>
           <Fecha>
             <Label>Selecciona el Día:</Label>
-            <DatePickerWrapper>
-              <DatePicker
-                selected={selectedDate}
-                onChange={(date) => setSelectedDate(date)}
-                inline
-                minDate={new Date()} // Make sure this is defined
-                dateFormat="P" // Formato de fecha adaptado al locale
-                locale="es" // Establece el locale a español
-                required
-              />
-            </DatePickerWrapper>
+              <DatePickerWrapper>
+                <DatePicker
+                  selected={selectedDate}
+                  onChange={(date) => setSelectedDate(date)}
+                  inline
+                  minDate={new Date()} // Solo permitir seleccionar desde hoy
+                  maxDate={calcularFechaMaxima()} // Permitir seleccionar hasta el viernes de la próxima semana
+                  filterDate={(date) => {
+                    const day = date.getDay();
+                    return day !== 0 && day !== 6; // Prohibir sábados (6) y domingos (0)
+                  }}
+                  dateFormat="P" // Formato de fecha adaptado al locale
+                  locale="es" // Establece el locale a español
+                  required
+                />
+              </DatePickerWrapper>
           </Fecha>
           <Hora>
             <Label htmlFor="hora">Selecciona la Hora:</Label>
@@ -202,11 +244,6 @@ function ReservayEquipo() {
 }
 
 export default ReservayEquipo;
-
-
-
-
-
 
 
 
