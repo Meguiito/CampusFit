@@ -186,9 +186,10 @@ def get_profile():
 def obtener_equipos_y_canchas_disponibles():
     try:
         data = request.get_json()
+        print(f"Datos recibidos: {data}")  # Agrega esta línea para ver los datos que estás recibiendo.
         fecha = data.get("fecha")
         hora = data.get("hora")
-
+        
         # Validar que se proporcionaron fecha y hora
         if not all([fecha, hora]):
             return jsonify({"error": "Se requieren fecha y hora"}), 400
@@ -289,7 +290,11 @@ def handle_special_request():
             "mongo_id": str(result.inserted_id)
         }), 200
 
+    except PyMongoError as e:
+        print(f"Error en la base de datos: {str(e)}")  # Log de errores de base de datos
+        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
+        print(f"Error inesperado: {str(e)}")  # Log de errores generales
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
 # Manejadores de errores
