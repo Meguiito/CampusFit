@@ -253,24 +253,19 @@ def obtener_equipos_y_canchas_disponibles():
 @jwt_required()
 def obtener_reservas():
     try:
-        # Obtener la identidad del usuario desde el JWT
-        usuario_actual = get_jwt_identity()
-
-        # Filtrar las reservas que pertenecen al usuario actual
-        reservas_usuario = mongo.db.Reservas.find({"usuario_id": usuario_actual})
-
-        # Convertir las reservas a una lista y serializar ObjectId
+        usuario_actual = get_jwt_identity()['email']  # Asegúrate de acceder correctamente al email
+        reservas_usuario = mongo.db.Reservas.find({"email_usuario": usuario_actual})
         reservas = []
         for reserva in reservas_usuario:
             reserva['_id'] = str(reserva['_id'])  # Convertir ObjectId a string
             reservas.append(reserva)
 
         return jsonify({"reservas": reservas}), 200
-
     except PyMongoError as e:
         return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
 
 
 
@@ -451,3 +446,19 @@ if __name__ == '__main__':
         app.run(debug=True)
     except ServerSelectionTimeoutError as e:
         print(f"Error de conexión a MongoDB: {e}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
