@@ -221,7 +221,7 @@ def obtener_equipos_y_canchas_disponibles():
             equipos_reservados.append(reserva_especial.get("equipo"))
 
         # Obtener todas las canchas y equipos
-        canchas = mongo.db.Canchas.find()
+        canchas = mongo.db.Espacios.find()
         equipos = mongo.db.Equipos.find()
 
         # Filtrar las canchas y equipos no reservados
@@ -413,7 +413,6 @@ def get_reservas():
         return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
-
 
 @app.errorhandler(Exception)
 def handle_exception(e):
