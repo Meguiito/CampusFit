@@ -200,6 +200,7 @@ function ReservayEquipo() {
 
         if (response.ok) {
           const data = await response.json();
+          console.log('Datos recibidos:', data); // Este log te dirá qué datos has recibido.
           setCanchasDisponibles(data.canchas_disponibles);
           setEquiposDisponibles(data.equipos_disponibles);
         } else {
@@ -250,6 +251,7 @@ function ReservayEquipo() {
     }
   };
 
+  
   const handleTimeChange = (event) => {
     setTime(event.target.value);
   };
