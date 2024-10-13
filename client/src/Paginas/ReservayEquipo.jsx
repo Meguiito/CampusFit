@@ -145,7 +145,7 @@ function ReservayEquipo() {
 
     const calcularFechaMaxima = () => {
       const hoy = new Date();
-      
+    
       // Si hoy es sábado, mover a lunes
       if (hoy.getDay() === 6) { // 6 es sábado
         hoy.setDate(hoy.getDate() + 2); // Mover a lunes
@@ -154,12 +154,11 @@ function ReservayEquipo() {
       }
     
       const finDeSemana = new Date(hoy);
-      finDeSemana.setDate(hoy.getDate() + (1 - hoy.getDay() + 7) % 7 + 7); // Moverse al lunes de la próxima semana
-      finDeSemana.setDate(finDeSemana.getDate() + 4); // Sumar 4 días para llegar al viernes
+      finDeSemana.setDate(hoy.getDate() + (5 - hoy.getDay())); // Moverse al viernes de esta semana
     
       return finDeSemana;
     };
-    
+     
 
   return (
     <Wrapper>
