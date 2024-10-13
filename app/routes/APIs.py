@@ -7,7 +7,8 @@ import magic
 from datetime import datetime, timedelta
 from pymongo.errors import PyMongoError, ServerSelectionTimeoutError
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from bson import json_util
+from apscheduler.schedulers.background import BackgroundScheduler
+import atexit
 
 
 app = Flask(__name__)
@@ -18,6 +19,13 @@ CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})  # Ajusta seg
 # Configuración de MongoDB
 app.config['MONGO_URI'] = 'mongodb+srv://Vicente:ap4STCRZXhetOIjA@campusfit.xih68.mongodb.net/CampusFIT_DB?retryWrites=true&w=majority'
 mongo = PyMongo(app)
+
+# Inicializa el scheduler
+scheduler = BackgroundScheduler()
+scheduler.start()
+
+# Asegúrate de cerrar el scheduler al finalizar la aplicación
+atexit.register(lambda: scheduler.shutdown())
 
 # Configuración de JWT
 app.config['JWT_SECRET_KEY'] = 'franciscobenavides'  # Cambia esto por una clave más segura en producción
@@ -186,29 +194,18 @@ def get_profile():
 def obtener_equipos_y_canchas_disponibles():
     try:
         data = request.get_json()
-        print(f"Datos recibidos: {data}")  # Agrega esta línea para ver los datos que estás recibiendo.
         fecha = data.get("fecha")
         hora = data.get("hora")
-        
-        # Validar que se proporcionaron fecha y hora
-        if not all([fecha, hora]):
-            return jsonify({"error": "Se requieren fecha y hora"}), 400
 
-        # Filtrar reservas existentes para la fecha y hora seleccionadas
+        # Filtrar reservas existentes para la fecha y hora exactas seleccionadas
         reservas_existentes = mongo.db.Reservas.find({
-            "$or": [
-                {"fecha": fecha, "hora": hora},
-                {"fecha": fecha, "hora": {"$gte": hora}},  # Reservas que comienzan después de la hora seleccionada
-                {"fecha": fecha, "hora": {"$lte": hora}}   # Reservas que comienzan antes de la hora seleccionada
-            ]
+            "fecha": fecha,
+            "hora": hora
         })
 
         reservas_especiales_existentes = mongo.db.Reservas_especiales.find({
-            "$or": [
-                {"fecha": fecha, "hora": hora},
-                {"fecha": fecha, "hora": {"$gte": hora}},  # Reservas que comienzan después de la hora seleccionada
-                {"fecha": fecha, "hora": {"$lte": hora}}   # Reservas que comienzan antes de la hora seleccionada
-            ]
+            "fecha": fecha,
+            "hora": hora
         })
 
         # Convertir las reservas a una lista para facilitar la comprobación
@@ -225,13 +222,24 @@ def obtener_equipos_y_canchas_disponibles():
 
         # Obtener todas las canchas y equipos
         canchas = mongo.db.Espacios.find()
-        equipos = mongo.db.Equipos.find()
+        equipos = mongo.db.Equipo.find()  
 
-        # Convertir a JSON utilizando json_util
-        canchas_disponibles = [cancha for cancha in canchas if cancha.get("nombre") not in canchas_reservadas]
-        equipos_disponibles = [equipo for equipo in equipos if equipo.get("nombre") not in equipos_reservados]
+        # Filtrar las canchas y equipos no reservados en la fecha y hora específicas
+        canchas_disponibles = []
+        for cancha in canchas:
+            if cancha.get("nombre") not in canchas_reservadas:
+                # Convertir ObjectId a string y asegurarse de incluir el tipo
+                cancha['_id'] = str(cancha['_id'])
+                canchas_disponibles.append(cancha)
 
-        return json_util.dumps({
+        equipos_disponibles = []
+        for equipo in equipos:
+            if equipo.get("nombre") not in equipos_reservados:
+                # Convertir ObjectId a string y asegurarse de incluir el tipo
+                equipo['_id'] = str(equipo['_id'])
+                equipos_disponibles.append(equipo)
+
+        return jsonify({
             "canchas_disponibles": canchas_disponibles,
             "equipos_disponibles": equipos_disponibles
         }), 200
@@ -240,6 +248,7 @@ def obtener_equipos_y_canchas_disponibles():
         return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
 
 # Ruta para manejar solicitudes de reserva especial
 @app.route('/special_request', methods=['POST'])
@@ -290,11 +299,7 @@ def handle_special_request():
             "mongo_id": str(result.inserted_id)
         }), 200
 
-    except PyMongoError as e:
-        print(f"Error en la base de datos: {str(e)}")  # Log de errores de base de datos
-        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
-        print(f"Error inesperado: {str(e)}")  # Log de errores generales
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
 # Manejadores de errores
@@ -318,25 +323,44 @@ def server_error(error=None):
 @jwt_required()
 def crear_reserva():
     try:
-        # Obtener el correo del usuario autenticado mediante el token
         identity = get_jwt_identity()
         email = identity.get('email')
 
-        # Obtener datos de la solicitud
         data = request.get_json()
         fecha = data.get("fecha")
         hora = data.get("hora")
         cancha = data.get("cancha")
         equipo = data.get("equipo")
 
-        # Verificar si ya existe una reserva en el mismo horario
+        if not all([fecha, hora, cancha, equipo]):
+            return jsonify({"error": "Se requieren fecha, hora, cancha y equipo"}), 400
+
+        reserva_mismo_dia = mongo.db.Reservas.find_one({
+            "fecha": fecha,
+            "email_usuario": email
+        })
+
+        reserva_especial_mismo_dia = mongo.db.Reservas_especiales.find_one({
+            "fecha": fecha,
+            "email_usuario": email
+        })
+
+        total_reservas = mongo.db.Reservas.count_documents({"email_usuario": email}) + \
+                         mongo.db.Reservas_especiales.count_documents({"email_usuario": email})
+
+        if total_reservas >= 2:
+            return jsonify({"error": "Has alcanzado el límite de 2 reservas semanales."}), 409
+
+        if reserva_mismo_dia or reserva_especial_mismo_dia:
+            return jsonify({"error": "Ya tienes una reserva en este día."}), 409
+
         conflicto_reserva = mongo.db.Reservas.find_one({
             "fecha": fecha,
             "hora": hora,
             "cancha": cancha
         })
         
-        conflicto_reserva_especial = mongo.db.Reserva_especial.find_one({
+        conflicto_reserva_especial = mongo.db.Reservas_especiales.find_one({
             "fecha": fecha,
             "hora": hora,
             "cancha": cancha
@@ -345,7 +369,7 @@ def crear_reserva():
         if conflicto_reserva or conflicto_reserva_especial:
             return jsonify({"error": "El horario seleccionado ya está reservado."}), 409
 
-        # Crear objeto de reserva incluyendo el correo del usuario
+        # 4. Crear objeto de reserva incluyendo el correo del usuario
         reserva = {
             "fecha": fecha,
             "hora": hora,
@@ -364,63 +388,36 @@ def crear_reserva():
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
 
-@app.route('/api/usuarios', methods=['GET'])
-@jwt_required()
-def get_usuarios():
+def eliminar_reservas_antiguas():
     try:
-        # Obtener la identidad del token JWT
-        identity = get_jwt_identity()
-        email = identity.get('email')
+        fecha_actual = datetime.now().strftime('%Y-%m-%d')
+        
+        resultado_reservas = mongo.db.Reservas.delete_many({
+            "fecha": {"$lt": fecha_actual}
+        })
+        print(f"Reservas eliminadas de Reservas: {resultado_reservas.deleted_count}")
+        
 
-        # Verificar si el usuario es admin
-        admin_user = mongo.db.Admin.find_one({'email': email})
-        if not admin_user:
-            return jsonify({"error": "Acceso denegado: solo administradores"}), 403
-
-        # Obtener todos los usuarios
-        usuarios = mongo.db.Usuarios.find({}, {"_id": 0, "username": 1, "email": 1, "rut": 1})
-        usuarios_list = list(usuarios)  # Convertir a lista para JSON
-
-        return jsonify(usuarios_list), 200
-
+        resultado_reservas_especiales = mongo.db.Reservas_especiales.delete_many({
+            "fecha": {"$lt": fecha_actual}
+        })
+        print(f"Reservas eliminadas de Reservas_especiales: {resultado_reservas_especiales.deleted_count}")
+        
     except PyMongoError as e:
-        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
+        print(f"Error en la base de datos al eliminar reservas antiguas: {str(e)}")
     except Exception as e:
-        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+        print(f"Error inesperado al eliminar reservas antiguas: {str(e)}")
 
-
-@app.route('/reservas', methods=['GET'])
-@jwt_required()
-def get_reservas():
-    try:
-
-        identity = get_jwt_identity()
-        email = identity.get('email')
-
-        user = mongo.db.Admin.find_one({'email': email})
-        if not user:
-            return jsonify({"error": "Acceso no autorizado"}), 403
-
-        reservas = mongo.db.Reservas.find()
-        reservas_list = [
-            {
-                "id": str(reserva["_id"]),
-                "fecha": reserva["fecha"],
-                "hora": reserva["hora"],
-                "cancha": reserva["cancha"],
-                "equipo": reserva["equipo"],
-                "email_usuario": reserva["email_usuario"]
-            }
-            for reserva in reservas
-        ]
-
-        return jsonify(reservas_list), 200
-
-    except PyMongoError as e:
-        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
-    except Exception as e:
-        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
-
+scheduler.add_job(
+    func=eliminar_reservas_antiguas,
+    trigger='cron',
+    day_of_week='mon',
+    hour=2,
+    minute=0,
+    id='eliminar_reservas_antiguas',
+    replace_existing=True
+)
+    
 @app.errorhandler(Exception)
 def handle_exception(e):
     return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
