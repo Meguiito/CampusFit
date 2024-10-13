@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -172,18 +172,42 @@ function ReservayEquipo() {
   const [time, setTime] = useState('08:00');
   const [message, setMessage] = useState('');
   const [error, setError] = useState(null);
+  const [cancha, setCancha] = useState('');
+  const [equipo, setEquipo] = useState('');
+  const [canchasDisponibles, setCanchasDisponibles] = useState([]);
+  const [equiposDisponibles, setEquiposDisponibles] = useState([]);
 
-  const minTime = "08:00";
-  const maxTime = "20:00";
+  const minTime = '08:00';
+  const maxTime = '20:00';
 
-  const handleTimeChange = (event) => {
-    const newTime = event.target.value;
-    if (newTime >= minTime && newTime <= maxTime) {
-      setTime(newTime);
-    } else {
-      setTime(minTime);
-    }
-  };
+  useEffect(() => {
+    const fetchCanchasYEquipos = async () => {
+      const token = localStorage.getItem('token');
+      try {
+        const response = await fetch('http://localhost:5000/api/equipo_and_canchas', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ fecha: selectedDate.toISOString().split('T')[0], hora: time }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setCanchasDisponibles(data.canchas_disponibles);
+          setEquiposDisponibles(data.equipos_disponibles);
+        } else {
+          const errorData = await response.json();
+          setError(errorData.error);
+        }
+      } catch (error) {
+        setError('Error al conectar con el servidor.');
+      }
+    };
+
+    fetchCanchasYEquipos();
+  }, [selectedDate, time]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -192,7 +216,7 @@ function ReservayEquipo() {
 
     const token = localStorage.getItem('token');
     const formData = {
-      fecha: selectedDate.toISOString().split('T')[0], // Formato YYYY-MM-DD
+      fecha: selectedDate.toISOString().split('T')[0], // Format YYYY-MM-DD
       hora: time,
       cancha: cancha,
       equipo: equipo,
@@ -203,16 +227,16 @@ function ReservayEquipo() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
       if (response.status === 201) {
         setMessage('¡Reserva confirmada! Tu tiempo de reservación es de 2 horas.');
       } else if (response.status === 409) {
         const result = await response.json();
-        setError(result.error); // Muestra el mensaje de conflicto de horario
+        setError(result.error); // Show conflict message
       } else {
         setError('Ocurrió un error al realizar la reserva.');
       }
@@ -221,42 +245,9 @@ function ReservayEquipo() {
     }
   };
 
-  // Función para calcular el final del semestre actual
-  const getSemesterEndDate = () => {
-    const today = new Date();
-    const currentMonth = today.getMonth(); // 0-11
-
-    let semesterEnd = new Date(today); // Clonar la fecha actual
-
-    if (currentMonth < 6) { // Enero (0) a Junio (5)
-      semesterEnd.setMonth(5); // Junio
-      semesterEnd.setDate(30);
-    } else { // Julio (6) a Diciembre (11)
-      semesterEnd.setMonth(11); // Diciembre
-      semesterEnd.setDate(31);
-    }
-
-    // Si la fecha actual es después del fin del semestre, pasar al siguiente semestre
-    if (today > semesterEnd) {
-      if (currentMonth < 6) {
-        // Actualmente en primer semestre, pasar al segundo
-        semesterEnd.setMonth(11);
-        semesterEnd.setDate(31);
-      } else {
-        // Actualmente en segundo semestre, pasar al siguiente año primer semestre
-        semesterEnd = new Date(today.getFullYear() + 1, 5, 30);
-      }
-    }
-
-    return semesterEnd;
+  const handleTimeChange = (event) => {
+    setTime(event.target.value);
   };
-
-  const minDate = new Date(); // Día actual
-  const maxDate = getSemesterEndDate(); // Final del semestre
-
-  // Estados para cancha y equipo
-  const [cancha, setCancha] = useState('');
-  const [equipo, setEquipo] = useState('');
 
   return (
     <Wrapper>
@@ -270,8 +261,7 @@ function ReservayEquipo() {
                 selected={selectedDate}
                 onChange={(date) => setSelectedDate(date)}
                 inline
-                minDate={minDate}
-                maxDate={maxDate}
+                minDate={new Date()} // Make sure this is defined
                 dateFormat="P" // Formato de fecha adaptado al locale
                 locale="es" // Establece el locale a español
                 required
@@ -302,10 +292,9 @@ function ReservayEquipo() {
               required
             >
               <option value="">Selecciona una cancha</option>
-              <option value="Cancha 1">Cancha 1</option>
-              <option value="Cancha 2">Cancha 2</option>
-              <option value="Cancha 3">Cancha 3</option>
-              <option value="Cancha 4">Cancha 4</option>
+              {canchasDisponibles.map((c) => (
+                <option key={c._id} value={c.nombre}>{c.nombre}</option>
+              ))}
             </Select>
           </Cancha>
           <Equipo>
@@ -318,10 +307,9 @@ function ReservayEquipo() {
               required
             >
               <option value="">Selecciona un equipo</option>
-              <option value="Equipo A">Equipo A</option>
-              <option value="Equipo B">Equipo B</option>
-              <option value="Equipo C">Equipo C</option>
-              <option value="Equipo D">Equipo D</option>
+              {equiposDisponibles.map((e) => (
+                <option key={e._id} value={e.nombre}>{e.nombre}</option>
+              ))}
             </Select>
           </Equipo>
           <Button type="submit">Reservar</Button>
