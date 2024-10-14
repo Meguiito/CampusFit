@@ -1,0 +1,58 @@
+.gestion-reservas {
+    background-color: #e0f7fa; /* Color azul claro */
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column; /* Mantiene el contenido principal en columna */
+    align-items: center;
+  }
+  
+  .gestion-reservas h2 {
+    color: #004d40; /* Color oscuro para el título */
+  }
+  
+  .gestion-reservas form {
+    background-color: white; /* Fondo blanco para los formularios */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    margin: 20px 0; /* Espaciado entre formularios */
+    width: 80%; /* Ancho del formulario */
+    max-width: 400px; /* Ancho máximo */
+  }
+  
+  .gestion-reservas input {
+    width: 94%; /* Campos de entrada a 100% del ancho */
+    padding: 10px; /* Espaciado interno */
+    margin: 10px 0; /* Espaciado vertical entre campos */
+    border: 1px solid #ccc; /* Borde gris claro */
+    border-radius: 5px; /* Bordes redondeados */
+  }
+  
+  .gestion-reservas button {
+    background-color: #3498DB; /* Color del botón */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 100%; /* Botón a 100% del ancho del formulario */
+  }
+  
+  .gestion-reservas button:hover {
+    background-color: #007bb5; /* Color más oscuro en hover */
+  }
+  
+  .contador-reservas {
+    background-color: #ffeb3b; /* Color de fondo llamativo */
+    color: #000; /* Color del texto */
+    font-weight: bold; /* Texto en negrita */
+    padding: 15px; /* Espaciado interno */
+    border-radius: 5px; /* Bordes redondeados */
+    margin: 15px 0; /* Espaciado vertical */
+    font-size: 1em; /* Tamaño de fuente */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Sombra sutil */
+    text-align: center; /* Alinear el texto al centro */
+  }
+  

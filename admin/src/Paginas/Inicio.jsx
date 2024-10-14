@@ -1,4 +1,3 @@
-// Inicio.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../Styles/Inicio.css';
@@ -15,9 +14,11 @@ function Inicio() {
       const reservas = localStorage.getItem('reservasDiarias');
 
       if (fechaGuardada === fechaActual) {
-        setReservasDiarias(reservas ? parseInt(reservas, 30) : 0);
+        setReservasDiarias(reservas ? parseInt(reservas, 10) : 0); // Cambié la base a 10
       } else {
         setReservasDiarias(0); // Resetea si es un nuevo día
+        localStorage.setItem('fechaReservas', fechaActual); // Actualiza la fecha para el nuevo día
+        localStorage.setItem('reservasDiarias', 0); // También restablece el contador en localStorage
       }
     };
 
@@ -26,6 +27,14 @@ function Inicio() {
 
   const handleVerReservas = () => {
     navigate('/Reservas');
+  };
+
+  const handleVerReservasEspeciales = () => {
+    navigate('/ReservasEspeciales');
+  };
+
+  const handleGestionReservas = () => {
+    navigate('/GestionReservas');
   };
 
   return (
@@ -44,7 +53,16 @@ function Inicio() {
         <div className="card">
           <h2>Reserva Especial</h2>
           <p>Gestiona las reservas especiales.</p>
-          <button className="inicio-button">Ver Reservas Especiales</button>
+          <button className="inicio-button" onClick={handleVerReservasEspeciales}>
+            Ver Reservas Especiales
+          </button>
+        </div>
+        <div className="card">
+          <h2>Gestión de Reservas Canchas</h2>
+          <p>Gestiona reservas de canchas y equipos</p>
+          <button className="inicio-button" onClick={handleGestionReservas}>
+            Gestiona las Reservas
+          </button>
         </div>
       </div>
     </div>
