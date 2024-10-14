@@ -7,6 +7,43 @@ import es from 'date-fns/locale/es';
 registerLocale('es', es); 
 
 function ReservayEquipo() {
+  // Función para obtener la próxima fecha hábil si hoy es fin de semana
+  const obtenerProximaFechaHabil = () => {
+    const hoy = new Date();
+    const dia = hoy.getDay(); // 0 (Dom) a 6 (Sáb)
+
+    if (dia === 6) { // Sábado
+      hoy.setDate(hoy.getDate() + 2); // Mover a lunes
+    } else if (dia === 0) { // Domingo
+      hoy.setDate(hoy.getDate() + 1); // Mover a lunes
+    }
+
+    return hoy;
+  };
+
+  // Función para calcular la fecha máxima seis meses adelante
+  const calcularFechaMaxima = (fechaMinima) => {
+    const fechaMax = new Date(fechaMinima);
+    fechaMax.setMonth(fechaMax.getMonth() + 6); // Añadir 6 meses
+
+    // Si la fecha máxima cae en fin de semana, ajustarla al viernes anterior
+    const dia = fechaMax.getDay();
+    if (dia === 6) { // Sábado
+      fechaMax.setDate(fechaMax.getDate() - 1); // Mover a viernes
+    } else if (dia === 0) { // Domingo
+      fechaMax.setDate(fechaMax.getDate() - 2); // Mover a viernes
+    }
+
+    return fechaMax;
+  };
+
+  // Calcular fechas mínimas y máximas
+  const fechaMinima = obtenerProximaFechaHabil();
+  const fechaMaxima = calcularFechaMaxima(fechaMinima);
+
+  // Estado
+  const [disp, setDis] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(fechaMinima);
   const [time, setTime] = useState(null);
   const [error, setError] = useState(null);
   const [cancha, setCancha] = useState('');
@@ -15,25 +52,8 @@ function ReservayEquipo() {
   const [canchasDisponibles, setCanchasDisponibles] = useState([]);
   const [equiposDisponibles, setEquiposDisponibles] = useState([]);
   const navigate = useNavigate();
-  
 
-  // Función para calcular el primer día hábil disponible
-  const calcularPrimerDiaHabil = () => {
-    const hoy = new Date();
-    
-    // Si hoy es sábado, mover a lunes
-    if (hoy.getDay() === 6) {
-        hoy.setDate(hoy.getDate() + 2); // Mover a lunes
-    } 
-    // Si hoy es domingo, mover a lunes
-    else if (hoy.getDay() === 0) {
-        hoy.setDate(hoy.getDate() + 1); // Mover a lunes
-    }
-
-    return hoy;
-  };
-
-  const [selectedDate, setSelectedDate] = useState(calcularPrimerDiaHabil());
+  // Efecto para obtener canchas y equipos disponibles
   useEffect(() => {
     const fetchCanchasYEquipos = async () => {
       const token = localStorage.getItem('token');
@@ -49,7 +69,10 @@ function ReservayEquipo() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
-          body: JSON.stringify({ fecha: selectedDate.toISOString().split('T')[0], hora: time }),
+          body: JSON.stringify({ 
+            fecha: selectedDate.toISOString().split('T')[0], 
+            hora: time 
+          }),
         });
 
         if (response.ok) {
@@ -66,7 +89,10 @@ function ReservayEquipo() {
       }
     };
 
-    fetchCanchasYEquipos();
+    // Solo fetch si hay una fecha y hora seleccionadas
+    if (selectedDate && time) {
+      fetchCanchasYEquipos();
+    }
   }, [selectedDate, time]);
 
   const handleSubmit = async (event) => {
@@ -75,7 +101,7 @@ function ReservayEquipo() {
 
     const token = localStorage.getItem('token');
     const formData = {
-      fecha: selectedDate.toISOString().split('T')[0], // Format YYYY-MM-DD
+      fecha: selectedDate.toISOString().split('T')[0], // Formato YYYY-MM-DD
       hora: time,
       cancha: cancha,
       equipo: equipo,
@@ -96,7 +122,7 @@ function ReservayEquipo() {
         navigate("/TuReservacion");
       } else if (response.status === 409) {
         const result = await response.json();
-        setError(result.error); // Show conflict message
+        setError(result.error); // Mostrar mensaje de conflicto
       } else {
         setError('Ocurrió un error al realizar la reserva.');
       }
@@ -104,7 +130,50 @@ function ReservayEquipo() {
       setError('Error al conectar con el servidor.');
     }
   };
-
+  useEffect(() => {
+    const verificarReservas = async () => {
+      setError(null);
+      const token = localStorage.getItem('token');
+      const formData = {
+        fecha: selectedDate.toISOString().split('T')[0], // Formato YYYY-MM-DD
+      };
+  
+      try {
+        const response = await fetch('http://localhost:5000/api/verificar_reservas', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(formData),
+        });
+  
+        if (response.ok) {
+          // Si hay reservas, establece la disponibilidad
+          setDis(true);
+        } else if (response.status === 409) {
+          const result = await response.json();
+          setDis(false);
+          setError(result.error);
+        } else if (response.status === 410) {
+          // Si hay exactamente dos reservas, realiza la acción correspondiente
+          const result = await response.json();
+          setDis(false);
+          alert(result.error);
+          navigate("/TuReservacion");
+        }
+        
+      } catch (error) {
+        setError('Error al conectar con el servidor.');
+      }
+    };
+  
+    // Solo llama a la función si hay una fecha seleccionada
+    if (selectedDate) {
+      verificarReservas();
+    }
+  }, [selectedDate]);
+  
   const generarOpcionesTiempo = () => {
     const opciones = [];
     for (let hora = 8; hora <= 18; hora += 2) {
@@ -142,26 +211,6 @@ function ReservayEquipo() {
     ? equiposDisponibles.filter(equipo => equipo.tipo === canchaTipo)
     : equiposDisponibles;
 
-
-    const calcularFechaMaxima = () => {
-      const hoy = new Date();
-      
-      // Si hoy es sábado, mover a lunes
-      if (hoy.getDay() === 6) { // 6 es sábado
-        hoy.setDate(hoy.getDate() + 2); // Mover a lunes
-      } else if (hoy.getDay() === 0) { // 0 es domingo
-        hoy.setDate(hoy.getDate() + 1); // Mover a lunes
-      }
-    
-      const finDeSemana = new Date(hoy);
-      finDeSemana.setDate(hoy.getDate() + (1 - hoy.getDay() + 7) % 7 + 7); // Moverse al lunes de la próxima semana
-      finDeSemana.setDate(finDeSemana.getDate() + 4); // Sumar 4 días para llegar al viernes
-    
-      return finDeSemana;
-    };
-    
-  
-
   return (
     <Wrapper>
       <FormularioContainer>
@@ -174,15 +223,18 @@ function ReservayEquipo() {
                   selected={selectedDate}
                   onChange={(date) => setSelectedDate(date)}
                   inline
-                  minDate={new Date()} // Solo permitir seleccionar desde hoy
-                  maxDate={calcularFechaMaxima()} // Permitir seleccionar hasta el viernes de la próxima semana
+                  minDate={fechaMinima} // Inicio del semestre
+                  maxDate={fechaMaxima} // Fin del semestre
                   filterDate={(date) => {
                     const day = date.getDay();
-                    return day !== 0 && day !== 6; // Prohibir sábados (6) y domingos (0)
+                    return day !== 0 && day !== 6; // Permitir solo lunes a viernes
                   }}
                   dateFormat="P" // Formato de fecha adaptado al locale
                   locale="es" // Establece el locale a español
                   required
+                  showMonthDropdown={false}
+                  showYearDropdown={false}
+                  dropdownMode="select"
                 />
               </DatePickerWrapper>
           </Fecha>
@@ -193,6 +245,7 @@ function ReservayEquipo() {
               name="hora"
               value={time}
               onChange={(e) => setTime(e.target.value)}
+              disabled={!disp}
               required
             >
               <option value="">Selecciona una hora</option>
@@ -227,7 +280,7 @@ function ReservayEquipo() {
               value={equipo}
               onChange={(e) => setEquipo(e.target.value)}
               required
-              disabled={!time || !canchaTipo} // Deshabilitar si no hay una hora seleccionada
+              disabled={!time || !canchaTipo} // Deshabilitar si no hay una hora seleccionada o tipo de cancha
             >
               <option value="">Selecciona un equipo</option>
               {equiposFiltrados.map((e) => (
@@ -244,9 +297,6 @@ function ReservayEquipo() {
 }
 
 export default ReservayEquipo;
-
-
-
 
 
 
