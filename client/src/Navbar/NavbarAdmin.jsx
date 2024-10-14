@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import '../Styles/Navbar.css';
+import '../Estilos/NavbarAdmin.css';
 
-function Navbar() {
+function NavbarAdmin() {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -12,16 +12,15 @@ function Navbar() {
     <div className="home">
       <header className="header">
         <div className="portada">
-          <h1 className="title">CampusFit</h1>
+          <h1 className="title">CampusFit Admin</h1>
         </div>
         <nav className="navbar">
           <button className="toggle-button" onClick={toggleMenu}>
-            {isOpen ? 'Cerrar' : 'Menu'}
+            {isOpen ? 'Cerrar' : 'Menú'}
           </button>
           <ul className={isOpen ? 'open' : ''}>
-            <li><a href="/Inicio">Inicio</a></li>
-            <li><a href="/ReservasEspeciales">Reservas Especiales</a></li>
-            <li><a href="/Usuario">Usuario</a></li>
+            <li><a href="/admin/inicio">Inicio Admin</a></li>
+            <li><a href="/admin/usuarios">Usuarios Admin</a></li>
           </ul>
         </nav>
       </header>
@@ -29,4 +28,4 @@ function Navbar() {
   );
 }
 
-export default Navbar;
+export default NavbarAdmin;

@@ -1,32 +1,19 @@
-// Inicio.jsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import '../Styles/Inicio.css';
+import '../Estilos/InicioAdmin.css'; // Importamos el archivo CSS para estilos
 
 function Inicio() {
+  // Estado para el número de reservas diarias
   const [reservasDiarias, setReservasDiarias] = useState(0);
-  const navigate = useNavigate();
 
+  // Simulamos la obtención de datos (podrías reemplazar esto con una llamada a una API)
   useEffect(() => {
     const obtenerReservasDiarias = () => {
-      const fechaActual = new Date().toISOString().split('T')[0]; // Obtiene la fecha actual
-
-      const fechaGuardada = localStorage.getItem('fechaReservas');
-      const reservas = localStorage.getItem('reservasDiarias');
-
-      if (fechaGuardada === fechaActual) {
-        setReservasDiarias(reservas ? parseInt(reservas, 30) : 0);
-      } else {
-        setReservasDiarias(0); // Resetea si es un nuevo día
-      }
+      // Aquí podrías hacer una llamada a una API para obtener las reservas reales
+      setReservasDiarias(5); // Simulamos 5 reservas para este ejemplo
     };
 
     obtenerReservasDiarias();
   }, []);
-
-  const handleVerReservas = () => {
-    navigate('/Reservas');
-  };
 
   return (
     <div className="inicio">
@@ -34,12 +21,11 @@ function Inicio() {
         <div className="card">
           <h2>Reservas</h2>
           <p>Administra las reservas de los usuarios.</p>
+          {/* Contador de reservas */}
           <div className="contador-reservas">
             <span>Reservas diarias: {reservasDiarias}</span>
           </div>
-          <button className="inicio-button" onClick={handleVerReservas}>
-            Ver Reservas
-          </button>
+          <button className="inicio-button">Ver Reservas</button>
         </div>
         <div className="card">
           <h2>Reserva Especial</h2>
