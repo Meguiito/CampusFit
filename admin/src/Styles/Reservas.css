@@ -1,0 +1,54 @@
+/* Reservas.css */
+
+.reservas {
+    background-color: #e0f7fa; /* Un color azul claro */
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .reservas-content {
+    display: flex;
+    flex-direction: column; /* Cambiado a columna para listas */
+    align-items: center;
+    width: 100%;
+    margin-top: 20px;
+  }
+  
+  .card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    width: 80%; /* Ajustar para mejor visualización */
+    margin-bottom: 15px; /* Espaciado entre tarjetas */
+    text-align: left; /* Alinear texto a la izquierda */
+  }
+  
+  .reservas-header {
+    display: flex;
+    justify-content: space-between; /* Espacio entre encabezados */
+    font-weight: bold;
+  }
+  
+  .reserva-info {
+    margin-top: 10px; /* Espaciado entre la cabecera y la información */
+  }
+  
+  .reservas-button {
+    background-color: #3498DB;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    align-self: center; /* Centrar el botón */
+  }
+  
+  .reservas-button:hover {
+    background-color: #004d40; /* Color más oscuro en hover */
+  }
+  

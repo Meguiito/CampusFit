@@ -1,16 +1,17 @@
-
 .inicio {
   background-color: #e0f7fa; /* Un color azul claro */
   padding: 20px;
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* Mantiene el contenido principal en columna */
   align-items: center;
 }
 
 .inicio-content {
   display: flex;
-  justify-content: space-around;
+  flex-direction: row; /* Disposición en fila para los cards */
+  justify-content: center; /* Centra los cards horizontalmente */
+  flex-wrap: wrap; /* Permite que los cards se envuelvan si no hay suficiente espacio */
   width: 100%;
   margin-top: 20px;
 }
@@ -19,9 +20,26 @@
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  padding: 20px;
-  width: 30%;
-  text-align: center;
+  padding: 15px; /* Espaciado interno */
+  width: 12%; /* Ancho reducido para hacer los cards más pequeños */
+  text-align: center; /* Alinear el texto al centro */
+  margin: 40px; /* Espaciado entre los cards */
+  min-width: 120px; /* Ancho mínimo para mejorar la apariencia */
+  max-width: 250px; /* Añadir un ancho máximo para limitar el tamaño */
+}
+
+.contador-reservas {
+  background-color: #ffeb3b; /* Color de fondo llamativo */
+  color: #000; /* Color del texto */
+  font-weight: bold; /* Texto en negrita */
+  padding: 15px; /* Espaciado interno */
+  border-radius: 5px; /* Bordes redondeados */
+  margin: 15px 0; /* Espaciado vertical */
+  font-size: 1em; /* Tamaño de fuente reducido */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Sombra sutil para destacar */
+  width: 80%; /* Cambiar el ancho para hacerlo más pequeño */
+  max-width: 300px; /* Añadir un ancho máximo para limitar el tamaño */
+  text-align: center; /* Alinear el texto al centro */
 }
 
 .inicio-button {
