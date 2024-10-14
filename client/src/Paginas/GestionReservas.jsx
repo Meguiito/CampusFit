@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../Styles/GestionReservas.css';
+import '../Estilos/GestionReservas.css';
 import axios from 'axios';
 
 function GestionReservas() {

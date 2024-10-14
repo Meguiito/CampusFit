@@ -11,6 +11,8 @@ import Register from './Paginas/FormularioRegister';
 import Login from './Paginas/FormularioLogin';
 import InicioAdmin from './Paginas/InicioAdmin';
 import UsuariosAdmin from './Paginas/UsuariosAdmin';
+import GestionReservas from './Paginas/GestionReservas';
+import ReservasEspeciales from './Paginas/ReservasEspeciales';
 import { getToken } from './Tokens/authService';
 import { Navigate } from 'react-router-dom';
 
@@ -32,6 +34,8 @@ const Layout = () => {
         <Route path="/Login" element={<Login />} />
 
         {/* Rutas de Admin */}
+        <Route path="/admin/ReservasEspeciales" element={<ReservasEspeciales />} />
+        <Route path="/admin/GestionReservas" element={<GestionReservas />} />
         <Route path="/admin/inicio" element={<InicioAdmin />} />
         <Route path="/admin/usuarios" element={<UsuariosAdmin />} />
       </Routes>
