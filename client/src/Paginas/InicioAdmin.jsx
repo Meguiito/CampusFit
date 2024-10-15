@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../Estilos/InicioAdmin.css'; // Importamos el archivo CSS para estilos
 
-function Inicio() {
+function InicioAdmin() {
   // Estado para el número de reservas diarias
   const [reservasDiarias, setReservasDiarias] = useState(0);
 
@@ -37,4 +37,4 @@ function Inicio() {
   );
 }
 
-export default Inicio;
+export default InicioAdmin;

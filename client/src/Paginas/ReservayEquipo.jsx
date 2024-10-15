@@ -7,6 +7,8 @@ import es from 'date-fns/locale/es';
 registerLocale('es', es); 
 
 function ReservayEquipo() {
+  const navigate = useNavigate(); // Obtiene navigate para ser usado en los efectos
+
   // Función para obtener la próxima fecha hábil si hoy es fin de semana
   const obtenerProximaFechaHabil = () => {
     const hoy = new Date();
@@ -51,7 +53,6 @@ function ReservayEquipo() {
   const [equipo, setEquipo] = useState('');
   const [canchasDisponibles, setCanchasDisponibles] = useState([]);
   const [equiposDisponibles, setEquiposDisponibles] = useState([]);
-  const navigate = useNavigate();
 
   // Efecto para obtener canchas y equipos disponibles
   useEffect(() => {
@@ -119,7 +120,7 @@ function ReservayEquipo() {
 
       if (response.status === 201) {
         alert("Se ha reservado con éxito");
-        navigate("/TuReservacion");
+        navigate("/TuReservacion"); // Se usa navigate aquí
       } else if (response.status === 409) {
         const result = await response.json();
         setError(result.error); // Mostrar mensaje de conflicto
@@ -130,6 +131,7 @@ function ReservayEquipo() {
       setError('Error al conectar con el servidor.');
     }
   };
+
   useEffect(() => {
     const verificarReservas = async () => {
       setError(null);
@@ -137,7 +139,7 @@ function ReservayEquipo() {
       const formData = {
         fecha: selectedDate.toISOString().split('T')[0], // Formato YYYY-MM-DD
       };
-  
+
       try {
         const response = await fetch('http://localhost:5000/api/verificar_reservas', {
           method: 'POST',
@@ -147,7 +149,7 @@ function ReservayEquipo() {
           },
           body: JSON.stringify(formData),
         });
-  
+
         if (response.ok) {
           // Si hay reservas, establece la disponibilidad
           setDis(true);
@@ -160,20 +162,20 @@ function ReservayEquipo() {
           const result = await response.json();
           setDis(false);
           alert(result.error);
-          navigate("/TuReservacion");
+          navigate("/TuReservacion"); // Se usa navigate aquí
         }
-        
+
       } catch (error) {
         setError('Error al conectar con el servidor.');
       }
     };
-  
+
     // Solo llama a la función si hay una fecha seleccionada
     if (selectedDate) {
       verificarReservas();
     }
-  }, [selectedDate]);
-  
+  }, [selectedDate, navigate]); // Agregando `navigate` como dependencia
+
   const generarOpcionesTiempo = () => {
     const opciones = [];
     for (let hora = 8; hora <= 18; hora += 2) {
@@ -183,7 +185,6 @@ function ReservayEquipo() {
     return opciones;
   };
 
-  // Función para determinar si una hora ya pasó (solo si la fecha seleccionada es hoy)
   const esHoraPasada = (horaSeleccionada) => {
     const hoy = new Date();
     const fechaSeleccionada = selectedDate.toDateString() === hoy.toDateString();

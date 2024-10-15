@@ -1,9 +1,8 @@
-// src/components/Perfil.js
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { logout } from '../Tokens/authService'; // Asegúrate de que la ruta sea correcta
+import { logout, isAdmin } from '../Tokens/authService'; // Asegúrate de que la ruta sea correcta
 
 function Perfil() {
   const navigate = useNavigate();
@@ -21,11 +20,16 @@ function Perfil() {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          const response = await axios.get('http://localhost:5000/profile'); // Asegúrate de que la URL sea correcta
+          const response = await axios.get('http://localhost:5000/profile', {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
           setUserData({
             rut: response.data.rut || '',
             username: response.data.username || '',
             email: response.data.email || '',
+            tipo_de_usuario: response.data.tipo_de_usuario || ''
           });
           setLoading(false);
         } catch (error) {
@@ -46,6 +50,13 @@ function Perfil() {
   const handleLogout = () => {
     logout();
   };
+
+  const adminSection = isAdmin() ? (
+    <div>
+      <h3>Sección de Administrador</h3>
+      <p>Eres un administrador.</p>
+    </div>
+  ) : null;
 
   if (loading) {
     return (
@@ -77,8 +88,10 @@ function Perfil() {
               <li><strong>Rut:</strong> {userData.rut}</li>
               <li><strong>Nombre:</strong> {userData.username}</li>
               <li><strong>E-Mail UCT:</strong> {userData.email}</li>
+              <li><strong>Tipo de Usuario:</strong> {userData.tipo_de_usuario}</li>
             </ul>
           </Datos>
+          {adminSection}
         </DatosPersonales>
         <LogoutButton onClick={handleLogout}>Cerrar sesión</LogoutButton>
       </Contenedor>
@@ -87,6 +100,7 @@ function Perfil() {
 }
 
 export default Perfil;
+
 
 // Estilos utilizando styled-components
 

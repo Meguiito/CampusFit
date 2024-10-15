@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import '../Estilos/UsuariosAdmin.css';
 
 function Usuarios() {
@@ -7,7 +7,7 @@ function Usuarios() {
   const [error, setError] = useState(null);
 
   // Función para verificar si el usuario es admin
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:5000/profile', {
@@ -28,7 +28,7 @@ function Usuarios() {
       console.error('Error al obtener el perfil del usuario:', error);
       setError('Error al verificar el perfil del usuario');
     }
-  };
+  }, []); // No hay dependencias
 
   // Función para obtener los usuarios desde la base de datos
   const fetchUsuarios = async () => {
@@ -51,7 +51,7 @@ function Usuarios() {
 
   useEffect(() => {
     fetchProfile();
-  }, []);
+  }, [fetchProfile]); // Añadido fetchProfile como dependencia
 
   if (error) {
     return <p className="Usuarios-error">{error}</p>;
