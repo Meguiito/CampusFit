@@ -91,10 +91,12 @@ def verify_user():
 
         if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
             tipo_usuario = "client"
+            isAdmin = False  # Este usuario no es admin
         else:
             user = mongo.db.Admin.find_one({'email': email})
             if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
                 tipo_usuario = "admin"
+                isAdmin = True  # Este usuario es admin
             else:
                 return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
 
@@ -112,6 +114,7 @@ def verify_user():
         return jsonify({
             "message": "Verificación exitosa",
             "access_token": access_token,
+            "isAdmin": isAdmin,  # Agregar este campo
             "user": {
                 "rut": rut,
                 "username": username,
@@ -124,7 +127,6 @@ def verify_user():
         return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
-
 
 
 
