@@ -7,43 +7,46 @@ import es from 'date-fns/locale/es';
 registerLocale('es', es); 
 
 function ReservayEquipo() {
-  const navigate = useNavigate(); // Obtiene navigate para ser usado en los efectos
-
-  // Función para obtener la próxima fecha hábil si hoy es fin de semana
+  const navigate = useNavigate(); 
   const obtenerProximaFechaHabil = () => {
     const hoy = new Date();
-    const dia = hoy.getDay(); // 0 (Dom) a 6 (Sáb)
+    const dia = hoy.getDay(); 
 
-    if (dia === 6) { // Sábado
-      hoy.setDate(hoy.getDate() + 2); // Mover a lunes
-    } else if (dia === 0) { // Domingo
-      hoy.setDate(hoy.getDate() + 1); // Mover a lunes
+    if (dia === 6) { 
+      hoy.setDate(hoy.getDate() + 2); 
+    } else if (dia === 0) { 
+      hoy.setDate(hoy.getDate() + 1); 
     }
 
     return hoy;
   };
 
-  // Función para calcular la fecha máxima seis meses adelante
   const calcularFechaMaxima = (fechaMinima) => {
     const fechaMax = new Date(fechaMinima);
-    fechaMax.setMonth(fechaMax.getMonth() + 6); // Añadir 6 meses
-
-    // Si la fecha máxima cae en fin de semana, ajustarla al viernes anterior
+  
+    const mesActual = fechaMinima.getMonth();
+    const semestreActual = Math.floor(mesActual / 6) + 1;
+  
+    if (semestreActual === 1) {
+      fechaMax.setFullYear(fechaMinima.getFullYear(), 5, 30); 
+    } else {
+      fechaMax.setFullYear(fechaMinima.getFullYear(), 11, 31); 
+    }
+  
     const dia = fechaMax.getDay();
     if (dia === 6) { // Sábado
-      fechaMax.setDate(fechaMax.getDate() - 1); // Mover a viernes
+      fechaMax.setDate(fechaMax.getDate() - 1); 
     } else if (dia === 0) { // Domingo
-      fechaMax.setDate(fechaMax.getDate() - 2); // Mover a viernes
+      fechaMax.setDate(fechaMax.getDate() - 2); 
     }
-
+  
     return fechaMax;
   };
+  
 
-  // Calcular fechas mínimas y máximas
   const fechaMinima = obtenerProximaFechaHabil();
   const fechaMaxima = calcularFechaMaxima(fechaMinima);
 
-  // Estado
   const [disp, setDis] = useState(null);
   const [selectedDate, setSelectedDate] = useState(fechaMinima);
   const [time, setTime] = useState(null);
@@ -54,7 +57,6 @@ function ReservayEquipo() {
   const [canchasDisponibles, setCanchasDisponibles] = useState([]);
   const [equiposDisponibles, setEquiposDisponibles] = useState([]);
 
-  // Efecto para obtener canchas y equipos disponibles
   useEffect(() => {
     const fetchCanchasYEquipos = async () => {
       const token = localStorage.getItem('token');
@@ -90,7 +92,6 @@ function ReservayEquipo() {
       }
     };
 
-    // Solo fetch si hay una fecha y hora seleccionadas
     if (selectedDate && time) {
       fetchCanchasYEquipos();
     }
@@ -120,10 +121,10 @@ function ReservayEquipo() {
 
       if (response.status === 201) {
         alert("Se ha reservado con éxito");
-        navigate("/TuReservacion"); // Se usa navigate aquí
+        navigate("/TuReservacion"); 
       } else if (response.status === 409) {
         const result = await response.json();
-        setError(result.error); // Mostrar mensaje de conflicto
+        setError(result.error); 
       } else {
         setError('Ocurrió un error al realizar la reserva.');
       }
@@ -137,7 +138,7 @@ function ReservayEquipo() {
       setError(null);
       const token = localStorage.getItem('token');
       const formData = {
-        fecha: selectedDate.toISOString().split('T')[0], // Formato YYYY-MM-DD
+        fecha: selectedDate.toISOString().split('T')[0], 
       };
 
       try {
@@ -151,18 +152,16 @@ function ReservayEquipo() {
         });
 
         if (response.ok) {
-          // Si hay reservas, establece la disponibilidad
           setDis(true);
         } else if (response.status === 409) {
           const result = await response.json();
           setDis(false);
           setError(result.error);
         } else if (response.status === 410) {
-          // Si hay exactamente dos reservas, realiza la acción correspondiente
           const result = await response.json();
           setDis(false);
           alert(result.error);
-          navigate("/TuReservacion"); // Se usa navigate aquí
+          navigate("/TuReservacion"); 
         }
 
       } catch (error) {
@@ -170,11 +169,10 @@ function ReservayEquipo() {
       }
     };
 
-    // Solo llama a la función si hay una fecha seleccionada
     if (selectedDate) {
       verificarReservas();
     }
-  }, [selectedDate, navigate]); // Agregando `navigate` como dependencia
+  }, [selectedDate, navigate]); 
 
   const generarOpcionesTiempo = () => {
     const opciones = [];
@@ -224,14 +222,14 @@ function ReservayEquipo() {
                   selected={selectedDate}
                   onChange={(date) => setSelectedDate(date)}
                   inline
-                  minDate={fechaMinima} // Inicio del semestre
-                  maxDate={fechaMaxima} // Fin del semestre
+                  minDate={fechaMinima} 
+                  maxDate={fechaMaxima} 
                   filterDate={(date) => {
                     const day = date.getDay();
-                    return day !== 0 && day !== 6; // Permitir solo lunes a viernes
+                    return day !== 0 && day !== 6; 
                   }}
-                  dateFormat="P" // Formato de fecha adaptado al locale
-                  locale="es" // Establece el locale a español
+                  dateFormat="P" 
+                  locale="es" 
                   required
                   showMonthDropdown={false}
                   showYearDropdown={false}
@@ -265,7 +263,7 @@ function ReservayEquipo() {
               value={cancha}
               onChange={handleCanchaChange}
               required
-              disabled={!time} // Deshabilitar si no hay una hora seleccionada
+              disabled={!time} 
             >
               <option value="">Selecciona una cancha</option>
               {canchasDisponibles.map((c) => (
@@ -281,7 +279,7 @@ function ReservayEquipo() {
               value={equipo}
               onChange={(e) => setEquipo(e.target.value)}
               required
-              disabled={!time || !canchaTipo} // Deshabilitar si no hay una hora seleccionada o tipo de cancha
+              disabled={!time || !canchaTipo} 
             >
               <option value="">Selecciona un equipo</option>
               {equiposFiltrados.map((e) => (
@@ -309,8 +307,8 @@ const Wrapper = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh; /* Ocupa al menos el alto de la ventana */
-  background-color: #f0f2f5; /* Color de fondo suave */
+  min-height: 100vh; 
+  background-color: #f0f2f5;
 `;
 
 const DatePickerWrapper = styled.div`
@@ -319,7 +317,7 @@ const DatePickerWrapper = styled.div`
   align-items: center;
 
   .react-datepicker {
-    font-size: 1.2rem; /* Tamaño de fuente base */
+    font-size: 1.2rem; 
     width: 100%;
   }
 
@@ -339,9 +337,9 @@ const DatePickerWrapper = styled.div`
   .react-datepicker__day-name,
   .react-datepicker__day,
   .react-datepicker__time-name {
-    width: calc(90% / 7); /* Ocupa el 100% del ancho dividido por 7 (días de la semana) */
-    height: 3rem; /* Aumenta la altura para que sea más fácil de hacer clic */
-    line-height: 3rem; /* Centrar verticalmente */
+    width: calc(90% / 7); 
+    height: 3rem; 
+    line-height: 3rem; 
     font-size: 1.4rem;
     text-align: center;
   }
@@ -366,7 +364,6 @@ const DatePickerWrapper = styled.div`
     border-color: #FFD700;
   }
 
-  /* Oculta el triángulo */
   .react-datepicker__triangle {
     display: none;
   }
@@ -375,14 +372,10 @@ const DatePickerWrapper = styled.div`
     width: 100%;
   }
 
-  /* Ajusta el tamaño de los botones de navegación */
   .react-datepicker__navigation {
     top: 10px;
   }
 
-  /* Media Queries para Responsividad */
-
-  /* Tablets (≥ 768px y < 1024px) */
   @media (min-width: 768px) and (max-width: 1023px) {
     .react-datepicker {
       font-size: 1rem;
@@ -397,14 +390,13 @@ const DatePickerWrapper = styled.div`
     .react-datepicker__day-name,
     .react-datepicker__day,
     .react-datepicker__time-name {
-      width: calc(90% / 7); /* Asegura que los días ocupen el mismo espacio en tablets */
-      height: 3rem; /* Ajusta la altura para tablets */
-      line-height: 3rem; /* Centrar verticalmente en tablets */
+      width: calc(90% / 7); 
+      height: 3rem;
+      line-height: 3rem;
       font-size: 1rem;
     }
   }
 
-  /* Móviles (≥ 480px y < 768px) */
   @media (max-width: 767px) {
     .react-datepicker {
       font-size: 0.9rem;
@@ -419,9 +411,9 @@ const DatePickerWrapper = styled.div`
     .react-datepicker__day-name,
     .react-datepicker__day,
     .react-datepicker__time-name {
-      width: calc(90% / 7); /* Asegura que los días ocupen el mismo espacio en móviles */
-      height: 2.5rem; /* Ajusta la altura para móviles */
-      line-height: 2.5rem; /* Centrar verticalmente en móviles */
+      width: calc(90% / 7); 
+      height: 2.5rem; 
+      line-height: 2.5rem;
       font-size: 0.9rem;
     }
 
@@ -434,33 +426,32 @@ const DatePickerWrapper = styled.div`
     }
   }
 
-  /* Dispositivos muy pequeños (< 480px) */
   @media (max-width: 479px) {
     .react-datepicker {
-      font-size: 0.8rem; /* Tamaño de fuente más pequeño */
+      font-size: 0.8rem;
     }
 
     .react-datepicker__current-month,
     .react-datepicker-time__header,
     .react-datepicker-year-header {
-      font-size: 1rem; /* Tamaño de fuente más pequeño para el encabezado */
+      font-size: 1rem; 
     }
 
     .react-datepicker__day-name,
     .react-datepicker__day,
     .react-datepicker__time-name {
-      width: calc(90% / 7); /* Asegura que los días ocupen el mismo espacio en dispositivos muy pequeños */
-      height: 2rem; /* Ajusta la altura para que sea más manejable */
-      line-height: 2rem; /* Centrar verticalmente en dispositivos muy pequeños */
-      font-size: 0.8rem; /* Tamaño de fuente más pequeño */
+      width: calc(90% / 7); 
+      height: 2rem; 
+      line-height: 2rem; 
+      font-size: 0.8rem; 
     }
 
     .react-datepicker__header {
-      padding: 6px 0; /* Menos padding en el encabezado */
+      padding: 6px 0; 
     }
 
     .react-datepicker__navigation {
-      top: 6px; /* Posición ajustada para los botones de navegación */
+      top: 6px; 
     }
   }
 `;
@@ -474,7 +465,7 @@ const FormularioContainer = styled.div`
   margin: 20px;
   border-radius: 20px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-  max-width: 600px; /* Reducido para hacer el contenedor más delgado */
+  max-width: 600px;
   width: 90%;
 
   h2 {

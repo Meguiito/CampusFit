@@ -88,7 +88,6 @@ function Perfil() {
               <li><strong>Rut:</strong> {userData.rut}</li>
               <li><strong>Nombre:</strong> {userData.username}</li>
               <li><strong>E-Mail UCT:</strong> {userData.email}</li>
-              <li><strong>Tipo de Usuario:</strong> {userData.tipo_de_usuario}</li>
             </ul>
           </Datos>
           {adminSection}

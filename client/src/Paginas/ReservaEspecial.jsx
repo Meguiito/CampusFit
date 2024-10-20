@@ -1,66 +1,194 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import es from 'date-fns/locale/es'; 
 
 function ReservaEspecial() {
   const [formData, setFormData] = useState({
     archivo: null,
+    meses: {
+      Enero: false,
+      Febrero: false,
+      Marzo: false,
+      Abril: false,
+      Mayo: false,
+      Junio: false,
+      Julio: false,
+      Agosto: false,
+      Septiembre: false,
+      Octubre: false,
+      Noviembre: false,
+      Diciembre: false,
+    },
+    dias: {
+      Lunes: { horaDesde: "08:00", horaHasta: "10:00", seleccionado: false },
+      Martes: { horaDesde: "08:00", horaHasta: "10:00", seleccionado: false },
+      Miércoles: { horaDesde: "08:00", horaHasta: "10:00", seleccionado: false },
+      Jueves: { horaDesde: "08:00", horaHasta: "10:00", seleccionado: false },
+      Viernes: { horaDesde: "08:00", horaHasta: "10:00", seleccionado: false },
+    },
   });
 
+  const [selectedDate, setSelectedDate] = useState(null);
   const [error, setError] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [mesesDisponibles, setMesesDisponibles] = useState([]);
+  const [diaActual] = useState(new Date());
+  const [reservarDiaEspecifico, setReservarDiaEspecifico] = useState(false);
+  const [maxDate, setMaxDate] = useState(new Date());
+  const [horaDesdeSeleccionada, setHoraDesdeSeleccionada] = useState("10:00"); // Estado para la hora "desde"
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const horas = [];
+  for (let h = 8; h <= 20; h += 2) {
+    const hour = h < 10 ? `0${h}:00` : `${h}:00`;
+    horas.push(hour);
+  }
 
-    if (formData.archivo) {
-      if (formData.archivo.type !== "application/pdf") {
-        setError("El archivo debe ser un PDF.");
-        return;
-      } else if (formData.archivo.size > 5000000) {
-        setError("El archivo no debe exceder los 5MB.");
-        return;
-      } else {
-        setError("");
+  useEffect(() => {
+    const mesActual = diaActual.getMonth();
+    const semestreActual = Math.floor(mesActual / 6) + 1;
+
+    const meses = semestreActual === 1
+      ? ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio"]
+      : ["Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+    const mesesFiltrados = meses.slice(mesActual % 6);
+    const mesesSeleccionables = mesesFiltrados.map(mes => ({
+      nombre: mes,
+      seleccionado: false,
+    }));
+
+    setMesesDisponibles(mesesSeleccionables);
+
+    // Calcular la fecha máxima
+    const finalSemestre = semestreActual === 1 
+      ? new Date(diaActual.getFullYear(), 6, 0) // Último día de Junio
+      : new Date(diaActual.getFullYear(), 12, 0); // Último día de Diciembre
+
+    setMaxDate(finalSemestre);
+  }, [diaActual]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
+  const handleFileChange = (e) => {
+    setSelectedFile(e.target.files[0]);
+    setError("");
+  };
+  const convertToMinutes = (time) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const handleHourChange = (dia, tipo, valor) => {
+    setFormData((prevState) => {
+      const newHoras = {
+        ...prevState.dias[dia],
+        [tipo]: valor,
+      };
+
+      // Validar que horaHasta sea mayor que horaDesde
+      if (tipo === "horaHasta" && convertToMinutes(newHoras.horaHasta) <= convertToMinutes(newHoras.horaDesde)) {
+        return prevState; // No se actualiza si la validación falla
       }
 
-      const formDataToSend = new FormData();
-      formDataToSend.append("file", formData.archivo);
+      return {
+        ...prevState,
+        dias: {
+          ...prevState.dias,
+          [dia]: newHoras,
+        },
+      };
+    });
 
-      try {
-        const response = await fetch("http://localhost:5000/special_request", {
-          method: "POST",
-          body: formDataToSend,
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          alert("Formulario enviado con éxito: " + result.message);
-        } else {
-          const errorResponse = await response.json();
-          setError(errorResponse.error);
-        }
-      } catch (err) {
-        console.error("Error en la petición", err);
-        setError("Ocurrió un error en la solicitud.");
-      }
-    } else {
-      setError("Archivo es requerido.");
+    // Actualizar el estado de la hora desde seleccionada
+    if (tipo === "horaDesde") {
+      setHoraDesdeSeleccionada(valor);
     }
   };
 
-  const handleChange = (e) => {
-    const { name, files } = e.target;
+  // Filtrar horas "hasta" disponibles según la hora "desde" seleccionada
+  const horasHastaDisponibles = horas.filter(hora => convertToMinutes(hora) > convertToMinutes(horaDesdeSeleccionada));
+
+
+  const handleCheckboxChange = (dia) => {
     setFormData((prevState) => ({
       ...prevState,
-      [name]: files ? files[0] : null,
+      dias: {
+        ...prevState.dias,
+        [dia]: {
+          ...prevState.dias[dia],
+          seleccionado: !prevState.dias[dia].seleccionado,
+        },
+      },
     }));
-    if (files && files[0]) {
-      if (files[0].type !== "application/pdf") {
-        setError("El archivo debe ser un PDF.");
-      } else if (files[0].size > 5000000) {
-        setError("El archivo no debe exceder los 5MB.");
+  };
+
+  const handleMonthChange = (mes) => {
+    setFormData((prevState) => ({
+      ...prevState,
+      meses: {
+        ...prevState.meses,
+        [mes]: !prevState.meses[mes],
+      },
+    }));
+  };
+
+  const toggleReservarDiaEspecifico = () => {
+    setReservarDiaEspecifico(!reservarDiaEspecifico);
+    setSelectedDate(null);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError(null);
+
+    const token = localStorage.getItem('token');
+    const fecha = selectedDate ? selectedDate.toISOString().split('T')[0] : null;
+    const bloquesDeHoras = Object.keys(formData.dias)
+      .filter(dia => formData.dias[dia].seleccionado)
+      .map(dia => ({
+        dia,
+        horaDesde: formData.dias[dia].horaDesde,
+        horaHasta: formData.dias[dia].horaHasta,
+      }));
+
+    const solicitudReservas = {
+      fecha,
+      bloquesDeHoras,
+      meses: formData.meses,
+      estado: 'Pendiente',
+    };
+
+    const data = new FormData();
+    data.append('solicitudReservas', JSON.stringify(solicitudReservas));
+    if (selectedFile) {
+      data.append('file', selectedFile);
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/special_request', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: data,
+      });
+
+      if (response.ok) {
+        alert("Tu solicitud ha sido enviada para su revisión.");
       } else {
-        setError("");
+        const result = await response.json();
+        setError(result.error || 'Error al enviar la solicitud.');
       }
+    } catch (error) {
+      setError('Error al conectar con el servidor.');
     }
   };
 
@@ -68,134 +196,232 @@ function ReservaEspecial() {
     <FormularioContainer>
       <h2>Reserva Especial</h2>
       <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="archivo">Subir archivo (PDF):</label>
-          <input
+        <FormGroup>
+          <Label htmlFor="archivo">Subir archivo (PDF):</Label>
+          <Input
             type="file"
             id="archivo"
             name="archivo"
             accept=".pdf"
-            onChange={handleChange}
+            onChange={handleFileChange}
           />
           {error && <Error>{error}</Error>}
-        </div>
-        <button type="submit">Enviar</button>
+        </FormGroup>
+
+        <FormGroup>
+          <h3>Seleccione cómo desea reservar:</h3>
+          <LabelRadio>
+            <InputRadio
+              type="radio"
+              checked={!reservarDiaEspecifico}
+              onChange={() => setReservarDiaEspecifico(false)}
+            />
+            Días en general
+          </LabelRadio>
+          <LabelRadio>
+            <InputRadio
+              type="radio"
+              checked={reservarDiaEspecifico}
+              onChange={toggleReservarDiaEspecifico}
+            />
+            Día específico
+          </LabelRadio>
+        </FormGroup>
+
+        {reservarDiaEspecifico && (
+          <>
+            <Fecha>
+              <Label>Selecciona el Día:</Label>
+              <DatePickerWrapper>
+                <DatePicker
+                  selected={selectedDate}
+                  onChange={(date) => setSelectedDate(date)}
+                  inline
+                  minDate={diaActual}
+                  maxDate={maxDate}
+                  filterDate={(date) => date.getDay() !== 0 && date.getDay() !== 6}
+                  dateFormat="P"
+                  locale="es"
+                  required
+                />
+              </DatePickerWrapper>
+            </Fecha>
+            <h3>Seleccione las horas:</h3>
+            <FormGroup>
+              <Label htmlFor="horaDesde">Desde:</Label>
+              <Select
+                id="horaDesde"
+                value={formData.dias.Lunes.horaDesde} // Usar Lunes como referencia ya que es solo un día
+                onChange={(e) => handleHourChange("Lunes", "horaDesde", e.target.value)}
+              >
+                {horas.slice(0, -1).map((hora) => (
+                  <option key={hora} value={hora}>
+                    {hora}
+                  </option>
+                ))}
+              </Select>
+
+              <Label htmlFor="horaHasta">Hasta:</Label>
+              <Select
+                id="horaHasta"
+                value={formData.dias.Lunes.horaHasta}
+                onChange={(e) => handleHourChange("Lunes", "horaHasta", e.target.value)}
+              >
+                {horasHastaDisponibles.map((hora) => (
+                  <option key={hora} value={hora}>
+                    {hora}
+                  </option>
+                ))}
+              </Select>
+            </FormGroup>
+          </>
+        )}
+
+        {!reservarDiaEspecifico && (
+          <>
+            <FormGroup>
+              <h3>Seleccione los meses:</h3>
+              {mesesDisponibles.map(({ nombre }) => (
+                <LabelCheckbox key={nombre}>
+                  <InputCheckbox
+                    type="checkbox"
+                    checked={formData.meses[nombre]}
+                    onChange={() => handleMonthChange(nombre)}
+                  />
+                  {nombre}
+                </LabelCheckbox>
+              ))}
+            </FormGroup>
+
+            <FormGroup>
+              <h3>Seleccione los días y horas para cada mes:</h3>
+              {Object.keys(formData.dias).map((dia) => (
+                <div key={dia}>
+                  <LabelCheckbox>
+                    <InputCheckbox
+                      type="checkbox"
+                      checked={formData.dias[dia].seleccionado}
+                      onChange={() => handleCheckboxChange(dia)}
+                    />
+                    {dia}
+                  </LabelCheckbox>
+
+                  {formData.dias[dia].seleccionado && (
+                    <FormGroup>
+                      <Label htmlFor={`horaDesde-${dia}`}>Desde:</Label>
+                      <Select
+                        id={`horaDesde-${dia}`}
+                        value={formData.dias[dia].horaDesde}
+                        onChange={(e) => handleHourChange(dia, "horaDesde", e.target.value)}
+                      >
+                        {horas.slice(0, -1).map((hora) => (
+                          <option key={hora} value={hora}>
+                            {hora}
+                          </option>
+                        ))}
+                      </Select>
+
+                      <Label htmlFor={`horaHasta-${dia}`}>Hasta:</Label>
+                      <Select
+                        id={`horaHasta-${dia}`}
+                        value={formData.dias[dia].horaHasta}
+                        onChange={(e) => handleHourChange(dia, "horaHasta", e.target.value)}
+                      >
+                        {horasHastaDisponibles.map((hora) => (
+                          <option key={hora} value={hora}>
+                            {hora}
+                          </option>
+                        ))}
+                      </Select>
+                    </FormGroup>
+                  )}
+                </div>
+              ))}
+            </FormGroup>
+          </>
+        )}
+
+        <Button type="submit">Enviar Solicitud</Button>
       </form>
     </FormularioContainer>
   );
 }
 
-export default ReservaEspecial;
-
 const FormularioContainer = styled.div`
-  background: linear-gradient(135deg, #3498DB, #ffffff);
-  margin-bottom: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 40px;
-  margin: 20px;
-  border-radius: 20px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease;
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+`;
 
-  h2 {
-    color: white;
-    text-align: center;
-    margin-bottom: 20px;
-  }
+const FormGroup = styled.div`
+  margin-bottom: 15px;
+`;
 
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    width: 50%;
-    background-color: #2985ec;
-    border-radius: 15px;
-    padding: 20px;
-    color: #FFD700;
+const Label = styled.label`
+  display: block;
+  margin-bottom: 5px;
+`;
 
-    div {
-      display: flex;
-      flex-direction: column;
+const Input = styled.input`
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+`;
 
-      label {
-        margin-bottom: 5px;
-        font-weight: bold;
-      }
+const Select = styled.select`
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+`;
 
-      input {
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-      }
-    }
-
-    button {
-      padding: 10px;
-      background-color: #FFD700;
-      border: none;
-      border-radius: 5px;
-      color: black;
-      cursor: pointer;
-      font-size: 1rem;
-
-      &:hover {
-        color: white;
-        background-color: #1e6bb8;
-      }
-    }
-  }
-
-  @media (max-width: 768px) {
-    padding: 15px;
-    max-width: 90%;
-
-    h2 {
-      font-size: 1.25rem;
-    }
-
-    form {
-      gap: 10px;
-
-      div {
-        input {
-          font-size: 0.9rem;
-        }
-      }
-
-      button {
-        font-size: 0.9rem;
-        background-color: #FFD700;
-      }
-    }
-  }
-
-  @media (max-width: 480px) {
-    padding: 10px;
-
-    h2 {
-      font-size: 1rem;
-    }
-
-    form {
-      gap: 5px;
-
-      div {
-        input {
-          font-size: 0.8rem;
-        }
-      }
-
-      button {
-        font-size: 0.8rem;
-      }
-    }
-  }
+const DatePickerWrapper = styled.div`
+  margin: 10px 0;
 `;
 
 const Error = styled.span`
   color: red;
-  font-size: 0.875rem;
-  margin-top: 5px;
+  font-size: 14px;
 `;
+
+const LabelCheckbox = styled.label`
+  display: flex;
+  align-items: center;
+`;
+
+const InputCheckbox = styled.input`
+  margin-right: 10px;
+`;
+
+const LabelRadio = styled.label`
+  display: block;
+  margin-bottom: 5px;
+`;
+
+const InputRadio = styled.input`
+  margin-right: 10px;
+`;
+
+const Fecha = styled.div`
+  margin: 15px 0;
+`;
+
+const Button = styled.button`
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #0056b3;
+  }
+`;
+
+export default ReservaEspecial;
