@@ -466,6 +466,39 @@ scheduler.add_job(
     id='eliminar_reservas_antiguas',
     replace_existing=True
 )
+
+
+
+
+@app.route('/reservas-dia', methods=['GET'])
+@jwt_required()
+def get_reservas_del_dia():
+    try:
+        # Obtener la fecha actual en formato YYYY-MM-DD
+        today = datetime.now().strftime('%Y-%m-%d')
+        
+        # Filtrar reservas que coincidan con la fecha de hoy y ordenar por la hora
+        reservas = mongo.db.Reservas.find({"fecha": today}).sort("hora", 1)
+        
+        # Crear una lista de las reservas filtradas solo con los campos requeridos
+        reservas_list = [
+            {
+                "nombre": reserva["nombre"],
+                "rut": reserva["rut"],
+                "cancha": reserva["cancha"]
+            }
+            for reserva in reservas
+        ]
+
+        return jsonify(reservas_list), 200
+
+    except PyMongoError as e:
+        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
     
 
 @app.errorhandler(404)
