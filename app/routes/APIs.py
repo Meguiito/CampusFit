@@ -469,28 +469,34 @@ scheduler.add_job(
 
 
 
-
 @app.route('/reservas-dia', methods=['GET'])
 @jwt_required()
-def get_reservas_del_dia():
+def mostrar_reservas_dia():
     try:
-        # Obtener la fecha actual en formato YYYY-MM-DD
-        today = datetime.now().strftime('%Y-%m-%d')
+        # Verificar si el usuario es admin
+        identity = get_jwt_identity()
+        email = identity.get('email')
+        admin_user = mongo.db.Admin.find_one({"email": email})
         
-        # Filtrar reservas que coincidan con la fecha de hoy y ordenar por la hora
-        reservas = mongo.db.Reservas.find({"fecha": today}).sort("hora", 1)
-        
-        # Crear una lista de las reservas filtradas solo con los campos requeridos
-        reservas_list = [
-            {
-                "nombre": reserva["nombre"],
-                "rut": reserva["rut"],
-                "cancha": reserva["cancha"]
-            }
-            for reserva in reservas
-        ]
+        if not admin_user:
+            return jsonify({"error": "Acceso denegado: Solo los administradores pueden ver las reservas"}), 403
 
-        return jsonify(reservas_list), 200
+        # Obtener la fecha de hoy
+        fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+
+        # Buscar reservas para la fecha de hoy y ordenarlas por hora
+        reservas_hoy = mongo.db.Reservas.find({"fecha": fecha_hoy}).sort("hora", 1)
+
+        # Formatear los datos de las reservas
+        reservas_filtradas = []
+        for reserva in reservas_hoy:
+            reservas_filtradas.append({
+                "nombre": reserva.get("equipo"),  # Asumimos que "equipo" es el nombre
+                "rut": reserva.get("rut"),        # Si 'rut' está disponible
+                "cancha": reserva.get("cancha")
+            })
+
+        return jsonify(reservas_filtradas), 200
 
     except PyMongoError as e:
         return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
