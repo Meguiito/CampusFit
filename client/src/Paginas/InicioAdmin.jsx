@@ -15,7 +15,14 @@ function InicioAdmin() {
         }
       });
       const data = await response.json();
-      setReservasDiarias(data); // Almacenar las reservas obtenidas
+      
+      // Verifica que data sea un array
+      if (Array.isArray(data)) {
+        setReservasDiarias(data); // Almacenar las reservas obtenidas
+      } else {
+        setReservasDiarias([]); // Si no es un array, inicializa como vacío
+      }
+      
       setLoading(false); // Ya no está cargando
     } catch (error) {
       console.error('Error al obtener las reservas:', error);
