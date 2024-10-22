@@ -2,16 +2,29 @@ import React, { useState, useEffect } from 'react';
 import '../Estilos/InicioAdmin.css'; // Importamos el archivo CSS para estilos
 
 function InicioAdmin() {
-  // Estado para el número de reservas diarias
-  const [reservasDiarias, setReservasDiarias] = useState(0);
+  // Estado para almacenar las reservas del día
+  const [reservasDiarias, setReservasDiarias] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Simulamos la obtención de datos (podrías reemplazar esto con una llamada a una API)
+  // Función para obtener las reservas del día desde el backend
+  const obtenerReservasDiarias = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/reservas-dia', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}` // Enviamos el token JWT
+        }
+      });
+      const data = await response.json();
+      setReservasDiarias(data); // Almacenar las reservas obtenidas
+      setLoading(false); // Ya no está cargando
+    } catch (error) {
+      console.error('Error al obtener las reservas:', error);
+      setLoading(false); // En caso de error, detener el estado de carga
+    }
+  };
+
+  // Llamar a la función para obtener reservas al montar el componente
   useEffect(() => {
-    const obtenerReservasDiarias = () => {
-      // Aquí podrías hacer una llamada a una API para obtener las reservas reales
-      setReservasDiarias(5); // Simulamos 5 reservas para este ejemplo
-    };
-
     obtenerReservasDiarias();
   }, []);
 
@@ -19,18 +32,27 @@ function InicioAdmin() {
     <div className="inicio">
       <div className="inicio-content">
         <div className="card">
-          <h2>Reservas</h2>
-          <p>Administra las reservas de los usuarios.</p>
-          {/* Contador de reservas */}
-          <div className="contador-reservas">
-            <span>Reservas diarias: {reservasDiarias}</span>
-          </div>
-          <button className="inicio-button">Ver Reservas</button>
-        </div>
-        <div className="card">
-          <h2>Reserva Especial</h2>
-          <p>Gestiona las reservas especiales.</p>
-          <button className="inicio-button">Ver Reservas Especiales</button>
+          <h2>Reservas del Día</h2>
+          <p>Administra las reservas de los usuarios programadas para hoy.</p>
+          
+          {/* Mostrar un mensaje mientras se cargan las reservas */}
+          {loading ? (
+            <p>Cargando reservas...</p>
+          ) : (
+            <div className="reservas-list">
+              {reservasDiarias.length === 0 ? (
+                <p>No hay reservas para hoy.</p> // Mensaje si no hay reservas
+              ) : (
+                reservasDiarias.map((reserva, index) => (
+                  <div className="reserva-card" key={index}>
+                    <h3>{reserva.nombre}</h3>
+                    <p><strong>RUT:</strong> {reserva.rut}</p>
+                    <p><strong>Cancha:</strong> {reserva.cancha}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
