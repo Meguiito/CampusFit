@@ -1,10 +1,61 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import es from 'date-fns/locale/es'; 
+import 'react-datepicker/dist/react-datepicker.css'; 
 
 function ReservaEspecial() {
+
+  const obtenerProximaFechaHabil = () => {
+    const hoy = new Date();
+    const dia = hoy.getDay(); 
+
+    if (dia === 6) { 
+      hoy.setDate(hoy.getDate() + 2); 
+    } else if (dia === 0) { 
+      hoy.setDate(hoy.getDate() + 1); 
+    }
+
+    return hoy;
+  };
+
+  const calcularFechaMaxima = (fechaMinima) => {
+    const fechaMax = new Date(fechaMinima);
+  
+    const mesActual = fechaMinima.getMonth();
+    const semestreActual = Math.floor(mesActual / 6) + 1;
+  
+    if (semestreActual === 1) {
+      fechaMax.setFullYear(fechaMinima.getFullYear(), 5, 30); 
+    } else {
+      fechaMax.setFullYear(fechaMinima.getFullYear(), 11, 31); 
+    }
+  
+    const dia = fechaMax.getDay();
+    if (dia === 6) { // Sábado
+      fechaMax.setDate(fechaMax.getDate() - 1); 
+    } else if (dia === 0) { // Domingo
+      fechaMax.setDate(fechaMax.getDate() - 2); 
+    }
+  
+    return fechaMax;
+  };
+
+  const fechaMinima = obtenerProximaFechaHabil();
+  const fechaMaxima = calcularFechaMaxima(fechaMinima);
+  const [selectedDate, setSelectedDate] = useState(fechaMinima);
+  const [error, setError] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [mesesDisponibles, setMesesDisponibles] = useState([]);
+  const [diaActual] = useState(new Date());
+  const [reservarDiaEspecifico, setReservarDiaEspecifico] = useState(false);
+  const [maxDate, setMaxDate] = useState(new Date());
+  const [cancha, setCancha] = useState('');
+  const [canchaTipo, setCanchaTipo] = useState('');
+  const [equipo, setEquipo] = useState('');
+  const [canchasDisponibles, setCanchasDisponibles] = useState([]);
+  const [equiposDisponibles, setEquiposDisponibles] = useState([]);
+  const horas = [];
+
   const [formData, setFormData] = useState({
     archivo: null,
     meses: {
@@ -22,28 +73,74 @@ function ReservaEspecial() {
       Diciembre: false,
     },
     dias: {
-      Lunes: { horaDesde: "08:00", horaHasta: "10:00", seleccionado: false },
-      Martes: { horaDesde: "08:00", horaHasta: "10:00", seleccionado: false },
-      Miércoles: { horaDesde: "08:00", horaHasta: "10:00", seleccionado: false },
-      Jueves: { horaDesde: "08:00", horaHasta: "10:00", seleccionado: false },
-      Viernes: { horaDesde: "08:00", horaHasta: "10:00", seleccionado: false },
+      Lunes: { horaDesde: "08:00", horaHasta: "10:00", seleccionado: false, cancha: '', equipo: '' },
+      Martes: { horaDesde: "08:00", horaHasta: "10:00", seleccionado: false, cancha: '', equipo: '' },
+      Miércoles: { horaDesde: "08:00", horaHasta: "10:00", seleccionado: false, cancha: '', equipo: '' },
+      Jueves: { horaDesde: "08:00", horaHasta: "10:00", seleccionado: false, cancha: '', equipo: '' },
+      Viernes: { horaDesde: "08:00", horaHasta: "10:00", seleccionado: false, cancha: '', equipo: '' },
     },
+    dia_esp: {
+      fecha: selectedDate ? selectedDate.toISOString().split('T')[0] : '',
+      horaDesde: "08:00",
+      horaHasta: "10:00",
+      cancha: cancha,
+      equipo: equipo,
+    }
   });
 
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [error, setError] = useState("");
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [mesesDisponibles, setMesesDisponibles] = useState([]);
-  const [diaActual] = useState(new Date());
-  const [reservarDiaEspecifico, setReservarDiaEspecifico] = useState(false);
-  const [maxDate, setMaxDate] = useState(new Date());
-  const [horaDesdeSeleccionada, setHoraDesdeSeleccionada] = useState("10:00"); // Estado para la hora "desde"
+  const [equiposFiltrados, setEquiposFiltrados] = useState({
+    Lunes: [],
+    Martes: [],
+    Miércoles: [],
+    Jueves: [],
+    Viernes: [],
+  }); 
 
-  const horas = [];
   for (let h = 8; h <= 20; h += 2) {
     const hour = h < 10 ? `0${h}:00` : `${h}:00`;
     horas.push(hour);
   }
+  const [horaDesdeSeleccionada, setHoraDesdeSeleccionada] = useState({
+    Lunes: "08:00",
+    Martes: "08:00",
+    Miércoles: "08:00",
+    Jueves: "08:00",
+    Viernes: "08:00",
+  });
+  
+  const fetchCanchasYEquipos = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('No se encontró el token de autenticación.');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/api/canchas_equipo', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCanchasDisponibles(data.canchas_disponibles);
+        setEquiposDisponibles(data.equipos_disponibles)
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Error al obtener los datos.');
+      }
+    } catch (error) {
+      console.error('Error de red:', error);
+      setError('Error al conectar con el servidor.');
+    }
+  };
+
+  useEffect(() => {
+    fetchCanchasYEquipos();
+  }, []);
 
   useEffect(() => {
     const mesActual = diaActual.getMonth();
@@ -69,18 +166,17 @@ function ReservaEspecial() {
     setMaxDate(finalSemestre);
   }, [diaActual]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.type === 'application/pdf') {
+        setSelectedFile(file);  
+      } else {
+        setError('Por favor, selecciona un archivo PDF.'); 
+      }
+    }
   };
-
-  const handleFileChange = (e) => {
-    setSelectedFile(e.target.files[0]);
-    setError("");
-  };
+  
   const convertToMinutes = (time) => {
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 60 + minutes;
@@ -88,33 +184,69 @@ function ReservaEspecial() {
 
   const handleHourChange = (dia, tipo, valor) => {
     setFormData((prevState) => {
-      const newHoras = {
-        ...prevState.dias[dia],
-        [tipo]: valor,
-      };
+      if(!reservarDiaEspecifico){
+        if (tipo === "horaHasta" && convertToMinutes(valor) < convertToMinutes(prevState.dias[dia].horaDesde)) {
+          console.log("La hora de 'horaHasta' debe ser mayor o igual a 'horaDesde'");
+          return prevState;
+        }
 
-      // Validar que horaHasta sea mayor que horaDesde
-      if (tipo === "horaHasta" && convertToMinutes(newHoras.horaHasta) <= convertToMinutes(newHoras.horaDesde)) {
-        return prevState; // No se actualiza si la validación falla
+        if (tipo === "horaDesde") {
+          const nuevaHoraHasta = convertToMinutes(prevState.dias[dia].horaHasta) <= convertToMinutes(valor)
+            ? horas.find(hora => convertToMinutes(hora) > convertToMinutes(valor))
+            : prevState.dias[dia].horaHasta;
+
+          setHoraDesdeSeleccionada(prevState => ({
+            ...prevState,
+            [dia]: valor
+          }));
+
+          return {
+            ...prevState,
+            dias: {
+              ...prevState.dias,
+              [dia]: {
+                ...prevState.dias[dia],
+                [tipo]: valor,
+                horaHasta: nuevaHoraHasta
+              },
+            },
+          };
+        }
+
+        return {
+          ...prevState,
+          dias: {
+            ...prevState.dias,
+            [dia]: {
+              ...prevState.dias[dia],
+              [tipo]: valor,
+            },
+          },
+        };
+      } else{
+        if (tipo === "horaHasta" && convertToMinutes(valor) < convertToMinutes(prevState.dia_esp.horaDesde)) {
+          console.log("La hora de 'horaHasta' debe ser mayor o igual a 'horaDesde'");
+          return prevState;
+        }
+        if (tipo === "horaDesde") {
+          const nuevaHoraHasta = convertToMinutes(prevState.dia_esp.horaHasta) <= convertToMinutes(valor)
+          ? horas.find(hora => convertToMinutes(hora) > convertToMinutes(valor))
+          : prevState.dia_esp.horaHasta;
+        
+          return {
+            ...prevState,
+            dia_esp: {
+              ...prevState.dia_esp,
+              horaDesde: valor, 
+              horaHasta: nuevaHoraHasta, 
+            },
+          };
+        }
       }
-
-      return {
-        ...prevState,
-        dias: {
-          ...prevState.dias,
-          [dia]: newHoras,
-        },
-      };
     });
-
-    // Actualizar el estado de la hora desde seleccionada
-    if (tipo === "horaDesde") {
-      setHoraDesdeSeleccionada(valor);
-    }
   };
 
-  // Filtrar horas "hasta" disponibles según la hora "desde" seleccionada
-  const horasHastaDisponibles = horas.filter(hora => convertToMinutes(hora) > convertToMinutes(horaDesdeSeleccionada));
+  const horasHastaDisponibles = (dia) => horas.filter(hora => convertToMinutes(hora) > convertToMinutes(horaDesdeSeleccionada[dia]));
 
 
   const handleCheckboxChange = (dia) => {
@@ -147,54 +279,112 @@ function ReservaEspecial() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError(null);
+    console.log(formData.dias);
 
-    const token = localStorage.getItem('token');
-    const fecha = selectedDate ? selectedDate.toISOString().split('T')[0] : null;
-    const bloquesDeHoras = Object.keys(formData.dias)
-      .filter(dia => formData.dias[dia].seleccionado)
-      .map(dia => ({
-        dia,
-        horaDesde: formData.dias[dia].horaDesde,
-        horaHasta: formData.dias[dia].horaHasta,
-      }));
+    if(!reservarDiaEspecifico){
+      const mesesSeleccionados = Object.keys(formData.meses).filter(mes => formData.meses[mes]);
+      if (mesesSeleccionados.length === 0) {
+        setError("Debes seleccionar al menos un mes.");
+        return;
+      };
+    
+      const diasSeleccionados = Object.keys(formData.dias).filter(dia => formData.dias[dia].seleccionado === true);
+      if (diasSeleccionados.length === 0) {
+        setError("Debes seleccionar al menos un dia en general.");
+        return;
+      };    
+      if (!formData.pdf) {
+        setError("Debes cargar un archivo PDF.");
+        return;
+      };
+      
+      setError(" ")
+      const reservas = crearReservas_DG(mesesSeleccionados);
+      console.log(formData);
+      console.log(reservas);
+  } else{
 
-    const solicitudReservas = {
-      fecha,
-      bloquesDeHoras,
-      meses: formData.meses,
-      estado: 'Pendiente',
-    };
-
-    const data = new FormData();
-    data.append('solicitudReservas', JSON.stringify(solicitudReservas));
-    if (selectedFile) {
-      data.append('file', selectedFile);
-    }
-
-    try {
-      const response = await fetch('http://localhost:5000/special_request', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: data,
-      });
-
-      if (response.ok) {
-        alert("Tu solicitud ha sido enviada para su revisión.");
-      } else {
-        const result = await response.json();
-        setError(result.error || 'Error al enviar la solicitud.');
-      }
-    } catch (error) {
-      setError('Error al conectar con el servidor.');
-    }
+  }
   };
 
+  const crearReservas_DG = (meses) => {
+  };
+
+  
+  const generarIdUnico = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+  
+
+  const handleCanchaChange = (dia, e) => { 
+    const canchaNombre = e.target.value;
+    const canchaSeleccionada = canchasDisponibles.find(c => c.nombre === canchaNombre);
+  
+    if (!canchaSeleccionada) {
+      console.log("Cancha no encontrada");
+      return;
+    }
+    
+    if(!reservarDiaEspecifico){
+      setFormData((prevState) => {
+        const diaData = prevState.dias[dia];
+    
+        return {
+          ...prevState,
+          dias: {
+            ...prevState.dias,
+            [dia]: {
+              ...diaData,
+              cancha: canchaNombre, 
+              equipo: canchaSeleccionada ? '' : diaData.equipo, 
+            },
+          },
+        };
+      })
+     } else {
+         setCancha(canchaNombre);
+     };
+  
+    const equiposFiltradosParaDia = equiposDisponibles.filter(e => e.tipo === canchaSeleccionada.tipo);
+    setEquiposFiltrados((prevState) => ({
+      ...prevState,
+      [dia]: equiposFiltradosParaDia 
+    }));
+  };
+  
+
+const handleEquipoChange = (dia, e) => {
+    const equipoSeleccionado = e.target.value;
+
+    setFormData((prevState) => {
+      if(!reservarDiaEspecifico){
+          const diaData = prevState.dias[dia];
+
+          return {
+              ...prevState,
+              dias: {
+                  ...prevState.dias,
+                  [dia]: {
+                      ...diaData,
+                      equipo: equipoSeleccionado, 
+                  },
+              },
+          };
+       } else{
+            setEquipo(equipoSeleccionado);
+         }
+    });
+};
+
+  
   return (
     <FormularioContainer>
       <h2>Reserva Especial</h2>
+      {error && <Error>{error}</Error>}
       <form onSubmit={handleSubmit}>
         <FormGroup>
           <Label htmlFor="archivo">Subir archivo (PDF):</Label>
@@ -205,7 +395,6 @@ function ReservaEspecial() {
             accept=".pdf"
             onChange={handleFileChange}
           />
-          {error && <Error>{error}</Error>}
         </FormGroup>
 
         <FormGroup>
@@ -235,10 +424,10 @@ function ReservaEspecial() {
               <DatePickerWrapper>
                 <DatePicker
                   selected={selectedDate}
-                  onChange={(date) => setSelectedDate(date)}
+                  onChange={(date) => {setSelectedDate(date);}}
                   inline
-                  minDate={diaActual}
-                  maxDate={maxDate}
+                  minDate={fechaMinima}
+                  maxDate={fechaMaxima}
                   filterDate={(date) => date.getDay() !== 0 && date.getDay() !== 6}
                   dateFormat="P"
                   locale="es"
@@ -251,8 +440,9 @@ function ReservaEspecial() {
               <Label htmlFor="horaDesde">Desde:</Label>
               <Select
                 id="horaDesde"
-                value={formData.dias.Lunes.horaDesde} // Usar Lunes como referencia ya que es solo un día
-                onChange={(e) => handleHourChange("Lunes", "horaDesde", e.target.value)}
+                value={formData.dias[selectedDate ? selectedDate.toLocaleDateString() : "Lunes"]?.horaDesde || ''} // Usar el día seleccionado
+                onChange={(e) => handleHourChange(selectedDate.toLocaleDateString(), "horaDesde", e.target.value)}
+                required
               >
                 {horas.slice(0, -1).map((hora) => (
                   <option key={hora} value={hora}>
@@ -264,13 +454,42 @@ function ReservaEspecial() {
               <Label htmlFor="horaHasta">Hasta:</Label>
               <Select
                 id="horaHasta"
-                value={formData.dias.Lunes.horaHasta}
-                onChange={(e) => handleHourChange("Lunes", "horaHasta", e.target.value)}
+                value={formData.dias[selectedDate ? selectedDate.toLocaleDateString() : "Lunes"]?.horaHasta || ''}
+                onChange={(e) => handleHourChange(selectedDate.toLocaleDateString(), "horaHasta", e.target.value)}
               >
-                {horasHastaDisponibles.map((hora) => (
+                {horasHastaDisponibles[selectedDate.toLocaleDateString()].map((hora) => (
                   <option key={hora} value={hora}>
                     {hora}
                   </option>
+                ))}
+              </Select>
+
+              <Label htmlFor="cancha">Selecciona la Cancha:</Label>
+              <Select 
+                id="cancha"
+                name="cancha"
+                value={cancha}
+                onChange={(e) => handleCanchaChange(e)}
+                required
+              >
+                <option value="">Selecciona una cancha</option>
+                {canchasDisponibles.map((c) => (
+                  <option key={c._id} value={c.nombre}>{c.nombre}</option>
+                ))}
+              </Select>
+
+              <Label htmlFor="equipo">Selecciona tu Equipo:</Label>
+              <Select
+                id="equipo"
+                name="equipo"
+                value={equipo}
+                onChange={(e) => setEquipo(e.target.value)}
+                required
+                disabled={!canchaTipo} 
+              >
+                <option value="">Selecciona un equipo</option>
+                {equiposFiltrados.map((e) => (
+                  <option key={e._id} value={e.nombre}>{e.nombre}</option>
                 ))}
               </Select>
             </FormGroup>
@@ -327,12 +546,40 @@ function ReservaEspecial() {
                         value={formData.dias[dia].horaHasta}
                         onChange={(e) => handleHourChange(dia, "horaHasta", e.target.value)}
                       >
-                        {horasHastaDisponibles.map((hora) => (
+                        {horasHastaDisponibles(dia).map((hora) => (
                           <option key={hora} value={hora}>
                             {hora}
                           </option>
                         ))}
                       </Select>
+                      <Label htmlFor={`Cancha-${dia}`}>Hasta:</Label>
+                      <Label htmlFor="cancha">Selecciona la Cancha:</Label>
+                      <Select 
+                          id={`cancha-${dia}`} 
+                          name={`cancha-${dia}`} 
+                          value={formData.dias[dia].cancha} // Usa el valor específico del día
+                          onChange={(e) => handleCanchaChange(dia, e)} // Pasa el día específico
+                          required
+                      >
+                          <option value="">Selecciona una cancha</option>
+                          {canchasDisponibles.map((c) => (
+                              <option key={c._id} value={c.nombre}>{c.nombre}</option>
+                          ))}
+                      </Select>
+                      <Label htmlFor="equipo">Selecciona tu Equipo:</Label>
+                      <Select
+                        id={`equipo-${dia}`}
+                        name={`equipo-${dia}`}
+                        value={formData.dias[dia].equipo} // Usa el valor específico del día
+                        onChange={(e) => handleEquipoChange(dia, e)} // Pasa el día específico
+                        disabled={!formData.dias[dia].cancha} // Deshabilitar si no hay cancha seleccionada
+                        required
+                    >
+                        <option value="">Selecciona un equipo</option>
+                        {equiposFiltrados[dia].map((e) => (
+                            <option key={e._id} value={e.nombre}>{e.nombre}</option>
+                        ))}
+                    </Select>
                     </FormGroup>
                   )}
                 </div>
