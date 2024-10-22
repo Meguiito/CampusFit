@@ -2,65 +2,44 @@ import React, { useState, useEffect } from 'react';
 import '../Estilos/InicioAdmin.css'; // Importamos el archivo CSS para estilos
 
 function InicioAdmin() {
-  // Estado para almacenar las reservas del día
-  const [reservasDiarias, setReservasDiarias] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [reservas, setReservas] = useState([]);
 
-  // Función para obtener las reservas del día desde el backend
-  const obtenerReservasDiarias = async () => {
+  // Obtener las reservas del día
+  const obtenerReservasDelDia = async () => {
     try {
       const response = await fetch('http://localhost:5000/reservas-dia', {
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}` // Enviamos el token JWT
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}` // Añadir el token JWT para autenticación
         }
       });
       const data = await response.json();
-      
-      // Verifica que data sea un array
-      if (Array.isArray(data)) {
-        setReservasDiarias(data); // Almacenar las reservas obtenidas
-      } else {
-        setReservasDiarias([]); // Si no es un array, inicializa como vacío
-      }
-      
-      setLoading(false); // Ya no está cargando
+      setReservas(data); // Guardar las reservas obtenidas
     } catch (error) {
       console.error('Error al obtener las reservas:', error);
-      setLoading(false); // En caso de error, detener el estado de carga
     }
   };
 
-  // Llamar a la función para obtener reservas al montar el componente
   useEffect(() => {
-    obtenerReservasDiarias();
+    obtenerReservasDelDia();
   }, []);
 
   return (
     <div className="inicio">
+      <h1>Reservas del Día</h1>
       <div className="inicio-content">
-        <div className="card">
-          <h2>Reservas del Día</h2>
-          <p>Administra las reservas de los usuarios programadas para hoy.</p>
-          
-          {/* Mostrar un mensaje mientras se cargan las reservas */}
-          {loading ? (
-            <p>Cargando reservas...</p>
-          ) : (
-            <div className="reservas-list">
-              {reservasDiarias.length === 0 ? (
-                <p>No hay reservas para hoy.</p> // Mensaje si no hay reservas
-              ) : (
-                reservasDiarias.map((reserva, index) => (
-                  <div className="reserva-card" key={index}>
-                    <h3>{reserva.nombre}</h3>
-                    <p><strong>RUT:</strong> {reserva.rut}</p>
-                    <p><strong>Cancha:</strong> {reserva.cancha}</p>
-                  </div>
-                ))
-              )}
+        {reservas.length > 0 ? (
+          reservas.map((reserva, index) => (
+            <div className="card" key={index}>
+              <h2>Cancha: {reserva.cancha}</h2>
+              <p>Equipo: {reserva.equipo}</p>
+              <p>Email del Usuario: {reserva.email_usuario}</p>
             </div>
-          )}
-        </div>
+          ))
+        ) : (
+          <p>No hay reservas para hoy.</p>
+        )}
       </div>
     </div>
   );
