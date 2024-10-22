@@ -59,14 +59,26 @@ function ReservasEspeciales() {
 
               <div className="reserva-right">
                 <p><strong>Estado:</strong></p>
-                <select
-                  value={reserva.estado}
-                  onChange={(e) => handleStatusChange(index, e.target.value)}
-                >
-                  <option value="Pendiente">Pendiente</option>
-                  <option value="Rechazado">Rechazado</option>
-                  <option value="Confirmado">Confirmado</option>
-                </select>
+                <div className="estado-botones">
+                  <button 
+                    onClick={() => handleStatusChange(index, 'Confirmado')} 
+                    className="boton-confirmar"
+                  >
+                    Confirmar
+                  </button>
+                  <button 
+                    onClick={() => handleStatusChange(index, 'Rechazado')} 
+                    className="boton-rechazar"
+                  >
+                    Rechazar
+                  </button>
+                  <button 
+                    onClick={() => handleStatusChange(index, 'Pendiente')} 
+                    className="boton-extra"
+                  >
+                    Pendiente
+                  </button>
+                </div>
               </div>
             </li>
           ))}
