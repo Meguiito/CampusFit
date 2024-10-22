@@ -1,48 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import '../Estilos/InicioAdmin.css'; // Importamos el archivo CSS para estilos
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import '../Estilos/InicioAdmin.css';
 
-function InicioAdmin() {
-  const [reservas, setReservas] = useState([]);
+const InicioAdmin = () => {
+    const [reservas, setReservas] = useState([]);
+    const [error, setError] = useState(null);
 
-  // Obtener las reservas del día
-  const obtenerReservasDelDia = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/reservas-dia', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}` // Añadir el token JWT para autenticación
-        }
-      });
-      const data = await response.json();
-      setReservas(data); // Guardar las reservas obtenidas
-    } catch (error) {
-      console.error('Error al obtener las reservas:', error);
-    }
-  };
+    useEffect(() => {
+        const fetchReservas = async () => {
+            try {
+                const response = await axios.get('http://localhost:5000/reservas-dia', {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}` // Asegúrate de que estás usando el token correcto
+                    }
+                });
+                setReservas(response.data);
+            } catch (err) {
+                setError(err.response ? err.response.data.message : 'Error al obtener las reservas');
+            }
+        };
 
-  useEffect(() => {
-    obtenerReservasDelDia();
-  }, []);
+        fetchReservas();
+    }, []);
 
-  return (
-    <div className="inicio">
-      <h1>Reservas del Día</h1>
-      <div className="inicio-content">
-        {reservas.length > 0 ? (
-          reservas.map((reserva, index) => (
-            <div className="card" key={index}>
-              <h2>Cancha: {reserva.cancha}</h2>
-              <p>Equipo: {reserva.equipo}</p>
-              <p>Email del Usuario: {reserva.email_usuario}</p>
+    return (
+        <div className="inicio">
+            <h1 style={{ color: 'white' }}>Reservas del Día</h1>
+            {error && <div className="error-message">{error}</div>}
+            <div className="inicio-content">
+                {reservas.map((reserva, index) => (
+                    <div className="card" key={index}>
+                        <p>Cancha: {reserva.cancha}</p>
+                        <p>Equipo: {reserva.equipo}</p>
+                        <p>Email: {reserva.email_usuario}</p>
+                    </div>
+                ))}
             </div>
-          ))
-        ) : (
-          <p>No hay reservas para hoy.</p>
-        )}
-      </div>
-    </div>
-  );
-}
+        </div>
+    );
+};
 
 export default InicioAdmin;
