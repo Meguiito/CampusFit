@@ -469,42 +469,35 @@ scheduler.add_job(
 
 
 
+
 @app.route('/reservas-dia', methods=['GET'])
 @jwt_required()
-def mostrar_reservas_dia():
+def obtener_reservas_del_dia():
     try:
-        # Verificar si el usuario es admin
-        identity = get_jwt_identity()
-        email = identity.get('email')
-        admin_user = mongo.db.Admin.find_one({"email": email})
-        
-        if not admin_user:
-            return jsonify({"error": "Acceso denegado: Solo los administradores pueden ver las reservas"}), 403
+        # Obtener la fecha actual (sin uso de pytz)
+        fecha_actual = datetime.now().strftime('%Y-%m-%d')
 
-        # Obtener la fecha de hoy
-        fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+        # Filtrar reservas del día actual
+        reservas = list(mongo.db.Reservas.find({
+            "fecha": fecha_actual
+        }).sort("hora", 1))  # Ordenar por hora ascendente
 
-        # Buscar reservas para la fecha de hoy y ordenarlas por hora
-        reservas_hoy = mongo.db.Reservas.find({"fecha": fecha_hoy}).sort("hora", 1)
+        # Si no hay reservas
+        if not reservas:
+            return jsonify({"message": "No hay reservas para el día de hoy."}), 200
 
-        # Formatear los datos de las reservas
-        reservas_filtradas = []
-        for reserva in reservas_hoy:
-            reservas_filtradas.append({
-                "nombre": reserva.get("equipo"),  # Asumimos que "equipo" es el nombre
-                "rut": reserva.get("rut"),        # Si 'rut' está disponible
-                "cancha": reserva.get("cancha")
-            })
+        # Filtrar los campos que queremos devolver
+        reservas_filtradas = [{
+            "cancha": reserva.get("cancha"),
+            "equipo": reserva.get("equipo"),
+            "email_usuario": reserva.get("email_usuario")
+        } for reserva in reservas]
 
         return jsonify(reservas_filtradas), 200
 
-    except PyMongoError as e:
-        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
-if __name__ == '__main__':
-    app.run(debug=True)
     
 
 @app.errorhandler(404)
