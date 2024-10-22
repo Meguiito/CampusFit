@@ -36,7 +36,9 @@ function Inicio() {
           />
           <div className="circulo">
             {token ? (
-              <Link to="/ReservayEquipo">Reserva tu hora y Equipo</Link>
+              <div className="reserva-button">
+                <Link to="/ReservayEquipo">Reserva tu hora y Equipo</Link>
+              </div>
             ) : (
               <div className='auth-buttons'>
                 <div className="auth-button1">

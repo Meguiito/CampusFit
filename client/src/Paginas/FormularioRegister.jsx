@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useForm } from "react-hook-form";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import "../Estilos/Register.css";
 
 const Formulario = () => {
     const { register, formState: { errors }, handleSubmit, watch } = useForm();
+    const navigate = useNavigate();
     const [mostrarContraseña, setMostrarContraseña] = useState(false);
     const [mostrarRepContraseña, setMostrarRepContraseña] = useState(false);
 
@@ -22,19 +23,30 @@ const Formulario = () => {
                     email: data.correo
                 })
             });
-
+    
             if (response.ok) {
                 const result = await response.json();
                 console.log("Usuario registrado:", result);
+                // Aquí asumo que el backend devuelve un token en result.token al registrar el usuario
+                // Redirige al inicio después del registro exitoso
+                navigate('/Login'); 
+            } else if (response.status === 409) {
+                const errorData = await response.json();
+                console.error("Error:", errorData);
+                alert("Error: " + errorData.message); // Muestra un mensaje de usuario ya registrado
             } else {
                 const errorData = await response.json();
                 console.error("Error:", errorData);
+                alert("Error en el registro: " + errorData.message); // Muestra un mensaje de error general
             }
         } catch (error) {
             console.error("Error en la conexión:", error);
+            alert("No se pudo conectar al servidor. Verifica tu conexión o intenta más tarde.");
         }
     };
+    
 
+    
     const contraseña = watch("contraseña");
 
     return (
@@ -144,7 +156,7 @@ const Formulario = () => {
                     {errors.repcontraseña && <p id="error-repcontraseña" className="error-message" data-error-id="repcontraseña">{errors.repcontraseña.message}</p>}
                 </div>
 
-                <input id="boton-registrarse" type="submit" value="Registrarse" />
+                <input id="boton-registrarse" type="submit" value="Registrarse" /> 
 
                 <p id="redirect-message">       
                     ¿Ya tienes una cuenta? <Link to="/Login">Inicia Sesión</Link>
