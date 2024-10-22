@@ -1,0 +1,113 @@
+.reservas-especiales {
+  background-color: #e0f7fa; /* Fondo azul claro */
+  padding: 30px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.reservas-table {
+  width: 100%;
+  max-width: 600px;
+  margin-top: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra suave */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.reservas-table ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.reserva-item {
+  padding: 15px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f9f9f9;
+  transition: background-color 0.3s ease;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+.reserva-item:hover {
+  background-color: #f1f1f1; /* Color gris claro en hover */
+}
+
+.reserva-left {
+  flex: 2;
+  text-align: left;
+}
+
+.pdf-button-container {
+  display: flex;
+  justify-content: center;
+  flex: 1;
+  padding: 0 15px;
+}
+
+.reserva-right {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.estado-botones {
+  display: flex;
+  gap: 10px;
+}
+
+.boton-confirmar, .boton-rechazar {
+  background-color: #3498DB; /* Color azul por defecto */
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.boton-confirmar:hover {
+  background-color: #2e86c1; /* Azul más oscuro en hover */
+}
+
+.boton-rechazar {
+  background-color: #e74c3c; /* Rojo para botón de rechazo */
+}
+
+.boton-rechazar:hover {
+  background-color: #c0392b; /* Rojo más oscuro en hover */
+}
+
+.reservas-button {
+  background-color: #3498DB;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.reservas-button:hover {
+  background-color: #004d40; /* Verde oscuro en hover */
+}
+
+select {
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  background-color: white;
+}
+
+select:focus {
+  outline: none;
+  border-color: #3498DB; /* Borde azul en foco */
+}

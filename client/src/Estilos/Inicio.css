@@ -1,14 +1,16 @@
 /* Inicio.css */
 
 .cuerpo {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 5px;
-    flex-wrap: wrap;
-  }
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  flex-wrap: wrap;
+  position: relative;
+  height: 580px;
+}
   
   @media (max-width: 768px) {
     .cuerpo {
@@ -27,8 +29,12 @@
     justify-content: center;
     color: white;
     font-size: 1.5em;
-    margin-top: 10px;
-  }
+    margin-top: 50px; /* Mover el contenedor gris más abajo */
+    position: relative;
+    left: -7%; /* Mover el contenedor gris más a la izquierda */
+}
+
+
   
   .circulo a {
     text-decoration: none;
@@ -48,9 +54,23 @@
   }
   
   .canchas {
-    width: 450px;
-    height: auto;
+    width: 650px;
+    height: 430px;
+    position: relative;
+    right: -7%; /* Mover la imagen más a la derecha */
+    opacity: 0;  /* Inicialmente oculta */
+    transition: opacity 1s ease-in-out; /* Transición suave para el desvanecimiento */
+    border-radius: 20px;
   }
+  
+  .canchas.fade-in {
+    opacity: 1; /* Aparece gradualmente */
+  }
+  
+  .canchas.fade-out {
+    opacity: 0; /* Desaparece gradualmente */
+  }
+  
   
   @media (max-width: 768px) {
     .canchas {
@@ -60,17 +80,20 @@
   }
   
   .pie {
+    height: auto;
     background-color: #424949;
     display: flex;
     justify-content: space-between;
     padding: 20px;
     color: white;
+    margin-top: auto;
   }
   
   .direcciones {
     display: flex;
     flex-direction: column;
-    width: 50%;
+    width: 100%;
+    margin-top: 30px;
   }
   
   .direcciones ul {
@@ -93,15 +116,30 @@
   .campus1, .campus2, .campus3, .campus4 {
     width: 45%;
   }
+
+  .campus1, .campus3{
+    margin-left: 150px;
+  }
+
+  .campus2, .campus4{
+    margin-left: 170px;
+  }
+
+  .direcciones h3{
+    margin-left: 150px;
+  }
   
   .telefonos {
     width: 50%;
     text-align: right;
+    margin-right: 150px;
+    margin-top: 30px;
   }
+
   
   .telefonos ul {
     list-style: none;
-    padding: 20px;
+    padding: 10px;
     margin: 0 0 20px;
   }
   
@@ -115,12 +153,13 @@
   }
 
   /* Añade estilos específicos para alinear los botones */
-.auth-buttons {
+  .auth-buttons {
     display: flex;
-    flex-direction: column; /* Apilar verticalmente los botones */
-    align-items: center; /* Centrar los botones horizontalmente */
+    flex-direction: column;
+    align-items: flex-start; /* Mover los botones más a la izquierda */
+    margin-left: 20px;
+}
 
-  }
   
   .auth-button1{
   
