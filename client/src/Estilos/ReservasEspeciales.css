@@ -1,5 +1,5 @@
 .reservas-especiales {
-  background-color: #e0f7fa; /* Azul claro */
+  background-color: #e0f7fa; /* Fondo azul claro */
   padding: 30px;
   min-height: 100vh;
   display: flex;
@@ -13,7 +13,7 @@
   margin-top: 20px;
   background-color: white;
   border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra suave */
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -22,7 +22,7 @@
 .reservas-table ul {
   list-style: none;
   padding: 0;
-  margin: 0; 
+  margin: 0;
 }
 
 .reserva-item {
@@ -32,7 +32,7 @@
   justify-content: space-between;
   align-items: center;
   background-color: #f9f9f9;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s ease;
   border-radius: 5px;
   margin-bottom: 10px;
 }
@@ -42,48 +42,48 @@
 }
 
 .reserva-left {
-  flex: 2; /* Se expande más para ocupar más espacio en la izquierda */
-  text-align: left; /* Alinear textos a la izquierda */
+  flex: 2;
+  text-align: left;
 }
 
 .pdf-button-container {
   display: flex;
-  justify-content: center; /* Centra el botón "Descargar PDF" */
-  flex: 1; /* El contenedor del botón ocupa un tamaño fijo en el medio */
-  padding: 0 15px; /* Añadir padding para evitar que se pegue a los lados */
+  justify-content: center;
+  flex: 1;
+  padding: 0 15px;
 }
 
 .reserva-right {
-  flex: 1; /* Ocupa espacio a la derecha */
+  flex: 1;
   display: flex;
-  justify-content: flex-end; /* Alinear los botones a la derecha */
+  justify-content: flex-end;
 }
 
 .estado-botones {
   display: flex;
-  gap: 10px; /* Espaciado entre botones */
+  gap: 10px;
 }
 
 .boton-confirmar, .boton-rechazar {
-  background-color: #3498DB;
+  background-color: #3498DB; /* Color azul por defecto */
   color: white;
   border: none;
   border-radius: 5px;
   padding: 10px 15px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s ease;
 }
 
 .boton-confirmar:hover {
-  background-color: #2e86c1; /* Color más oscuro en hover */
+  background-color: #2e86c1; /* Azul más oscuro en hover */
 }
 
 .boton-rechazar {
-  background-color: #e74c3c; /* Color rojo para rechazar */
+  background-color: #e74c3c; /* Rojo para botón de rechazo */
 }
 
 .boton-rechazar:hover {
-  background-color: #c0392b; /* Color más oscuro en hover */
+  background-color: #c0392b; /* Rojo más oscuro en hover */
 }
 
 .reservas-button {
@@ -93,9 +93,21 @@
   border-radius: 5px;
   padding: 10px 15px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s ease;
 }
 
 .reservas-button:hover {
-  background-color: #004d40; /* Color más oscuro en hover */
+  background-color: #004d40; /* Verde oscuro en hover */
+}
+
+select {
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  background-color: white;
+}
+
+select:focus {
+  outline: none;
+  border-color: #3498DB; /* Borde azul en foco */
 }
