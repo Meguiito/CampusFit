@@ -1,53 +1,27 @@
-import React, { useState, useEffect } from 'react'; 
-import { Link } from 'react-router-dom';
+import React from 'react'; 
 import '../Estilos/Inicio.css'; 
 
 function Inicio() {
   const token = localStorage.getItem('token');
-  const [currentImage, setCurrentImage] = useState(0);
-  const [fadeOut, setFadeOut] = useState(false);  // Nuevo estado para manejar el fade out
-  const images = [
-    '/imgUCT/CanchasUCT.jpg',
-    '/imgUCT/cancha2.jpg',  // Añade más imágenes
-    '/imgUCT/cancha3.jpg',
-    '/imgUCT/cancha4.jpg'
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFadeOut(true);  // Inicia el efecto de fade out antes de cambiar la imagen
-      setTimeout(() => {
-        setCurrentImage((prevImage) => (prevImage + 1) % images.length);
-        setFadeOut(false);  // Después de cambiar la imagen, vuelve a iniciar el fade in
-      }, 1000);  // La duración del fade out debe coincidir con la transición en CSS
-    }, 4000);  // Cambia la imagen cada 4 segundos
-
-    return () => clearInterval(interval);
-  }, [images.length]);
 
   return (
     <div>
       <main>
         <div className="cuerpo">
-          <img 
-            className={`canchas ${fadeOut ? 'fade-out' : 'fade-in'}`} 
-            src={images[currentImage]} 
-            alt="Canchas UCT" 
-          />
           <div className="circulo">
             {token ? (
               <div className="reserva-button">
-                <Link to="/ReservayEquipo">Reserva tu hora y Equipo</Link>
+                <a href="/ReservayEquipo"><span>Reserva tu hora y Equipo</span></a>
               </div>
             ) : (
-              <div className='auth-buttons'>
-                <div className="auth-button1">
-                  <Link to="/Login">Iniciar Sesión</Link>
-                </div>
-                <div className="auth-button2">
-                  <Link to="/Register">Registrarse</Link>
-                </div>
+            <div className="auth-buttons center">
+              <div className="auth-button1 btn-1">
+                <a href="/Login"><span>Iniciar Sesión</span></a>
               </div>
+              <div className="auth-button2 btn-2">
+                <a href="/Register"><span>Registrarse</span></a>
+              </div>
+            </div>
             )}
           </div>
         </div>
