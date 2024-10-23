@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import DatePicker from 'react-datepicker';
+import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css'; 
+import es from 'date-fns/locale/es'; 
+registerLocale('es', es); 
 
 function ReservaEspecial() {
 
   const obtenerProximaFechaHabil = () => {
     const hoy = new Date();
+    hoy.setDate(hoy.getDate() + 3); 
     const dia = hoy.getDay(); 
 
     if (dia === 6) { 
@@ -31,9 +34,9 @@ function ReservaEspecial() {
     }
   
     const dia = fechaMax.getDay();
-    if (dia === 6) { // Sábado
+    if (dia === 6) { 
       fechaMax.setDate(fechaMax.getDate() - 1); 
-    } else if (dia === 0) { // Domingo
+    } else if (dia === 0) { 
       fechaMax.setDate(fechaMax.getDate() - 2); 
     }
   
@@ -42,16 +45,12 @@ function ReservaEspecial() {
 
   const fechaMinima = obtenerProximaFechaHabil();
   const fechaMaxima = calcularFechaMaxima(fechaMinima);
-  const [selectedDate, setSelectedDate] = useState(fechaMinima);
+  const [diaActual] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
   const [error, setError] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [mesesDisponibles, setMesesDisponibles] = useState([]);
-  const [diaActual] = useState(new Date());
   const [reservarDiaEspecifico, setReservarDiaEspecifico] = useState(false);
-  const [maxDate, setMaxDate] = useState(new Date());
-  const [cancha, setCancha] = useState('');
-  const [canchaTipo, setCanchaTipo] = useState('');
-  const [equipo, setEquipo] = useState('');
   const [canchasDisponibles, setCanchasDisponibles] = useState([]);
   const [equiposDisponibles, setEquiposDisponibles] = useState([]);
   const horas = [];
@@ -80,11 +79,11 @@ function ReservaEspecial() {
       Viernes: { horaDesde: "08:00", horaHasta: "10:00", seleccionado: false, cancha: '', equipo: '' },
     },
     dia_esp: {
-      fecha: selectedDate ? selectedDate.toISOString().split('T')[0] : '',
+      fecha: fechaMinima.toLocaleDateString('en-CA'),
       horaDesde: "08:00",
       horaHasta: "10:00",
-      cancha: cancha,
-      equipo: equipo,
+      cancha: '',
+      equipo: '',
     }
   });
 
@@ -95,6 +94,8 @@ function ReservaEspecial() {
     Jueves: [],
     Viernes: [],
   }); 
+
+  const [equipos_Filtrados_DE, setEquiposFiltrados_DE] = useState([]);
 
   for (let h = 8; h <= 20; h += 2) {
     const hour = h < 10 ? `0${h}:00` : `${h}:00`;
@@ -107,11 +108,20 @@ function ReservaEspecial() {
     Jueves: "08:00",
     Viernes: "08:00",
   });
+
+  const setErrorWithTimeout = (message) => {
+    setError(message);
+    setTimeout(() => {
+      setError("");
+    }, 2000);
+  };
   
   const fetchCanchasYEquipos = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      setError('No se encontró el token de autenticación.');
+      setTimeout(() =>{
+        setError('No se encontró el token de autenticación.');
+      }, 2000)
       return;
     }
 
@@ -130,17 +140,31 @@ function ReservaEspecial() {
         setEquiposDisponibles(data.equipos_disponibles)
       } else {
         const errorData = await response.json();
-        setError(errorData.error || 'Error al obtener los datos.');
+        setErrorWithTimeout(errorData.error || 'Error al obtener los datos.')
       }
     } catch (error) {
       console.error('Error de red:', error);
-      setError('Error al conectar con el servidor.');
+      setErrorWithTimeout('Error al conectar con el servidor.')
     }
   };
 
   useEffect(() => {
     fetchCanchasYEquipos();
   }, []);
+
+  useEffect(() => {
+    if (selectedDate) {
+      const nuevafecha = selectedDate.toLocaleDateString('en-CA');
+
+      setFormData((prevState) => ({
+        ...prevState,
+        dia_esp: {
+          ...prevState.dia_esp,
+          fecha: nuevafecha, 
+        },
+      }));
+    }
+  }, [selectedDate]); 
 
   useEffect(() => {
     const mesActual = diaActual.getMonth();
@@ -158,12 +182,6 @@ function ReservaEspecial() {
 
     setMesesDisponibles(mesesSeleccionables);
 
-    // Calcular la fecha máxima
-    const finalSemestre = semestreActual === 1 
-      ? new Date(diaActual.getFullYear(), 6, 0) // Último día de Junio
-      : new Date(diaActual.getFullYear(), 12, 0); // Último día de Diciembre
-
-    setMaxDate(finalSemestre);
   }, [diaActual]);
 
   const handleFileChange = (event) => {
@@ -172,9 +190,14 @@ function ReservaEspecial() {
       if (file.type === 'application/pdf') {
         setSelectedFile(file);  
       } else {
-        setError('Por favor, selecciona un archivo PDF.'); 
+        setErrorWithTimeout('Por favor, selecciona un archivo PDF.')
       }
     }
+  };
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null); // Limpiar el archivo seleccionado
+    setError(""); // Opcionalmente limpiar el error
   };
   
   const convertToMinutes = (time) => {
@@ -184,22 +207,23 @@ function ReservaEspecial() {
 
   const handleHourChange = (dia, tipo, valor) => {
     setFormData((prevState) => {
-      if(!reservarDiaEspecifico){
+
+      if (!reservarDiaEspecifico) {
         if (tipo === "horaHasta" && convertToMinutes(valor) < convertToMinutes(prevState.dias[dia].horaDesde)) {
           console.log("La hora de 'horaHasta' debe ser mayor o igual a 'horaDesde'");
-          return prevState;
+          return prevState; 
         }
-
+  
         if (tipo === "horaDesde") {
           const nuevaHoraHasta = convertToMinutes(prevState.dias[dia].horaHasta) <= convertToMinutes(valor)
-            ? horas.find(hora => convertToMinutes(hora) > convertToMinutes(valor))
+            ? horas.find(hora => convertToMinutes(hora) > convertToMinutes(valor)) || prevState.dias[dia].horaHasta
             : prevState.dias[dia].horaHasta;
-
+  
           setHoraDesdeSeleccionada(prevState => ({
             ...prevState,
             [dia]: valor
           }));
-
+  
           return {
             ...prevState,
             dias: {
@@ -207,12 +231,13 @@ function ReservaEspecial() {
               [dia]: {
                 ...prevState.dias[dia],
                 [tipo]: valor,
-                horaHasta: nuevaHoraHasta
+                horaHasta: nuevaHoraHasta,
               },
             },
           };
         }
-
+  
+        // Actualiza la hora en caso de que sea diferente de horaDesde
         return {
           ...prevState,
           dias: {
@@ -223,16 +248,20 @@ function ReservaEspecial() {
             },
           },
         };
-      } else{
+  
+      } else if (dia === 1) {
+        // Verificación para el día específico
         if (tipo === "horaHasta" && convertToMinutes(valor) < convertToMinutes(prevState.dia_esp.horaDesde)) {
           console.log("La hora de 'horaHasta' debe ser mayor o igual a 'horaDesde'");
-          return prevState;
+          return prevState; // Retorna el estado anterior si hay un error
         }
+  
+        // Lógica para actualizar horaDesde para día específico
         if (tipo === "horaDesde") {
           const nuevaHoraHasta = convertToMinutes(prevState.dia_esp.horaHasta) <= convertToMinutes(valor)
-          ? horas.find(hora => convertToMinutes(hora) > convertToMinutes(valor))
-          : prevState.dia_esp.horaHasta;
-        
+            ? horas.find(hora => convertToMinutes(hora) > convertToMinutes(valor)) || prevState.dia_esp.horaHasta
+            : prevState.dia_esp.horaHasta;
+  
           return {
             ...prevState,
             dia_esp: {
@@ -243,11 +272,19 @@ function ReservaEspecial() {
           };
         }
       }
+  
+      return {
+        ...prevState,
+        dia_esp: {
+          ...prevState.dia_esp,
+          [tipo]: valor,
+        },
+      };
     });
   };
-
+  
   const horasHastaDisponibles = (dia) => horas.filter(hora => convertToMinutes(hora) > convertToMinutes(horaDesdeSeleccionada[dia]));
-
+  const horaHastaDispDE = horas.filter(hora => convertToMinutes(hora) > convertToMinutes(formData.dia_esp.horaDesde))
 
   const handleCheckboxChange = (dia) => {
     setFormData((prevState) => ({
@@ -277,62 +314,19 @@ function ReservaEspecial() {
     setSelectedDate(null);
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    console.log(formData.dias);
-
-    if(!reservarDiaEspecifico){
-      const mesesSeleccionados = Object.keys(formData.meses).filter(mes => formData.meses[mes]);
-      if (mesesSeleccionados.length === 0) {
-        setError("Debes seleccionar al menos un mes.");
-        return;
-      };
-    
-      const diasSeleccionados = Object.keys(formData.dias).filter(dia => formData.dias[dia].seleccionado === true);
-      if (diasSeleccionados.length === 0) {
-        setError("Debes seleccionar al menos un dia en general.");
-        return;
-      };    
-      if (!formData.pdf) {
-        setError("Debes cargar un archivo PDF.");
-        return;
-      };
-      
-      setError(" ")
-      const reservas = crearReservas_DG(mesesSeleccionados);
-      console.log(formData);
-      console.log(reservas);
-  } else{
-
-  }
-  };
-
-  const crearReservas_DG = (meses) => {
-  };
-
-  
-  const generarIdUnico = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  };
-  
-
   const handleCanchaChange = (dia, e) => { 
     const canchaNombre = e.target.value;
     const canchaSeleccionada = canchasDisponibles.find(c => c.nombre === canchaNombre);
-  
+    const canchaTipo = canchaSeleccionada.tipo;
     if (!canchaSeleccionada) {
       console.log("Cancha no encontrada");
       return;
     }
-    
-    if(!reservarDiaEspecifico){
+  
+    if (!reservarDiaEspecifico) {
       setFormData((prevState) => {
         const diaData = prevState.dias[dia];
-    
+        
         return {
           ...prevState,
           dias: {
@@ -344,19 +338,28 @@ function ReservaEspecial() {
             },
           },
         };
-      })
-     } else {
-         setCancha(canchaNombre);
-     };
+      });
+      const equiposFiltradosDG = equiposDisponibles.filter(equipo => equipo.tipo === canchaTipo);
+      setEquiposFiltrados((prevState) => ({
+        ...prevState,
+        [dia]: equiposFiltradosDG,
+      }));
   
-    const equiposFiltradosParaDia = equiposDisponibles.filter(e => e.tipo === canchaSeleccionada.tipo);
-    setEquiposFiltrados((prevState) => ({
-      ...prevState,
-      [dia]: equiposFiltradosParaDia 
-    }));
+    } else if(dia === 1) {
+      setFormData((prevState) => ({
+        ...prevState,
+        dia_esp: {
+          ...prevState.dia_esp,
+          cancha: canchaNombre, 
+          equipo: canchaSeleccionada ? '' : prevState.dia_esp.equipo, 
+        },
+      }));
+      const equiposFiltrados_DE = equiposDisponibles.filter(equipo => equipo.tipo === canchaTipo);
+      setEquiposFiltrados_DE(equiposFiltrados_DE);
+    }
   };
-  
 
+  
 const handleEquipoChange = (dia, e) => {
     const equipoSeleccionado = e.target.value;
 
@@ -374,13 +377,47 @@ const handleEquipoChange = (dia, e) => {
                   },
               },
           };
-       } else{
-            setEquipo(equipoSeleccionado);
-         }
+       } else if(dia === 1){
+         return {
+           ...prevState,
+           dia_esp: {
+             ...prevState.dia_esp,
+             equipo: equipoSeleccionado,
+           },
+        };
+      }
     });
-};
+  };
 
-  
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!selectedFile) {
+      setErrorWithTimeout("Debes cargar un archivo PDF.")
+      return;
+    };
+
+    if(!reservarDiaEspecifico){
+      const mesesSeleccionados = Object.keys(formData.meses).filter(mes => formData.meses[mes]);
+      if (mesesSeleccionados.length === 0) {
+        setErrorWithTimeout("Debes seleccionar al menos un mes.")
+        return;
+      };
+    
+      const diasSeleccionados = Object.keys(formData.dias).filter(dia => formData.dias[dia].seleccionado === true);
+      if (diasSeleccionados.length === 0) {
+        setErrorWithTimeout("Debes seleccionar al menos un dia en general.")
+        return;
+      };    
+           
+      setError(" ")
+      console.log(formData.meses);
+      console.log(formData.dias);
+      
+  } else if(reservarDiaEspecifico){
+      console.log(formData.dia_esp)
+  }
+  };
+
   return (
     <FormularioContainer>
       <h2>Reserva Especial</h2>
@@ -388,15 +425,33 @@ const handleEquipoChange = (dia, e) => {
       <form onSubmit={handleSubmit}>
         <FormGroup>
           <Label htmlFor="archivo">Subir archivo (PDF):</Label>
+          {/* Ocultar el input original */}
           <Input
             type="file"
             id="archivo"
             name="archivo"
             accept=".pdf"
             onChange={handleFileChange}
+            style={{ display: "none" }} // Ocultar el input
           />
+          {/* Botón para abrir el diálogo de archivo */}
+          <button
+            type="button"
+            onClick={() => document.getElementById("archivo").click()}
+          >
+            Seleccionar archivo
+          </button>
+          {/* Mostrar el nombre del archivo seleccionado */}
+          {selectedFile && (
+            <div>
+              <p>Archivo seleccionado: {selectedFile.name}</p>
+              {/* Botón para borrar el archivo seleccionado */}
+              <Button  onClick={handleRemoveFile}>
+                Borrar archivo
+              </Button>
+            </div>
+          )}
         </FormGroup>
-
         <FormGroup>
           <h3>Seleccione cómo desea reservar:</h3>
           <LabelRadio>
@@ -424,7 +479,7 @@ const handleEquipoChange = (dia, e) => {
               <DatePickerWrapper>
                 <DatePicker
                   selected={selectedDate}
-                  onChange={(date) => {setSelectedDate(date);}}
+                  onChange={(date) => {setSelectedDate(date)}}
                   inline
                   minDate={fechaMinima}
                   maxDate={fechaMaxima}
@@ -432,6 +487,9 @@ const handleEquipoChange = (dia, e) => {
                   dateFormat="P"
                   locale="es"
                   required
+                  showMonthDropdown={false}
+                  showYearDropdown={false}
+                  dropdownMode="select"
                 />
               </DatePickerWrapper>
             </Fecha>
@@ -440,8 +498,8 @@ const handleEquipoChange = (dia, e) => {
               <Label htmlFor="horaDesde">Desde:</Label>
               <Select
                 id="horaDesde"
-                value={formData.dias[selectedDate ? selectedDate.toLocaleDateString() : "Lunes"]?.horaDesde || ''} // Usar el día seleccionado
-                onChange={(e) => handleHourChange(selectedDate.toLocaleDateString(), "horaDesde", e.target.value)}
+                value={formData.dia_esp.horaDesde}
+                onChange={(e) => handleHourChange(1, "horaDesde", e.target.value)}
                 required
               >
                 {horas.slice(0, -1).map((hora) => (
@@ -454,22 +512,24 @@ const handleEquipoChange = (dia, e) => {
               <Label htmlFor="horaHasta">Hasta:</Label>
               <Select
                 id="horaHasta"
-                value={formData.dias[selectedDate ? selectedDate.toLocaleDateString() : "Lunes"]?.horaHasta || ''}
-                onChange={(e) => handleHourChange(selectedDate.toLocaleDateString(), "horaHasta", e.target.value)}
+                value={formData.dia_esp.horaHasta}
+                onChange={(e) => handleHourChange(1, "horaHasta", e.target.value)}
               >
-                {horasHastaDisponibles[selectedDate.toLocaleDateString()].map((hora) => (
-                  <option key={hora} value={hora}>
-                    {hora}
-                  </option>
-                ))}
+                {horaHastaDispDE.map((hora) => (
+                    <option key={hora} value={hora}>
+                      {hora}
+                    </option>
+                  )) 
+                }
               </Select>
+
 
               <Label htmlFor="cancha">Selecciona la Cancha:</Label>
               <Select 
                 id="cancha"
                 name="cancha"
-                value={cancha}
-                onChange={(e) => handleCanchaChange(e)}
+                value={formData.dia_esp.cancha}
+                onChange={(e) => handleCanchaChange(1, e)}
                 required
               >
                 <option value="">Selecciona una cancha</option>
@@ -482,13 +542,13 @@ const handleEquipoChange = (dia, e) => {
               <Select
                 id="equipo"
                 name="equipo"
-                value={equipo}
-                onChange={(e) => setEquipo(e.target.value)}
+                value={formData.dia_esp.equipo}
+                onChange={(e) => handleEquipoChange(1, e)}
                 required
-                disabled={!canchaTipo} 
+                disabled={!formData.dia_esp.cancha} 
               >
                 <option value="">Selecciona un equipo</option>
-                {equiposFiltrados.map((e) => (
+                {equipos_Filtrados_DE.map((e) => (
                   <option key={e._id} value={e.nombre}>{e.nombre}</option>
                 ))}
               </Select>
