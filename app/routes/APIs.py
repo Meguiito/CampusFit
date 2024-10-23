@@ -192,6 +192,41 @@ def get_profile():
 
 
 
+@app.route('/api/canchas_equipo', methods=['GET'])  # Cambia a GET
+@jwt_required()
+def obtener_canchas():
+    try:
+        # Obtener todas las canchas
+        canchas = mongo.db.Espacios.find()
+
+        canchas_disponibles = []
+
+        # Procesar canchas
+        for cancha in canchas:
+            cancha['_id'] = str(cancha['_id'])  # Convertir ObjectId a string
+            canchas_disponibles.append(cancha)
+
+        equipos = mongo.db.Equipo.find()
+
+        equipos_disponibles = []
+
+        for equipo in equipos:
+            equipo['_id'] = str(equipo['_id'])  # Convertir ObjectId a string
+            equipos_disponibles.append(equipo)
+
+        return jsonify({
+            "canchas_disponibles": canchas_disponibles,
+            "equipos_disponibles": equipos_disponibles
+        }), 200
+
+    except PyMongoError as e:
+        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
+
+
+
 
 @app.route('/api/equipo_and_canchas', methods=['POST'])
 @jwt_required()
