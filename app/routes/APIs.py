@@ -501,6 +501,38 @@ scheduler.add_job(
     id='eliminar_reservas_antiguas',
     replace_existing=True
 )
+
+
+
+
+@app.route('/reservas-dia', methods=['GET'])
+@jwt_required()
+def obtener_reservas_del_dia():
+    try:
+        # Obtener la fecha actual (sin uso de pytz)
+        fecha_actual = datetime.now().strftime('%Y-%m-%d')
+
+        # Filtrar reservas del día actual
+        reservas = list(mongo.db.Reservas.find({
+            "fecha": fecha_actual
+        }).sort("hora", 1))  # Ordenar por hora ascendente
+
+        # Si no hay reservas
+        if not reservas:
+            return jsonify({"message": "No hay reservas para el día de hoy."}), 200
+
+        # Filtrar los campos que queremos devolver
+        reservas_filtradas = [{
+            "cancha": reserva.get("cancha"),
+            "equipo": reserva.get("equipo"),
+            "email_usuario": reserva.get("email_usuario")
+        } for reserva in reservas]
+
+        return jsonify(reservas_filtradas), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
     
 
 @app.errorhandler(404)
