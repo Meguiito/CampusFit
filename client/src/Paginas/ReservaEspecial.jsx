@@ -314,10 +314,47 @@ function ReservaEspecial() {
     setSelectedDate(null);
   };
 
-  const handleCanchaChange = (dia, e) => { 
+  const handleCanchaChange = (dia, e) => {
     const canchaNombre = e.target.value;
+  
+    // Si el valor de la cancha es vacío (deseleccionado), resetea los valores
+    if (canchaNombre === '') {
+      if (!reservarDiaEspecifico) {
+        setFormData((prevState) => {
+          const diaData = prevState.dias[dia];
+          return {
+            ...prevState,
+            dias: {
+              ...prevState.dias,
+              [dia]: {
+                ...diaData,
+                cancha: '', // Resetea la cancha
+                equipo: '', // Resetea el equipo también
+              },
+            },
+          };
+        });
+        setEquiposFiltrados((prevState) => ({
+          ...prevState,
+          [dia]: [], // Resetea la lista de equipos
+        }));
+      } else if (dia === 1) {
+        setFormData((prevState) => ({
+          ...prevState,
+          dia_esp: {
+            ...prevState.dia_esp,
+            cancha: '', // Resetea la cancha
+            equipo: '', // Resetea el equipo también
+          },
+        }));
+        setEquiposFiltrados_DE([]); // Resetea la lista de equipos filtrados
+      }
+      return;
+    }
+  
     const canchaSeleccionada = canchasDisponibles.find(c => c.nombre === canchaNombre);
-    const canchaTipo = canchaSeleccionada.tipo;
+    const canchaTipo = canchaSeleccionada ? canchaSeleccionada.tipo : '';
+  
     if (!canchaSeleccionada) {
       console.log("Cancha no encontrada");
       return;
@@ -326,7 +363,7 @@ function ReservaEspecial() {
     if (!reservarDiaEspecifico) {
       setFormData((prevState) => {
         const diaData = prevState.dias[dia];
-        
+  
         return {
           ...prevState,
           dias: {
@@ -339,13 +376,14 @@ function ReservaEspecial() {
           },
         };
       });
+  
       const equiposFiltradosDG = equiposDisponibles.filter(equipo => equipo.tipo === canchaTipo);
       setEquiposFiltrados((prevState) => ({
         ...prevState,
         [dia]: equiposFiltradosDG,
       }));
   
-    } else if(dia === 1) {
+    } else if (dia === 1) {
       setFormData((prevState) => ({
         ...prevState,
         dia_esp: {
@@ -354,11 +392,11 @@ function ReservaEspecial() {
           equipo: canchaSeleccionada ? '' : prevState.dia_esp.equipo, 
         },
       }));
+  
       const equiposFiltrados_DE = equiposDisponibles.filter(equipo => equipo.tipo === canchaTipo);
       setEquiposFiltrados_DE(equiposFiltrados_DE);
     }
   };
-
   
 const handleEquipoChange = (dia, e) => {
     const equipoSeleccionado = e.target.value;
