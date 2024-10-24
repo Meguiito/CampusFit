@@ -73,19 +73,6 @@ input:hover {
     transform: scale(1.05);
 }
 
-/* Mensajes de error */
-#error-nombres,
-#error-apellidos,
-#error-rut,
-#error-correo,
-#error-contraseña,
-#error-repcontraseña {
-    font-size: 12px;
-    color: red;
-    margin-top: 5px;
-    margin-bottom: 15px; /* Asegúrate de que haya suficiente espacio */
-    transition: margin-bottom 0.3s ease; /* Transición suave para el movimiento */
-}
 
 /* Botón de registro */
 #boton-registrarse {
@@ -141,8 +128,12 @@ input:hover {
 #error-correo,
 #error-contraseña,
 #error-repcontraseña {
-    font-size: 14px;  /* Tamaño de fuente */
-    color: red;       /* Color del texto */
+    background-color: #3498DB;
+    padding: 3px;
+    border-radius: 40px;
+    text-align: center;
+    font-size: 15px;  /* Tamaño de fuente */
+    color: #ffe600;       /* Color del texto */
     margin-top: 5px; /* Espacio superior respecto al campo de entrada */
     margin-bottom: 10px; /* Espacio inferior para que no se superponga */
     animation: shake 0.3s ease-in-out; /* Animación de error */

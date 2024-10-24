@@ -150,7 +150,7 @@ function ReservaEspecial() {
 
   useEffect(() => {
     fetchCanchasYEquipos();
-  }, []);
+  });
 
   useEffect(() => {
     if (selectedDate) {

@@ -145,11 +145,15 @@
 
 
 .error-message {
-    font-size: 14px;
-    color: red;
+    background-color: #3498DB;
+    padding: 3px;
+    border-radius: 40px;
+    text-align: center;
+    font-size: 15px;  /* Tamaño de fuente */
+    color: #ffe600;       /* Color del texto */
     margin-top: 5px; /* Espacio superior respecto al campo de entrada */
     margin-bottom: 10px; /* Espacio inferior para que no se superponga */
-    animation: shake 0.3s ease-in-out;
+    animation: shake 0.3s ease-in-out; /* Animación de error */
 }
 
 @keyframes shake {

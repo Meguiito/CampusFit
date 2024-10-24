@@ -4,14 +4,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import "../Estilos/Register.css";
 
 const Formulario = () => {
-    const { register, formState: { errors }, handleSubmit, watch } = useForm();
+    const { register, formState: { errors }, handleSubmit, watch, setError } = useForm();
     const navigate = useNavigate();
     const [mostrarContraseñas, setMostrarContraseñas] = useState({
         contraseña: false,
         repContraseña: false
     });
     
-
     const onSubmit = async (data) => {
         try {
             const response = await fetch('http://localhost:5000/users', {
@@ -26,28 +25,38 @@ const Formulario = () => {
                     email: data.correo
                 })
             });
-    
+        
             if (response.ok) {
                 alert("Usuario registrado correctamente");
                 navigate('/Login');
             } else {
-                const result = await response.json();
-                alert("Error en el registro: " + result.error); 
+                const errorData = await response.json();
+                if (response.status === 401) {
+                    setError('rut', { type: 'server', message: errorData.error });
+                } else if (response.status === 402) {
+                    setError('correo', { type: 'server', message: errorData.error });
+                } else if (response.status === 403) {
+                    setError('rut', { type: 'server', message: errorData.error_rut });
+                    setError('correo', { type: 'server', message: errorData.error_email });
+                } 
+                else {
+                    alert("Error inesperado. Por favor, intenta de nuevo más tarde.");
+                }
             }
-    
+        
         } catch (error) {
             console.error("Error en la conexión:", error);
-            alert("No se pudo conectar al servidor. Verifica tu conexión o intenta más tarde.");
+            alert("Error de conexión. Intenta de nuevo más tarde.");
         }
-    };
-    
+        
+    }
 
     
     const contraseña = watch("contraseña");
 
     return (
         <div id="register-body">
-            <form id="formulario-registro" onSubmit={handleSubmit(onSubmit)}>
+            <form id="formulario-registro" onSubmit={handleSubmit(onSubmit)} noValidate>
                 <h2 id="titulo-registro">Registro</h2>
                 
                 {/* Campo Nombres */}

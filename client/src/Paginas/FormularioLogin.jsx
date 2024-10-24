@@ -5,9 +5,10 @@ import { login } from '../Tokens/authService';
 import "../Estilos/Login.css";
 
 const FormularioLogin = () => {
-    const { register, formState: { errors }, handleSubmit } = useForm();
+    const { register, formState: { errors }, handleSubmit, setError } = useForm();
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false); 
+    const [serverError, setServerError] = useState(""); // Para manejar errores de servidor
 
     useEffect(() => {
         document.body.setAttribute('id', 'login-body');
@@ -28,17 +29,19 @@ const FormularioLogin = () => {
             }
         } catch (error) {
             console.error("Error en la conexión:", error);
-            if (error.response) {
-                alert(error.response.data.error);
+            if (error.response?.status === 402) {
+                setError('email', { type: 'server', message: error.response.data.error });
+            } else if (error.response?.status === 401) {
+                setError('password', { type: 'server', message: error.response.data.error });
             } else {
-                alert("Error inesperado. Por favor, intenta de nuevo más tarde.");
+                setServerError("Error inesperado. Por favor, intenta de nuevo más tarde.");
             }
         }
     };
 
     return (
         <div id="form-container">
-            <form id="login-form" onSubmit={handleSubmit(onSubmit)}>
+            <form id="login-form" onSubmit={handleSubmit(onSubmit)} noValidate>
                 <h2 id="login-title">Iniciar Sesión</h2>
                 <div id="email-group">
                     <label htmlFor="email-input">Correo</label>
@@ -48,8 +51,8 @@ const FormularioLogin = () => {
                         {...register('email', {
                             required: "El campo correo es requerido",
                             pattern: {
-                                value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
-                                message: 'Formato de correo no válido'
+                                value: /^[a-zA-Z0-9._%+-]+@(alu\.uct\.cl|uct\.cl)$/,
+                                message: 'El correo debe terminar en @alu.uct.cl o @uct.cl'
                             }
                         })}
                     />
@@ -76,6 +79,7 @@ const FormularioLogin = () => {
                     {errors.password && <p id="password-error" className="error-message">{errors.password.message}</p>}
                 </div>
                 <input id="submit-button" type="submit" value="Iniciar Sesión" />
+                {serverError && <p className="error-message">{serverError}</p>}
                 <p id="redirect-message" className="redirect-message">
                     ¿No tienes una cuenta? <Link to="/Register">Regístrate</Link>
                 </p>
