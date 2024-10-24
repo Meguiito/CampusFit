@@ -89,16 +89,22 @@ def verify_user():
 
         user = mongo.db.Usuarios.find_one({'email': email})
 
-        if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
-            tipo_usuario = "client"
-            isAdmin = False  # Este usuario no es admin
+        if user:
+            if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
+                tipo_usuario = "client"
+                isAdmin = False  
+            else:
+                return jsonify({"error": "Contraseña incorrecta"}), 401
         else:
             user = mongo.db.Admin.find_one({'email': email})
-            if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
-                tipo_usuario = "admin"
-                isAdmin = True  # Este usuario es admin
+            if user:
+                if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
+                    tipo_usuario = "admin"
+                    isAdmin = True 
+                else:
+                    return jsonify({"error": "Contraseña incorrecta"}), 401
             else:
-                return jsonify({"error": "Usuario o contraseña incorrectos"}), 401
+                return jsonify({"error": "Correo no registrado"}), 401
 
         rut = user.get('rut')
         username = user.get('username')
