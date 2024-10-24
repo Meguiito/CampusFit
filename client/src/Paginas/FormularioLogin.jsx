@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'; // Agrega useState
+import React, { useEffect, useState } from 'react'; 
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
 import { login } from '../Tokens/authService';
@@ -7,7 +7,7 @@ import "../Estilos/Login.css";
 const FormularioLogin = () => {
     const { register, formState: { errors }, handleSubmit } = useForm();
     const navigate = useNavigate();
-    const [showPassword, setShowPassword] = useState(false); // Estado para mostrar/ocultar contraseña
+    const [showPassword, setShowPassword] = useState(false); 
 
     useEffect(() => {
         document.body.setAttribute('id', 'login-body');
@@ -18,9 +18,9 @@ const FormularioLogin = () => {
 
     const onSubmit = async (data) => {
         try {
-            const result = await login(data.correo, data.contraseña);
+            const result = await login(data.email, data.password);
             console.log("Inicio de sesión exitoso:", result);
-            const isAdmin = localStorage.getItem('isAdmin') === 'true';
+            const isAdmin = result.isAdmin;
             if (isAdmin) {
                 navigate("/admin/inicio");
             } else {
@@ -28,7 +28,11 @@ const FormularioLogin = () => {
             }
         } catch (error) {
             console.error("Error en la conexión:", error);
-            alert("Usuario no registrado");
+            if (error.response) {
+                alert(error.response.data.error);
+            } else {
+                alert("Error inesperado. Por favor, intenta de nuevo más tarde.");
+            }
         }
     };
 
@@ -41,7 +45,7 @@ const FormularioLogin = () => {
                     <input
                         id="email-input"
                         type="email"
-                        {...register('correo', {
+                        {...register('email', {
                             required: "El campo correo es requerido",
                             pattern: {
                                 value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
@@ -49,7 +53,7 @@ const FormularioLogin = () => {
                             }
                         })}
                     />
-                    {errors.correo && <p id="email-error" className="error-message">{errors.correo.message}</p>}
+                    {errors.email && <p id="email-error" className="error-message">{errors.email.message}</p>}
                     <i id="email-icon" className="input-icon"></i>
                 </div>
                 <div id="password-group">
@@ -58,7 +62,7 @@ const FormularioLogin = () => {
                         <input
                             id="password-input"
                             type={showPassword ? 'text' : 'password'}
-                            {...register('contraseña', {
+                            {...register('password', {
                                 required: "El campo contraseña es requerido",
                                 minLength: { value: 6, message: "Mínimo 6 caracteres" }
                             })}
@@ -69,7 +73,7 @@ const FormularioLogin = () => {
                             onClick={() => setShowPassword(!showPassword)}
                         ></i>
                     </div>
-                    {errors.contraseña && <p id="password-error" className="error-message">{errors.contraseña.message}</p>}
+                    {errors.password && <p id="password-error" className="error-message">{errors.password.message}</p>}
                 </div>
                 <input id="submit-button" type="submit" value="Iniciar Sesión" />
                 <p id="redirect-message" className="redirect-message">

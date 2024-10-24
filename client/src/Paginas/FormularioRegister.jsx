@@ -6,8 +6,11 @@ import "../Estilos/Register.css";
 const Formulario = () => {
     const { register, formState: { errors }, handleSubmit, watch } = useForm();
     const navigate = useNavigate();
-    const [mostrarContraseña, setMostrarContraseña] = useState(false);
-    const [mostrarRepContraseña, setMostrarRepContraseña] = useState(false);
+    const [mostrarContraseñas, setMostrarContraseñas] = useState({
+        contraseña: false,
+        repContraseña: false
+    });
+    
 
     const onSubmit = async (data) => {
         try {
@@ -25,20 +28,13 @@ const Formulario = () => {
             });
     
             if (response.ok) {
-                const result = await response.json();
-                console.log("Usuario registrado:", result);
-                // Aquí asumo que el backend devuelve un token en result.token al registrar el usuario
-                // Redirige al inicio después del registro exitoso
-                navigate('/Login'); 
-            } else if (response.status === 409) {
-                const errorData = await response.json();
-                console.error("Error:", errorData);
-                alert("Error: " + errorData.message); // Muestra un mensaje de usuario ya registrado
+                alert("Usuario registrado correctamente");
+                navigate('/Login');
             } else {
-                const errorData = await response.json();
-                console.error("Error:", errorData);
-                alert("Error en el registro: " + errorData.message); // Muestra un mensaje de error general
+                const result = await response.json();
+                alert("Error en el registro: " + result.error); 
             }
+    
         } catch (error) {
             console.error("Error en la conexión:", error);
             alert("No se pudo conectar al servidor. Verifica tu conexión o intenta más tarde.");
@@ -122,18 +118,22 @@ const Formulario = () => {
                     <div id="password-input-container">
                         <input
                             id="input-contraseña"
-                            type={mostrarContraseña ? "text" : "password"}
+                            type={mostrarContraseñas.contraseña ? "text" : "password"}
                             {...register('contraseña', {
                                 required: "El campo contraseña es requerido",
+                                minLength: {
+                                    value: 6,
+                                    message: "La contraseña debe tener al menos 6 caracteres"
+                                }
                             })}
                         />
                         <i 
-                            id="password-iconn" 
-                            className={`fas ${mostrarContraseña ? 'fa-eye-slash' : 'fa-eye'}`}
-                            onClick={() => setMostrarContraseña(!mostrarContraseña)} 
+                            id="password-icon" 
+                            className={`fas ${mostrarContraseñas.contraseña ? 'fa-eye-slash' : 'fa-eye'}`}
+                            onClick={() => setMostrarContraseñas(prev => ({ ...prev, contraseña: !prev.contraseña }))} 
                         />
                     </div>
-                    {errors.contraseña && <p id="error-contraseña" className="error-message" data-error-id="contraseña">{errors.contraseña.message}</p>}
+                    {errors.contraseña && <p id="error-contraseña" className="error-message">{errors.contraseña.message}</p>}
                 </div>
 
                 <div id="campo-repcontraseña">
@@ -141,7 +141,7 @@ const Formulario = () => {
                     <div id="password-input-container">
                         <input
                             id="input-repcontraseña"
-                            type={mostrarRepContraseña ? "text" : "password"}
+                            type={mostrarContraseñas.repContraseña ? "text" : "password"}
                             {...register('repcontraseña', {
                                 required: "El campo repetir contraseña es requerido",
                                 validate: value => value === contraseña || "Las contraseñas no coinciden"
@@ -149,12 +149,13 @@ const Formulario = () => {
                         />
                         <i 
                             id="rep-password-icon" 
-                            className={`fas ${mostrarRepContraseña ? 'fa-eye-slash' : 'fa-eye'}`}
-                            onClick={() => setMostrarRepContraseña(!mostrarRepContraseña)} 
+                            className={`fas ${mostrarContraseñas.repContraseña ? 'fa-eye-slash' : 'fa-eye'}`}
+                            onClick={() => setMostrarContraseñas(prev => ({ ...prev, repContraseña: !prev.repContraseña }))} 
                         />
                     </div>
-                    {errors.repcontraseña && <p id="error-repcontraseña" className="error-message" data-error-id="repcontraseña">{errors.repcontraseña.message}</p>}
+                    {errors.repcontraseña && <p id="error-repcontraseña" className="error-message">{errors.repcontraseña.message}</p>}
                 </div>
+
 
                 <input id="boton-registrarse" type="submit" value="Registrarse" /> 
 
