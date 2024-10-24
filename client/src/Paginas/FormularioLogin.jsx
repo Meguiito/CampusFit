@@ -51,7 +51,7 @@ const FormularioLogin = () => {
                         {...register('email', {
                             required: "El campo correo es requerido",
                             pattern: {
-                                value: /^[a-zA-Z0-9._%+-]+@(alu\.uct\.cl|uct\.cl)$/,
+                                value: /^[a-zA-Z0-9._%+-]+@(alu\.uct\.cl|uct\.cl|uctadmin\.cl)$/,
                                 message: 'El correo debe terminar en @alu.uct.cl o @uct.cl'
                             }
                         })}
