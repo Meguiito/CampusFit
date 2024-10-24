@@ -42,16 +42,21 @@ def create_user():
         password = data.get("password")
         email = data.get("email")
 
-        if not all([username, rut, password, email]):
-            return jsonify({"error": "Todos los campos son requeridos"}), 400
-
         existing_user_rut = mongo.db.Usuarios.find_one({"rut": rut})
-        if existing_user_rut:
-            return jsonify({"error": "El RUT ya está registrado"}), 400
-
         existing_user_email = mongo.db.Usuarios.find_one({"email": email})
-        if existing_user_email:
-            return jsonify({"error": "El correo institucional ya está registrado"}), 400
+
+        if existing_user_rut and existing_user_email:
+            return jsonify({
+                "error_rut": "El RUT ya está registrado", 
+                "error_email": "El correo institucional ya está registrado"
+            }), 403
+        
+        elif existing_user_rut:
+            return jsonify({"error": "El RUT ya está registrado"}), 401
+
+        elif existing_user_email:
+            return jsonify({"error": "El correo institucional ya está registrado"}), 402
+
 
         salt = bcrypt.gensalt()
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
@@ -84,27 +89,26 @@ def verify_user():
         email = data.get("email")
         password = data.get("password")
 
-        if not all([email, password]):
-            return jsonify({"error": "Email y contraseña son requeridos"}), 400
-
         user = mongo.db.Usuarios.find_one({'email': email})
 
         if user:
+            # Verifica la contraseña
             if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
                 tipo_usuario = "client"
-                isAdmin = False  
+                isAdmin = False  # Este usuario no es admin
             else:
                 return jsonify({"error": "Contraseña incorrecta"}), 401
         else:
+            # Si no se encontró en Usuarios, verifica en Admin
             user = mongo.db.Admin.find_one({'email': email})
             if user:
                 if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
                     tipo_usuario = "admin"
-                    isAdmin = True 
+                    isAdmin = True  # Este usuario es admin
                 else:
                     return jsonify({"error": "Contraseña incorrecta"}), 401
             else:
-                return jsonify({"error": "Correo no registrado"}), 401
+                return jsonify({"error": "Correo no registrado"}), 402
 
         rut = user.get('rut')
         username = user.get('username')
