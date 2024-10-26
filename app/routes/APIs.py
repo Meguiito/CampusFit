@@ -246,56 +246,50 @@ def obtener_equipos_y_canchas_disponibles():
         fecha = data.get("fecha")
         hora = data.get("hora")
 
-        reservas_existentes = mongo.db.Reservas.find({
-            "fecha": fecha,
-            "hora": hora
-        })
-
-        reservas_especiales_existentes = mongo.db.Reservas_especiales.find({
-            "fecha": fecha,
-            "hora": hora
-        })
-
-        equipos_reservados = []
         canchas_reservadas = []
+        equipos_reservados = []
+        horas_no_disponibles = set()
 
-        for reserva in reservas_existentes:
-            canchas_reservadas.append(reserva.get("cancha"))
-            equipos_reservados.append(reserva.get("equipo"))
+        if fecha and not hora:
+            reservas_existentes = mongo.db.Reservas.find({"fecha": fecha})
 
-        for reserva_especial in reservas_especiales_existentes:
-            canchas_reservadas.append(reserva_especial.get("cancha"))
-            equipos_reservados.append(reserva_especial.get("equipo"))
+            total_canchas = mongo.db.Espacios.count_documents({})
 
-        canchas = mongo.db.Espacios.find()
-        equipos = mongo.db.Equipo.find()  
+            reservas_por_hora = {}
+            for reserva in reservas_existentes:
+                hora_reserva = reserva.get("hora")
+                if hora_reserva not in reservas_por_hora:
+                    reservas_por_hora[hora_reserva] = 0
+                reservas_por_hora[hora_reserva] += 1
+            
+            for hora_reserva, cantidad_reservas in reservas_por_hora.items():
+                if cantidad_reservas >= total_canchas:
+                    horas_no_disponibles.add(hora_reserva)
+            
+            return jsonify({
+                "horas_no_disponibles": list(horas_no_disponibles)
+            }), 200
 
-        canchas_disponibles = []
-        for cancha in canchas:
-            if cancha.get("nombre") not in canchas_reservadas:
-                cancha['_id'] = str(cancha['_id'])
-                canchas_disponibles.append(cancha)
+        elif fecha and hora:
+            reservas_existentes = mongo.db.Reservas.find({"fecha": fecha, "hora": hora})
 
-        equipos_disponibles = []
-        for equipo in equipos:
-            if equipo.get("nombre") not in equipos_reservados:
-                equipo['_id'] = str(equipo['_id'])
-                equipos_disponibles.append(equipo)
+            for reserva in reservas_existentes:
+                canchas_reservadas.append(reserva.get("cancha"))
+                equipos_reservados.append(reserva.get("equipo"))
 
         return jsonify({
-            "canchas_disponibles": canchas_disponibles,
-            "equipos_disponibles": equipos_disponibles
+            "canchas_reservadas": canchas_reservadas,
+            "equipos_reservados": equipos_reservados,
         }), 200
 
     except PyMongoError as e:
         return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+    
 
 
-
-
-
+    
 @app.route('/api/reservas', methods=['GET'])
 @jwt_required()
 def obtener_reservas():
