@@ -6,6 +6,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import es from 'date-fns/locale/es'; 
 registerLocale('es', es); 
 
+
 function ReservayEquipo() {
   const navigate = useNavigate(); 
   const obtenerProximaFechaHabil = () => {
@@ -48,15 +49,18 @@ function ReservayEquipo() {
   const fechaMaxima = calcularFechaMaxima(fechaMinima);
 
   const [disp, setDis] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(fechaMinima);
+  const [selectedDate, setSelectedDate] = useState(obtenerProximaFechaHabil());
   const [time, setTime] = useState(null);
   const [error, setError] = useState(null);
   const [cancha, setCancha] = useState('');
   const [canchaTipo, setCanchaTipo] = useState('');
   const [equipo, setEquipo] = useState('');
-  const [canchasDisponibles, setCanchasDisponibles] = useState([]);
-  const [equiposDisponibles, setEquiposDisponibles] = useState([]);
-
+  const [canchasReservadas, setCanchasReservadas] = useState([]);
+  const [equiposReservados, setEquiposReservados] = useState([]);
+  const [canchas, setCanchas] = useState([]);
+  const [equipos, setEquipos] = useState([]);
+  const [horasNoDisponibles, setHorasNoDisponibles] = useState([]);
+  
   useEffect(() => {
     const fetchCanchasYEquipos = async () => {
       const token = localStorage.getItem('token');
@@ -64,38 +68,115 @@ function ReservayEquipo() {
         setError('No se encontró el token de autenticación.');
         return;
       }
-
+    
       try {
-        const response = await fetch('http://localhost:5000/api/equipo_and_canchas', {
-          method: 'POST',
+        const response = await fetch('http://localhost:5000/api/canchas_equipo', {
+          method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
           },
-          body: JSON.stringify({ 
-            fecha: selectedDate.toISOString().split('T')[0], 
-            hora: time 
-          }),
         });
-
+    
         if (response.ok) {
           const data = await response.json();
-          setCanchasDisponibles(data.canchas_disponibles);
-          setEquiposDisponibles(data.equipos_disponibles);
+          console.log(data);
+          setCanchas(data.canchas_disponibles);
+          setEquipos(data.equipos_disponibles);
         } else {
           const errorData = await response.json();
           setError(errorData.error || 'Error al obtener los datos.');
         }
       } catch (error) {
-        console.error('Error de red:', error);
+        setError('Error de red: ' + error.message);
+      }
+    };
+
+    fetchCanchasYEquipos()
+  }, [])
+
+  useEffect(() => {
+    const fetchCanchasYEquiposReservados = async () => {
+      try {
+        const body = {
+          fecha: selectedDate.toISOString().split('T')[0], // Formato YYYY-MM-DD
+          hora: null,
+        };
+        if (time) {
+          body.hora = time;
+        } 
+
+        const response = await fetch('http://localhost:5000/api/equipo_and_canchas', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem("token")}`
+          },
+          body: JSON.stringify(body)
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (time) {
+            setCanchasReservadas(data.canchas_reservadas);
+            setEquiposReservados(data.equipos_reservados);
+          } else {
+            console.log(data.horas_no_disponibles)
+            setHorasNoDisponibles(data.horas_no_disponibles);
+          }
+        } else {
+          console.error('Error en la solicitud:', response.statusText);
+        }
+      } catch (error) {
+        console.error('Error en la solicitud:', error);
+      }
+    };
+
+    if(selectedDate){
+      fetchCanchasYEquiposReservados();
+    }
+  }, [selectedDate, time])
+
+  useEffect(() => {
+    const verificarReservas = async () => {
+      setError(null);
+      const token = localStorage.getItem('token');
+      const formData = {
+        fecha: selectedDate.toISOString().split('T')[0],
+      };
+
+      try {
+        const response = await fetch('http://localhost:5000/api/verificar_reservas', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (response.ok) {
+          setDis(true);
+        } else if (response.status === 409) {
+          const result = await response.json();
+          setDis(false);
+          setError(result.error);
+        } else if (response.status === 410) {
+          const result = await response.json();
+          setDis(false);
+          alert(result.error);
+          navigate("/TuReservacion");
+        }
+
+      } catch (error) {
         setError('Error al conectar con el servidor.');
       }
     };
 
-    if (selectedDate && time) {
-      fetchCanchasYEquipos();
+    if(selectedDate){
+      verificarReservas()
     }
-  }, [selectedDate, time]);
+  }, [selectedDate, navigate]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -133,55 +214,27 @@ function ReservayEquipo() {
     }
   };
 
-  useEffect(() => {
-    const verificarReservas = async () => {
-      setError(null);
-      const token = localStorage.getItem('token');
-      const formData = {
-        fecha: selectedDate.toISOString().split('T')[0], 
-      };
-
-      try {
-        const response = await fetch('http://localhost:5000/api/verificar_reservas', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify(formData),
-        });
-
-        if (response.ok) {
-          setDis(true);
-        } else if (response.status === 409) {
-          const result = await response.json();
-          setDis(false);
-          setError(result.error);
-        } else if (response.status === 410) {
-          const result = await response.json();
-          setDis(false);
-          alert(result.error);
-          navigate("/TuReservacion"); 
-        }
-
-      } catch (error) {
-        setError('Error al conectar con el servidor.');
+    const generarOpcionesTiempo = () => {
+      const opciones = [];
+      for (let hora = 8; hora <= 18; hora += 2) {
+        const horaFormateada = hora.toString().padStart(2, '0') + ':00';
+        const isDisabled = horasNoDisponibles.includes(horaFormateada);
+    
+        opciones.push(
+          <option 
+            key={horaFormateada} 
+            value={horaFormateada} 
+            disabled={isDisabled || esHoraPasada(horaFormateada)}
+            className={isDisabled ? 'hora-no-disponible' : ''}
+          >
+            {horaFormateada}
+          </option>
+        );
       }
+      return opciones;
     };
 
-    if (selectedDate) {
-      verificarReservas();
-    }
-  }, [selectedDate, navigate]); 
-
-  const generarOpcionesTiempo = () => {
-    const opciones = [];
-    for (let hora = 8; hora <= 18; hora += 2) {
-      const horaFormateada = hora.toString().padStart(2, '0') + ':00';
-      opciones.push(horaFormateada);
-    }
-    return opciones;
-  };
+  
 
   const esHoraPasada = (horaSeleccionada) => {
     const hoy = new Date();
@@ -194,11 +247,29 @@ function ReservayEquipo() {
     return hora < ahora.getHours() || (hora === ahora.getHours() && minuto < ahora.getMinutes());
   };
 
+
+  const generarOpcionesCancha = () => {
+    return (canchas || []).map((cancha) => {
+      const isReserved = canchasReservadas.includes(cancha.nombre);
+      return (
+        <option 
+          key={cancha._id} 
+          value={cancha.nombre} 
+          disabled={isReserved}
+          className={isReserved ? 'cancha-reservada' : ''}
+        >
+          {cancha.nombre}
+        </option>
+      );
+    });
+  };
+  
+  
   const handleCanchaChange = (e) => {
     const canchaNombre = e.target.value;
     setCancha(canchaNombre);
 
-    const canchaSeleccionada = canchasDisponibles.find(c => c.nombre === canchaNombre);
+    const canchaSeleccionada = canchas.find(c => c.nombre === canchaNombre);
     if (canchaSeleccionada) {
       setCanchaTipo(canchaSeleccionada.tipo);
     } else {
@@ -206,9 +277,22 @@ function ReservayEquipo() {
     }
   };
 
-  const equiposFiltrados = canchaTipo
-    ? equiposDisponibles.filter(equipo => equipo.tipo === canchaTipo)
-    : equiposDisponibles;
+  const generarOpcionesEquipo = () => {    
+    const equiposfiltrados = equipos.filter(equipo => equipo.tipo === canchaTipo)
+    return (equiposfiltrados || []).map((equipo) => {
+      const isReserved = equiposReservados.includes(equipo.nombre);
+      return (
+        <option 
+          key={equipo._id} 
+          value={equipo.nombre} 
+          disabled={isReserved}
+          className={isReserved ? 'equipo-reservado' : ''}
+        >
+          {equipo.nombre}
+        </option>
+      );
+    });
+  };
 
   return (
     <Wrapper>
@@ -248,11 +332,7 @@ function ReservayEquipo() {
               required
             >
               <option value="">Selecciona una hora</option>
-              {generarOpcionesTiempo().map((hora) => (
-                <option key={hora} value={hora} disabled={esHoraPasada(hora)}>
-                  {hora}
-                </option>
-              ))}
+              {generarOpcionesTiempo()}
             </Select>
           </Hora>
           <Cancha>
@@ -263,12 +343,10 @@ function ReservayEquipo() {
               value={cancha}
               onChange={handleCanchaChange}
               required
-              disabled={!time} 
+              disabled={!disp || !time} 
             >
               <option value="">Selecciona una cancha</option>
-              {canchasDisponibles.map((c) => (
-                <option key={c._id} value={c.nombre}>{c.nombre}</option>
-              ))}
+              {generarOpcionesCancha()}
             </Select>
           </Cancha>
           <Equipo>
@@ -279,12 +357,10 @@ function ReservayEquipo() {
               value={equipo}
               onChange={(e) => setEquipo(e.target.value)}
               required
-              disabled={!time || !canchaTipo} 
+              disabled={!disp || !time || !canchaTipo} 
             >
               <option value="">Selecciona un equipo</option>
-              {equiposFiltrados.map((e) => (
-                <option key={e._id} value={e.nombre}>{e.nombre}</option>
-              ))}
+              {generarOpcionesEquipo()}              
             </Select>
           </Equipo>
           <Button type="submit">Reservar</Button>
@@ -510,6 +586,15 @@ const Hora = styled.div`
     font-weight: bold;
     color: white;
   }
+
+  .hora-no-disponible {
+    background-color: rgba(255, 0, 0, 0.5);
+  }
+
+  .cancha-reservada {
+    background-color: rgba(255, 0, 0, 0.5);
+  }
+
 `;
 
 const Cancha = styled.div`
@@ -522,6 +607,11 @@ const Cancha = styled.div`
     font-weight: bold;
     color: white;
   }
+
+  .cancha-reservada {
+    background-color: rgba(255, 0, 0, 0.5);
+  }
+
 `;
 
 const Equipo = styled.div`
@@ -533,6 +623,10 @@ const Equipo = styled.div`
     margin-bottom: 5px;
     font-weight: bold;
     color: white;
+  }
+
+  .equipo-reservado {
+    background-color: rgba(255, 0, 0, 0.5);
   }
 `;
 
