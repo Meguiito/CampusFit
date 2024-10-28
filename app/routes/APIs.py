@@ -312,50 +312,69 @@ def obtener_reservas():
 
 
 
+
 @app.route('/special_request', methods=['POST'])
 @jwt_required()
 def handle_special_request():
     try:
+        # Validar que el archivo está en la solicitud
         if 'file' not in request.files:
             return jsonify({"error": "No se encontró el archivo en la solicitud"}), 400
 
+        # Obtener el archivo PDF
         file = request.files['file']
-
         if file.filename == '':
             return jsonify({"error": "No se seleccionó ningún archivo"}), 400
 
+        # Verificar que es un archivo PDF
+        mime_type = magic.from_buffer(file.read(1024), mime=True)
+        file.seek(0)
+        if mime_type != 'application/pdf':
+            return jsonify({"error": "El archivo no es un PDF válido"}), 400
+
+        # Crear carpeta de subidas si no existe
         upload_folder = 'uploads'
         if not os.path.exists(upload_folder):
             os.makedirs(upload_folder)
 
-        mime_type = magic.from_buffer(file.read(1024), mime=True)
-        file.seek(0) 
-
-        if mime_type != 'application/pdf':
-            return jsonify({"error": "El archivo no es un PDF válido"}), 400
-
+        # Guardar el archivo
         filepath = os.path.join(upload_folder, file.filename)
         file.save(filepath)
 
+        # Obtener información del usuario autenticado y datos adicionales del formulario
         identity = get_jwt_identity()
+        meses = request.form.get('meses')
+        dias = request.form.get('dias')
+        dia_esp = request.form.get('dia_esp')
 
         reserva_data = {
             "filename": file.filename,
             "filepath": filepath,
             "upload_date": datetime.utcnow(),
-            "user_email": identity.get('email') 
+            "user_email": identity.get('email'),
+            "user_name": identity.get('username')
         }
 
+        # Deserializar los datos si están presentes
+        if meses and dias:
+            reserva_data["meses"] = json.loads(meses)
+            reserva_data["dias"] = json.loads(dias)
+            reserva_data["tipo"] = "DG"
+        elif dia_esp:
+            reserva_data["dia_esp"] = json.loads(dia_esp)
+            reserva_data["tipo"] = "DE"
+            
+        # Guardar los datos en la base de datos
         result = mongo.db.Reservas_especiales.insert_one(reserva_data)
 
         return jsonify({
-            "message": "PDF subido exitosamente",
-            "file_path": filepath,
+            "message": "Reserva especial enviada para su revisión",
             "mongo_id": str(result.inserted_id)
         }), 200
 
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
 
 
 
