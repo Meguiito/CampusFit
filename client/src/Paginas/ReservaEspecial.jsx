@@ -118,9 +118,7 @@ function ReservaEspecial() {
   const fetchCanchasYEquipos = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      setTimeout(() =>{
-        setError('No se encontró el token de autenticación.');
-      }, 2000)
+      setErrorWithTimeout('No se encontró el token de autenticación.');
       return;
     }
 
@@ -136,7 +134,7 @@ function ReservaEspecial() {
       if (response.ok) {
         const data = await response.json();
         setCanchasDisponibles(data.canchas_disponibles);
-        setEquiposDisponibles(data.equipos_disponibles)
+        setEquiposDisponibles(data.equipos_disponibles);
       } else {
         const errorData = await response.json();
         setErrorWithTimeout(errorData.error || 'Error al obtener los datos.')

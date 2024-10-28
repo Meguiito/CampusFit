@@ -1,89 +1,137 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import '../Estilos/ReservasEspeciales.css';
 
 function ReservasEspeciales() {
-  const [reservas, setReservas] = useState([]);
+  const [error, setError] = useState("");
+  const [reservasEspeciales, setReservasEspeciales] = useState([]);
+  const [mesesReservados, setMesesReservados] = useState([]);
+  const [diasReservados, setDiasReservados] = useState([]);
+  const [horasDesdeReservadas, setHorasDesdeReservadas] = useState([]);
+  const [horasHastaReservadas, setHorasHastaReservadas] = useState([]);
+  const [canchasReservadas, setcanchasReservadas] = useState([]);
+  const [equiposReservados, setequiposReservados] = useState([]);
 
-  // Función para obtener las reservas desde el backend
-  const fetchReservas = async () => {
+  const setErrorWithTimeout = (message) => {
+    setError(message);
+    setTimeout(() => setError(""), 2000);
+  };
+
+  const fetchReservasEspeciales = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setErrorWithTimeout('No se encontró el token de autenticación.');
+      return;
+    }
+
     try {
-      const response = await axios.get('http://localhost:5000/special_request');
-      setReservas(response.data);
+      const response = await fetch('http://localhost:5000/get_special_requests', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setReservasEspeciales(data);
+      } else {
+        const errorData = await response.json();
+        setErrorWithTimeout(errorData.error || 'Error al obtener las reservas especiales.');
+      }
     } catch (error) {
-      console.error('Error fetching reservas:', error);
+      console.error('Error de red:', error);
+      setErrorWithTimeout('Error al conectar con el servidor.');
     }
   };
 
-  // Se ejecuta al montar el componente
   useEffect(() => {
-    fetchReservas();
+    fetchReservasEspeciales();
   }, []);
 
-  // Función para manejar el cambio de estado
-  const handleStatusChange = (index, newStatus) => {
-    const updatedReservas = reservas.map((reserva, idx) =>
-      idx === index ? { ...reserva, estado: newStatus } : reserva
-    );
-    setReservas(updatedReservas);
+  const obtenerMeses = () => {
+    const mesesReservadosActualizados = reservasEspeciales
+      .filter(reserva => reserva.tipo === "DG")
+      .map(reserva => Object.keys(reserva.meses).filter(mes => reserva.meses[mes]));
+
+    setMesesReservados(mesesReservadosActualizados);
   };
 
+  const obtenerDias = () => {
+    const diasReservadosActualizados = reservasEspeciales
+      .filter(reserva => reserva.tipo === "DG")
+      .map(reserva => Object.keys(reserva.dias).filter(dia => reserva.dias[dia].seleccionado));
+
+    setDiasReservados(diasReservadosActualizados);
+  };
+
+  const obtenerHoraDesde = () => {
+    const horaDesdeActualizados = reservasEspeciales
+      .filter(reserva => reserva.tipo === "DG")
+      .map(reserva => Object.keys(reserva.dias)
+        .filter(dia => reserva.dias[dia].seleccionado)
+        .map(dia => reserva.dias[dia].horaDesde));
+
+    setHorasDesdeReservadas(horaDesdeActualizados);
+  };
+
+  const obtenerHoraHasta = () => {
+    const horaHastaActualizados = reservasEspeciales
+      .filter(reserva => reserva.tipo === "DG")
+      .map(reserva => Object.keys(reserva.dias)
+        .filter(dia => reserva.dias[dia].seleccionado)
+        .map(dia => reserva.dias[dia].horaHasta));
+
+    setHorasHastaReservadas(horaHastaActualizados);
+  };
+
+  const obtenerCanchas = () => {
+    const canchasActualizadas = reservasEspeciales
+      .filter(reserva => reserva.tipo === "DG")
+      .map(reserva => Object.keys(reserva.dias)
+        .filter(dia => reserva.dias[dia].seleccionado)
+        .map(dia => reserva.dias[dia].cancha));
+
+    setcanchasReservadas(canchasActualizadas);
+  };
+
+  const obtenerEquipos = () => {
+    const equiposActualizados = reservasEspeciales
+      .filter(reserva => reserva.tipo === "DG")
+      .map(reserva => Object.keys(reserva.dias)
+        .filter(dia => reserva.dias[dia].seleccionado)
+        .map(dia => reserva.dias[dia].equipo));
+
+    setequiposReservados(equiposActualizados);
+  };
+
+
+  useEffect(() => {
+    if (reservasEspeciales.length > 0) {
+      obtenerMeses();
+      obtenerDias();
+      obtenerHoraDesde();
+      obtenerHoraHasta();
+      obtenerCanchas();
+      obtenerEquipos();
+    }
+  }, [reservasEspeciales]);
+
   return (
-    <div className="reservas-especiales">
-      <h2>Reservas Especiales</h2>
-      <div className="reservas-table">
-        <ul>
-          {reservas.map((reserva, index) => (
-            <li key={reserva._id} className="reserva-item">
-              <div className="reserva-left">
-                <p><strong>Email:</strong> {reserva.user_email}</p>
-                <p><strong>Reservas:</strong> {reserva.reservas}</p>
-                <p><strong>Mes:</strong> {reserva.meses}</p>
-                <p><strong>Cancha:</strong> {reserva.cancha}</p>
-                <p><strong>Equipo:</strong> {reserva.equipo}</p>
-                <p><strong>Fecha de Subida:</strong> {new Date(reserva.upload_date).toLocaleDateString()}</p>
-              </div>
-
-              <div className="pdf-button-container">
-                {reserva.filepath && (
-                  <a 
-                    href={reserva.filepath} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="reservas-button"
-                  >
-                    Descargar PDF
-                  </a>
-                )}
-              </div>
-
-              <div className="reserva-right">
-                <p><strong>Estado:</strong></p>
-                <div className="estado-botones">
-                  <button 
-                    onClick={() => handleStatusChange(index, 'Confirmado')} 
-                    className="boton-confirmar"
-                  >
-                    Confirmar
-                  </button>
-                  <button 
-                    onClick={() => handleStatusChange(index, 'Rechazado')} 
-                    className="boton-rechazar"
-                  >
-                    Rechazar
-                  </button>
-                  <button 
-                    onClick={() => handleStatusChange(index, 'Pendiente')} 
-                    className="boton-extra"
-                  >
-                    Pendiente
-                  </button>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+    <div>
+      {error && <div className="error">{error}</div>}
+      <h1>Meses Reservados</h1>
+      <pre>{JSON.stringify(mesesReservados, null, 2)}</pre>
+      <h1>Días Reservados</h1>
+      <pre>{JSON.stringify(diasReservados, null, 2)}</pre>
+      <h1>Horas Desde Reservadas</h1>
+      <pre>{JSON.stringify(horasDesdeReservadas, null, 2)}</pre>
+      <h1>Horas Hasta Reservadas</h1>
+      <pre>{JSON.stringify(horasHastaReservadas, null, 2)}</pre>
+      <h1>Canchas Reservadas</h1>
+      <pre>{JSON.stringify(canchasReservadas, null, 2)}</pre>
+      <h1>Equipos Reservados</h1>
+      <pre>{JSON.stringify(equiposReservados, null, 2)}</pre>
     </div>
   );
 }
