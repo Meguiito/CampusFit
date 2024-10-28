@@ -56,7 +56,6 @@ function ReservaEspecial() {
   const horas = [];
 
   const [formData, setFormData] = useState({
-    archivo: null,
     meses: {
       Enero: false,
       Febrero: false,
@@ -429,33 +428,48 @@ const handleEquipoChange = (dia, e) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!selectedFile) {
-      setErrorWithTimeout("Debes cargar un archivo PDF.")
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setErrorWithTimeout('No se encontró el token de autenticación.');
       return;
-    };
+    }
 
-    if(!reservarDiaEspecifico){
-      const mesesSeleccionados = Object.keys(formData.meses).filter(mes => formData.meses[mes]);
-      if (mesesSeleccionados.length === 0) {
-        setErrorWithTimeout("Debes seleccionar al menos un mes.")
-        return;
-      };
-    
-      const diasSeleccionados = Object.keys(formData.dias).filter(dia => formData.dias[dia].seleccionado === true);
-      if (diasSeleccionados.length === 0) {
-        setErrorWithTimeout("Debes seleccionar al menos un dia en general.")
-        return;
-      };    
-           
-      setError(" ")
-      console.log(formData.meses);
-      console.log(formData.dias);
-      
-  } else if(reservarDiaEspecifico){
-      console.log(formData.dia_esp)
-  }
-  };
+    try {
+      const formDataENVIO = new FormData();
+      if(!reservarDiaEspecifico){
+        formDataENVIO.append('file', selectedFile);
+        formDataENVIO.append('meses', JSON.stringify(formData.meses));
+        formDataENVIO.append('dias', JSON.stringify(formData.dias));
 
+      } else if(reservarDiaEspecifico){
+        formDataENVIO.append('file', selectedFile);
+        formDataENVIO.append('dia_esp', JSON.stringify(formData.dia_esp));
+      }
+
+      console.log("Datos antes del envío:", formDataENVIO);
+
+      const response = await fetch("http://localhost:5000/special_request", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        },
+        body: formDataENVIO,
+      });
+
+      if (response.ok) {
+        alert("La reserva especial fue enviada para su revisión.");
+      } else {
+        const errorData = await response.json();
+        setErrorWithTimeout(errorData.error || "Error en el envío del formulario.");
+      }
+    } catch (error) {
+      console.error("Error de red:", error);
+      setErrorWithTimeout("Error al conectar con el servidor.");
+    }
+};
+
+  
   return (
     <FormularioContainer>
       <h2>Reserva Especial</h2>
