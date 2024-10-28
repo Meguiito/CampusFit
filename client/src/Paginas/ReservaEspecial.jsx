@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css'; 
-import es from 'date-fns/locale/es'; 
-registerLocale('es', es); 
+import es from 'date-fns/locale/es';
+registerLocale('es', es);
 
 function ReservaEspecial() {
 
@@ -78,7 +78,7 @@ function ReservaEspecial() {
       Viernes: { horaDesde: "08:00", horaHasta: "10:00", seleccionado: false, cancha: '', equipo: '' },
     },
     dia_esp: {
-      fecha: fechaMinima.toLocaleDateString('en-CA'),
+      fecha: fechaMinima.toLocaleDateString('es-CL'),
       horaDesde: "08:00",
       horaHasta: "10:00",
       cancha: '',
@@ -151,7 +151,7 @@ function ReservaEspecial() {
 
   useEffect(() => {
     if (selectedDate) {
-      const nuevafecha = selectedDate.toLocaleDateString('en-CA');
+      const nuevafecha = selectedDate.toLocaleDateString('es-CL');
 
       setFormData((prevState) => ({
         ...prevState,

@@ -27,6 +27,7 @@ const InicioAdmin = () => {
         };
 
         fetchReservas();
+        console.log(reservas)
     }, []);
 
     return (

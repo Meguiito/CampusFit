@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
@@ -67,7 +66,7 @@ function TuReservacion() {
           <Reservacion>
             {reservas.map((reserva, index) => (
               <Detalle key={index}>
-                <strong>Día:</strong> {new Date(reserva.fecha).toLocaleDateString()}<br />
+                <strong>Día:</strong> {reserva.fecha}<br />
                 <strong>Hora:</strong> {reserva.hora}<br />
                 <strong>Cancha:</strong> {reserva.cancha}<br />
                 <strong>Equipo:</strong> {reserva.equipo}<br />

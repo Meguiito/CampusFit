@@ -3,9 +3,8 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import es from 'date-fns/locale/es'; 
-registerLocale('es', es); 
-
+import es from 'date-fns/locale/es';
+registerLocale('es', es);
 
 function ReservayEquipo() {
   const navigate = useNavigate(); 
@@ -99,7 +98,7 @@ function ReservayEquipo() {
     const fetchCanchasYEquiposReservados = async () => {
       try {
         const body = {
-          fecha: selectedDate.toISOString().split('T')[0], // Formato YYYY-MM-DD
+          fecha: selectedDate.toLocaleDateString('es-CL'), // Formato YYYY-MM-DD
           hora: null,
         };
         if (time) {
@@ -142,7 +141,7 @@ function ReservayEquipo() {
       setError(null);
       const token = localStorage.getItem('token');
       const formData = {
-        fecha: selectedDate.toISOString().split('T')[0],
+        fecha: selectedDate.toLocaleDateString('es-CL'),
       };
 
       try {
@@ -184,7 +183,7 @@ function ReservayEquipo() {
 
     const token = localStorage.getItem('token');
     const formData = {
-      fecha: selectedDate.toISOString().split('T')[0], // Formato YYYY-MM-DD
+      fecha: selectedDate.toLocaleDateString('es-CL'), // Formato YYYY-MM-DD
       hora: time,
       cancha: cancha,
       equipo: equipo,
@@ -216,7 +215,7 @@ function ReservayEquipo() {
 
     const generarOpcionesTiempo = () => {
       const opciones = [];
-      for (let hora = 8; hora <= 18; hora += 2) {
+      for (let hora = 2; hora <= 18; hora += 2) {
         const horaFormateada = hora.toString().padStart(2, '0') + ':00';
         const isDisabled = horasNoDisponibles.includes(horaFormateada);
     
