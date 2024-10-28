@@ -9,7 +9,7 @@ from pymongo.errors import PyMongoError, ServerSelectionTimeoutError
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
-
+import json
 
 app = Flask(__name__)
 
@@ -376,6 +376,35 @@ def handle_special_request():
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
 
+
+
+@app.route('/get_special_requests', methods=['GET'])
+@jwt_required()
+def get_special_requests():
+    try:
+        # Obtener la identidad del token JWT
+        identity = get_jwt_identity()
+        email = identity.get('email')
+
+        # Verificar si el usuario es admin
+        admin_user = mongo.db.Admin.find_one({'email': email})
+        if not admin_user:
+            return jsonify({"error": "Acceso denegado: solo administradores"}), 403
+
+
+        # Consulta para obtener las reservas especiales
+        reservas_especiales = mongo.db.Reservas_especiales.find()
+
+        # Convertir el cursor en una lista y eliminar el campo '_id' de cada documento
+        reservas_list = []
+        for reserva in reservas_especiales:
+            reserva['_id'] = str(reserva['_id'])  # Convertir ObjectId a string
+            reservas_list.append(reserva)
+
+        return jsonify(reservas_list), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
 
 
