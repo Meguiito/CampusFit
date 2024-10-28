@@ -561,13 +561,19 @@ scheduler.add_job(
 @jwt_required()
 def obtener_reservas_del_dia():
     try:
-        # Obtener la fecha actual (sin uso de pytz)
-        fecha_actual = datetime.now().strftime('%Y-%m-%d')
+        identity = get_jwt_identity()
+        email = identity.get('email')
 
-        # Filtrar reservas del día actual
+        admin_user = mongo.db.Admin.find_one({'email': email})
+        if not admin_user:
+            return jsonify({"error": "Acceso denegado: solo administradores"}), 403
+
+
+        fecha_actual = datetime.now().strftime('%d-%m-%Y')
+
         reservas = list(mongo.db.Reservas.find({
             "fecha": fecha_actual
-        }).sort("hora", 1))  # Ordenar por hora ascendente
+        }).sort("hora", 1)) 
 
         # Si no hay reservas
         if not reservas:
@@ -584,6 +590,7 @@ def obtener_reservas_del_dia():
 
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
 
     
 
