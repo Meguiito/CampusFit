@@ -1,31 +1,62 @@
 .inicio {
-  background-image: url('../Img/fondo.jpg'); /* Imagen de fondo */
-  background-size: cover; /* Asegúrate de que cubra todo el fondo */
+  background-image: url('../Img/fondo.jpg'); /* Fondo general de la sección */
+  background-size: cover;
   padding: 20px;
-  min-height: 100vh; /* Altura mínima para cubrir toda la pantalla */
+  min-height: 100vh;
   display: flex;
-  flex-direction: column; /* Mantiene el contenido en columna */
-  align-items: center; /* Alinea el contenido al centro */
+  flex-direction: column;
+  align-items: center;
 }
 
 .inicio-content {
-  display: flex; /* Usar flexbox para el contenido */
-  flex-direction: row; /* Disposición en fila para los cards */
-  justify-content: center; /* Centra los cards horizontalmente */
-  flex-wrap: wrap; /* Permite que los cards se envuelvan si no hay suficiente espacio */
-  width: 100%; /* Ancho total del contenedor */
-  margin-top: 20px; /* Margen superior */
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: 20px;
 }
 
 .card {
   background-color: white;
-  border-radius: 15px; /* Bordes redondeados */
+  background-image: url('../Img/fondotest.png'); /* Fondo general de la card */
+  background-size: cover;
+  background-position: center;
+  border-radius: 15px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  padding: 15px;
-  width: 250px; /* Aumenta el ancho */
-  height: 150px; /* Añade altura para hacerla más rectangular */
-  text-align: center;
-  margin: 20px; /* Espaciado entre los cards */
+  padding: 20px;
+  width: 500px; /* Ancho para hacerla rectangular */
+  height: 250px; /* Alto para ajuste de proporción */
+  display: flex;
+  align-items: center;
+  text-align: left;
+  margin: 20px;
+}
+
+.card .info {
+  flex: 1; /* Espacio para los textos */
+}
+
+.card .info p {
+  margin: 10px 0;
+  font-size: 18px;
+  font-weight: normal;
+  color: #333; /* Color oscuro */
+}
+
+.card .info p strong {
+  font-weight: bold;
+  color: #111; /* Color más oscuro para títulos */
+}
+
+.card .image-container {
+  width: 200px; /* Tamaño específico para la imagen */
+  height: 200px;
+  background-image: url('../Img/ejemplo.png'); /* Imagen adicional dentro de la card */
+  background-size: cover;
+  background-position: center;
+  border-radius: 10px;
+  margin-left: 20px;
 }
 
 
@@ -38,5 +69,24 @@ h1 {
 p {
   margin: 5px 0; /* Margen para los párrafos */
   font-size: 16px; /* Tamaño de fuente de los párrafos */
+}
+
+.logout-button {
+  background-color: rgba(255, 0, 0, 0.3); /* Rojo transparente */
+  border: 2px solid rgba(255, 0, 0, 0.5); /* Borde rojo más oscuro */
+  color: white;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.3s; /* Animación de transición */
+  margin-top: 20px;
+  display: block;
+  text-align: center;
+}
+
+.logout-button:hover {
+  background-color: rgba(255, 0, 0, 0.5); /* Color más intenso al pasar el cursor */
+  transform: scale(1.05); /* Aumenta ligeramente el tamaño */
 }
 

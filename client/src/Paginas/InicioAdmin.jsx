@@ -1,34 +1,74 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import '../Estilos/InicioAdmin.css';
-
+import { logout, isAdmin } from '../Tokens/authService';
 const InicioAdmin = () => {
-    const [reservas, setReservas] = useState([]); // Inicialmente un arreglo vacío
+    const [reservas, setReservas] = useState([]);
     const [error, setError] = useState(null);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
-        const fetchReservas = async () => {
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+            // Si no hay token, redirige al login
+            window.location.href = '/login';
+            return;
+        }
+
+        const fetchProfileData = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/reservas-dia', {
+                const response = await axios.get('http://localhost:5000/profile', {
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}` // Asegúrate de que estás usando el token correcto
+                        Authorization: `Bearer ${token}`
                     }
                 });
-                
-                // Asegúrate de que response.data sea un arreglo
-                if (Array.isArray(response.data)) {
-                    setReservas(response.data);
+
+                const profileData = response.data;
+
+                if (profileData.tipo_de_usuario === 'admin') {
+                    setIsAdmin(true);
+                    fetchReservas();
+                } else if (profileData.tipo_de_usuario === 'client') {
+                    // Si el usuario es un cliente, redirige a la página de inicio de usuarios
+                    window.location.href = '/';
                 } else {
-                    setReservas([]); // Si no es un arreglo, establece reservas como vacío
+                    setError('Acceso denegado: solo los administradores pueden ver esta página.');
                 }
             } catch (err) {
-                setError(err.response ? err.response.data.message : 'Error al obtener las reservas');
+                setError('Error al verificar el perfil de usuario');
+                window.location.href = '/login';
             }
         };
 
-        fetchReservas();
-        console.log(reservas)
+        fetchProfileData();
     }, []);
+
+    const fetchReservas = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/reservas-dia', {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (Array.isArray(response.data)) {
+                setReservas(response.data);
+            } else {
+                setReservas([]);
+            }
+        } catch (err) {
+            setError(err.response ? err.response.data.message : 'Error al obtener las reservas');
+        }
+    };
+
+    const handleLogout = () => {
+        logout();
+    };
+
+    if (error) {
+        return <div className="error-message">{error}</div>;
+    }
 
     return (
         <div className="inicio">
@@ -36,17 +76,21 @@ const InicioAdmin = () => {
             {error && <div className="error-message">{error}</div>}
             <div className="inicio-content">
                 {reservas.length === 0 ? (
-                    <p>No hay reservas para mostrar.</p> // Mensaje cuando reservas está vacío
+                    <p>No hay reservas para mostrar.</p>
                 ) : (
                     reservas.map((reserva, index) => (
                         <div className="card" key={index}>
-                            <p>Cancha: {reserva.cancha}</p>
-                            <p>Equipo: {reserva.equipo}</p>
-                            <p>Email: {reserva.email_usuario}</p>
+                            <div className="info">
+                                <p><strong>Cancha:</strong> {reserva.cancha}</p>
+                                <p><strong>Equipo:</strong> {reserva.equipo}</p>
+                                <p><strong>Email:</strong> {reserva.email_usuario}</p>
+                            </div>
+                            <div className="image-container"></div>
                         </div>
                     ))
                 )}
             </div>
+            <button className="logout-button" onClick={handleLogout}>Cerrar sesión</button>
         </div>
     );
 };
