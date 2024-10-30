@@ -628,6 +628,47 @@ def obtener_reservas_del_dia():
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
+
+@app.route('/eliminar-reserva', methods=['DELETE'])
+@jwt_required()
+def eliminar_reserva():
+    try:
+        identity = get_jwt_identity()
+        email = identity.get('email')
+        
+        # Obtiene los datos de la solicitud
+        data = request.get_json()
+        reserva_id = data.get('reserva_id')
+        password = data.get('password')
+        motivo = data.get('motivo')
+
+        # Verifica la existencia del usuario y su contraseña
+        admin_user = mongo.db.Admin.find_one({'email': email})
+        if not admin_user or not bcrypt.checkpw(password.encode('utf-8'), admin_user['password']):
+            return jsonify({"error": "Contraseña incorrecta"}), 401
+
+        # Verifica la existencia de la reserva
+        reserva = mongo.db.Reservas.find_one({"_id": reserva_id})
+        if not reserva:
+            return jsonify({"error": "Reserva no encontrada"}), 404
+
+        # Elimina la reserva
+        mongo.db.Reservas.delete_one({"_id": reserva_id})
+
+        # Almacena el motivo de la eliminación
+        mongo.db.MotivosEliminacion.insert_one({
+            "reserva_id": reserva_id,
+            "email_usuario": email,
+            "motivo": motivo,
+            "fecha_eliminacion": datetime.now().strftime('%d-%m-%Y %H:%M:%S')
+        })
+
+        return jsonify({"message": "Reserva eliminada con éxito"}), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
+
 @app.errorhandler(404)
 def not_found(error=None):
     message = {
