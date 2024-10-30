@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import '../Estilos/InicioAdmin.css';
 import { logout, isAdmin } from '../Tokens/authService';
+
 const InicioAdmin = () => {
     const [reservas, setReservas] = useState([]);
     const [error, setError] = useState(null);
@@ -11,7 +12,6 @@ const InicioAdmin = () => {
         const token = localStorage.getItem('token');
         
         if (!token) {
-            // Si no hay token, redirige al login
             window.location.href = '/login';
             return;
         }
@@ -30,7 +30,6 @@ const InicioAdmin = () => {
                     setIsAdmin(true);
                     fetchReservas();
                 } else if (profileData.tipo_de_usuario === 'client') {
-                    // Si el usuario es un cliente, redirige a la página de inicio de usuarios
                     window.location.href = '/';
                 } else {
                     setError('Acceso denegado: solo los administradores pueden ver esta página.');
@@ -66,6 +65,20 @@ const InicioAdmin = () => {
         logout();
     };
 
+    // Mapeo de imágenes de canchas
+    const canchaImages = {
+        'Cancha de futbol 1': require('../Img/futbol1.png'),
+        'Cancha de futbol 2': require('../Img/futbol2.png'),
+        'Cancha de futbol 3': require('../Img/futbol3.png'),
+        'Cancha de tenis 1': require('../Img/tenis1.png'),
+        'Cancha de tenis 2': require('../Img/tenis2.png'),
+        'Cancha de tenis 3': require('../Img/tenis3.png')
+    };
+
+    const getCanchaImage = (cancha) => {
+        return canchaImages[cancha] || require('../Img/default.png'); // Imagen por defecto si no hay coincidencia
+    };
+
     if (error) {
         return <div className="error-message">{error}</div>;
     }
@@ -84,8 +97,11 @@ const InicioAdmin = () => {
                                 <p><strong>Cancha:</strong> {reserva.cancha}</p>
                                 <p><strong>Equipo:</strong> {reserva.equipo}</p>
                                 <p><strong>Email:</strong> {reserva.email_usuario}</p>
+                                <p><strong>Hora:</strong> {reserva.hora}</p>
                             </div>
-                            <div className="image-container"></div>
+                            <div className="image-container" style={{
+                                backgroundImage: `url(${getCanchaImage(reserva.cancha)})`
+                            }}></div>
                         </div>
                     ))
                 )}

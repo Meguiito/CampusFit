@@ -52,7 +52,6 @@
 .card .image-container {
   width: 200px; /* Tamaño específico para la imagen */
   height: 200px;
-  background-image: url('../Img/ejemplo.png'); /* Imagen adicional dentro de la card */
   background-size: cover;
   background-position: center;
   border-radius: 10px;
