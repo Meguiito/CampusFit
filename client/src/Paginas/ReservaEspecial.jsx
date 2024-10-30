@@ -193,8 +193,8 @@ function ReservaEspecial() {
   };
 
   const handleRemoveFile = () => {
-    setSelectedFile(null); // Limpiar el archivo seleccionado
-    setError(""); // Opcionalmente limpiar el error
+    setSelectedFile(null); 
+    setError("");
   };
   
   const convertToMinutes = (time) => {
@@ -234,7 +234,6 @@ function ReservaEspecial() {
           };
         }
   
-        // Actualiza la hora en caso de que sea diferente de horaDesde
         return {
           ...prevState,
           dias: {
@@ -247,13 +246,11 @@ function ReservaEspecial() {
         };
   
       } else if (dia === 1) {
-        // Verificación para el día específico
         if (tipo === "horaHasta" && convertToMinutes(valor) < convertToMinutes(prevState.dia_esp.horaDesde)) {
           console.log("La hora de 'horaHasta' debe ser mayor o igual a 'horaDesde'");
-          return prevState; // Retorna el estado anterior si hay un error
+          return prevState; 
         }
   
-        // Lógica para actualizar horaDesde para día específico
         if (tipo === "horaDesde") {
           const nuevaHoraHasta = convertToMinutes(prevState.dia_esp.horaHasta) <= convertToMinutes(valor)
             ? horas.find(hora => convertToMinutes(hora) > convertToMinutes(valor)) || prevState.dia_esp.horaHasta
@@ -314,7 +311,6 @@ function ReservaEspecial() {
   const handleCanchaChange = (dia, e) => {
     const canchaNombre = e.target.value;
   
-    // Si el valor de la cancha es vacío (deseleccionado), resetea los valores
     if (canchaNombre === '') {
       if (!reservarDiaEspecifico) {
         setFormData((prevState) => {
@@ -325,26 +321,26 @@ function ReservaEspecial() {
               ...prevState.dias,
               [dia]: {
                 ...diaData,
-                cancha: '', // Resetea la cancha
-                equipo: '', // Resetea el equipo también
+                cancha: '', 
+                equipo: '', 
               },
             },
           };
         });
         setEquiposFiltrados((prevState) => ({
           ...prevState,
-          [dia]: [], // Resetea la lista de equipos
+          [dia]: [], 
         }));
       } else if (dia === 1) {
         setFormData((prevState) => ({
           ...prevState,
           dia_esp: {
             ...prevState.dia_esp,
-            cancha: '', // Resetea la cancha
-            equipo: '', // Resetea el equipo también
+            cancha: '',
+            equipo: '', 
           },
         }));
-        setEquiposFiltrados_DE([]); // Resetea la lista de equipos filtrados
+        setEquiposFiltrados_DE([]); 
       }
       return;
     }
@@ -475,27 +471,27 @@ const handleEquipoChange = (dia, e) => {
       <form onSubmit={handleSubmit}>
         <FormGroup>
           <Label htmlFor="archivo">Subir archivo (PDF):</Label>
-          {/* Ocultar el input original */}
+          {}
           <Input
             type="file"
             id="archivo"
             name="archivo"
             accept=".pdf"
             onChange={handleFileChange}
-            style={{ display: "none" }} // Ocultar el input
+            style={{ display: "none" }} 
           />
-          {/* Botón para abrir el diálogo de archivo */}
+          {}
           <button
             type="button"
             onClick={() => document.getElementById("archivo").click()}
           >
             Seleccionar archivo
           </button>
-          {/* Mostrar el nombre del archivo seleccionado */}
+          {}
           {selectedFile && (
             <div>
               <p>Archivo seleccionado: {selectedFile.name}</p>
-              {/* Botón para borrar el archivo seleccionado */}
+              {}
               <Button  onClick={handleRemoveFile}>
                 Borrar archivo
               </Button>
@@ -667,8 +663,8 @@ const handleEquipoChange = (dia, e) => {
                       <Select 
                           id={`cancha-${dia}`} 
                           name={`cancha-${dia}`} 
-                          value={formData.dias[dia].cancha} // Usa el valor específico del día
-                          onChange={(e) => handleCanchaChange(dia, e)} // Pasa el día específico
+                          value={formData.dias[dia].cancha} 
+                          onChange={(e) => handleCanchaChange(dia, e)}
                           required
                       >
                           <option value="">Selecciona una cancha</option>
@@ -680,9 +676,9 @@ const handleEquipoChange = (dia, e) => {
                       <Select
                         id={`equipo-${dia}`}
                         name={`equipo-${dia}`}
-                        value={formData.dias[dia].equipo} // Usa el valor específico del día
-                        onChange={(e) => handleEquipoChange(dia, e)} // Pasa el día específico
-                        disabled={!formData.dias[dia].cancha} // Deshabilitar si no hay cancha seleccionada
+                        value={formData.dias[dia].equipo} 
+                        onChange={(e) => handleEquipoChange(dia, e)} 
+                        disabled={!formData.dias[dia].cancha} 
                         required
                     >
                         <option value="">Selecciona un equipo</option>

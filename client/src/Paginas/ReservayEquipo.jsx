@@ -215,7 +215,7 @@ function ReservayEquipo() {
 
     const generarOpcionesTiempo = () => {
       const opciones = [];
-      for (let hora = 2; hora <= 18; hora += 2) {
+      for (let hora = 8; hora <= 18; hora += 2) {
         const horaFormateada = hora.toString().padStart(2, '0') + ':00';
         const isDisabled = horasNoDisponibles.includes(horaFormateada);
     
