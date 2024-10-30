@@ -568,7 +568,6 @@ def obtener_reservas_del_dia():
         if not admin_user:
             return jsonify({"error": "Acceso denegado: solo administradores"}), 403
 
-
         fecha_actual = datetime.now().strftime('%d-%m-%Y')
 
         reservas = list(mongo.db.Reservas.find({
@@ -583,16 +582,14 @@ def obtener_reservas_del_dia():
         reservas_filtradas = [{
             "cancha": reserva.get("cancha"),
             "equipo": reserva.get("equipo"),
-            "email_usuario": reserva.get("email_usuario")
+            "email_usuario": reserva.get("email_usuario"),
+            "hora": reserva.get("hora")  # Incluyendo la hora de la reserva
         } for reserva in reservas]
 
         return jsonify(reservas_filtradas), 200
 
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
-
-
-    
 
 @app.errorhandler(404)
 def not_found(error=None):
