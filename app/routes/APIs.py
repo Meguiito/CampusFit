@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_pymongo import PyMongo
 from flask_cors import CORS
 import bcrypt
@@ -10,6 +10,8 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
 import json
+from bson import ObjectId
+from gridfs import GridFS
 
 app = Flask(__name__)
 
@@ -17,7 +19,7 @@ CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 app.config['MONGO_URI'] = 'mongodb+srv://Vicente:ap4STCRZXhetOIjA@campusfit.xih68.mongodb.net/CampusFIT_DB?retryWrites=true&w=majority'
 mongo = PyMongo(app)
-
+fs = GridFS(mongo.db)
 scheduler = BackgroundScheduler()
 scheduler.start()
 
@@ -317,31 +319,20 @@ def obtener_reservas():
 @jwt_required()
 def handle_special_request():
     try:
-        # Validar que el archivo está en la solicitud
         if 'file' not in request.files:
             return jsonify({"error": "No se encontró el archivo en la solicitud"}), 400
 
-        # Obtener el archivo PDF
         file = request.files['file']
         if file.filename == '':
             return jsonify({"error": "No se seleccionó ningún archivo"}), 400
 
-        # Verificar que es un archivo PDF
         mime_type = magic.from_buffer(file.read(1024), mime=True)
         file.seek(0)
         if mime_type != 'application/pdf':
             return jsonify({"error": "El archivo no es un PDF válido"}), 400
 
-        # Crear carpeta de subidas si no existe
-        upload_folder = 'uploads'
-        if not os.path.exists(upload_folder):
-            os.makedirs(upload_folder)
+        file_id = fs.put(file, filename=file.filename, content_type="application/pdf")
 
-        # Guardar el archivo
-        filepath = os.path.join(upload_folder, file.filename)
-        file.save(filepath)
-
-        # Obtener información del usuario autenticado y datos adicionales del formulario
         identity = get_jwt_identity()
         meses = request.form.get('meses')
         dias = request.form.get('dias')
@@ -349,13 +340,12 @@ def handle_special_request():
 
         reserva_data = {
             "filename": file.filename,
-            "filepath": filepath,
+            "file_id": str(file_id),
             "upload_date": datetime.utcnow(),
             "user_email": identity.get('email'),
             "user_name": identity.get('username')
         }
 
-        # Deserializar los datos si están presentes
         if meses and dias:
             reserva_data["meses"] = json.loads(meses)
             reserva_data["dias"] = json.loads(dias)
@@ -364,7 +354,6 @@ def handle_special_request():
             reserva_data["dia_esp"] = json.loads(dia_esp)
             reserva_data["tipo"] = "DE"
             
-        # Guardar los datos en la base de datos
         result = mongo.db.Reservas_especiales.insert_one(reserva_data)
 
         return jsonify({
@@ -374,6 +363,8 @@ def handle_special_request():
 
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+    
+
 
 
 
@@ -382,29 +373,75 @@ def handle_special_request():
 @jwt_required()
 def get_special_requests():
     try:
-        # Obtener la identidad del token JWT
         identity = get_jwt_identity()
         email = identity.get('email')
 
-        # Verificar si el usuario es admin
         admin_user = mongo.db.Admin.find_one({'email': email})
         if not admin_user:
             return jsonify({"error": "Acceso denegado: solo administradores"}), 403
 
 
-        # Consulta para obtener las reservas especiales
         reservas_especiales = mongo.db.Reservas_especiales.find()
 
-        # Convertir el cursor en una lista y eliminar el campo '_id' de cada documento
         reservas_list = []
         for reserva in reservas_especiales:
-            reserva['_id'] = str(reserva['_id'])  # Convertir ObjectId a string
+            reserva['_id'] = str(reserva['_id'])  
             reservas_list.append(reserva)
 
         return jsonify(reservas_list), 200
 
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
+
+
+
+
+
+@app.route('/manejar_pdf/<mongo_id>/<action>', methods=['GET'])
+@jwt_required()
+def manejar_pdf(mongo_id, action):
+    try:
+        identity = get_jwt_identity()
+        email = identity.get('email')
+
+        # Verifica si el usuario es administrador
+        admin_user = mongo.db.Admin.find_one({'email': email})
+        if not admin_user:
+            return jsonify({"error": "Acceso denegado: solo administradores"}), 403
+
+        try:
+            object_id = ObjectId(mongo_id)
+        except Exception:
+            return jsonify({"error": "ID de reserva inválido"}), 400
+
+        reserva = mongo.db.Reservas_especiales.find_one({"_id": object_id})
+        if not reserva:
+            return jsonify({"error": "Reserva especial no encontrada"}), 404
+
+        file_id = reserva.get("file_id")
+        if not file_id:
+            return jsonify({"error": "No se encontró el ID del archivo PDF"}), 404
+
+        # Obtén el archivo desde GridFS
+        file_data = fs.get(ObjectId(file_id))
+        if not file_data:
+            return jsonify({"error": "Archivo PDF no encontrado en GridFS"}), 404
+
+        # Si la acción es "ver", envía el archivo para verlo en el navegador
+        if action == "ver":
+            return send_file(file_data, as_attachment=False, download_name=reserva["filename"])
+
+        # Si la acción es "descargar", envía el archivo como adjunto
+        elif action == "descargar":
+            return send_file(file_data, as_attachment=True, download_name=reserva["filename"])
+
+        else:
+            return jsonify({"error": "Acción no válida"}), 400
+
+    except Exception as e:
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
 
 
 
