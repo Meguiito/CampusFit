@@ -628,7 +628,7 @@ def obtener_reservas_del_dia():
 @jwt_required()
 def obtener_reservas_agrupadas():
     try:
-        reservas = list(mongo.db.reservas.find())
+        reservas = list(mongo.db.Reservas.find())
         reservas_format = [
             {
                 "_id": str(reserva["_id"]),
