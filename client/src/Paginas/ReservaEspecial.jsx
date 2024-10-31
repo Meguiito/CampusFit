@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import styled from "styled-components";
 import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css'; 
 import es from 'date-fns/locale/es';
+import "../Estilos/ReservaEspecial.css"
 registerLocale('es', es);
 
 function ReservaEspecial() {
@@ -464,65 +464,72 @@ const handleEquipoChange = (dia, e) => {
 };
 
   
-  return (
-    <FormularioContainer>
-      <h2>Reserva Especial</h2>
-      {error && <Error>{error}</Error>}
-      <form onSubmit={handleSubmit}>
-        <FormGroup>
-          <Label htmlFor="archivo">Subir archivo (PDF):</Label>
-          {}
-          <Input
-            type="file"
-            id="archivo"
-            name="archivo"
-            accept=".pdf"
-            onChange={handleFileChange}
-            style={{ display: "none" }} 
-          />
-          {}
-          <button
-            type="button"
-            onClick={() => document.getElementById("archivo").click()}
-          >
-            Seleccionar archivo
-          </button>
-          {}
+return (
+  <div id="container-boss" className="container-boss">
+    <div id="formulario-container" className="formulario-container">
+      <h2 className="titulo">Reserva Especial</h2>
+      {error && <p className="error">{error}</p>}
+      <form onSubmit={handleSubmit} className="formulario">
+        <div className="form-group" id="archivo-group">
+          <label htmlFor="archivo" className="label">Subir archivo (PDF):</label>
+          
+          <div className="pdf">
+            <input 
+              type="file"
+              id="archivo"
+              name="archivo"
+              accept=".pdf"
+              onChange={handleFileChange}
+              style={{ display: "none" }} 
+            />
+          </div>
+          
+          <div className="seleccionar-archivo">
+            <button
+              type="button"
+              className="btn-seleccionar-archivo"
+              onClick={() => document.getElementById("archivo").click()}
+            >
+              Seleccionar archivo
+            </button>
+          </div>
           {selectedFile && (
-            <div>
-              <p>Archivo seleccionado: {selectedFile.name}</p>
-              {}
-              <Button  onClick={handleRemoveFile}>
+            <div className="archivo-seleccionado">
+              <p className="archivo-nombre">Archivo seleccionado: {selectedFile.name}</p>
+              <button className="btn-borrar-archivo" onClick={handleRemoveFile}>
                 Borrar archivo
-              </Button>
+              </button>
             </div>
           )}
-        </FormGroup>
-        <FormGroup>
-          <h3>Seleccione cómo desea reservar:</h3>
-          <LabelRadio>
-            <InputRadio
+        </div>
+
+        <div className="form-group" id="reserva-group">
+          <h3 id="reserva-subtitulo" className="subtitulo">Seleccione cómo desea reservar:</h3>
+          <label className="label-radio">
+            <input
               type="radio"
+              className="input-radio"
               checked={!reservarDiaEspecifico}
               onChange={() => setReservarDiaEspecifico(false)}
             />
             Días en general
-          </LabelRadio>
-          <LabelRadio>
-            <InputRadio
+          </label>
+          <label className="label-radio">
+            <input
               type="radio"
+              className="input-radio"
               checked={reservarDiaEspecifico}
               onChange={toggleReservarDiaEspecifico}
             />
             Día específico
-          </LabelRadio>
-        </FormGroup>
+          </label>
+        </div>
 
         {reservarDiaEspecifico && (
           <>
-            <Fecha>
-              <Label>Selecciona el Día:</Label>
-              <DatePickerWrapper>
+            <div className="fecha-group">
+              <label className="label">Selecciona el Día:</label>
+              <div className="datepicker-wrapper">
                 <DatePicker
                   selected={selectedDate}
                   onChange={(date) => {setSelectedDate(date)}}
@@ -537,13 +544,15 @@ const handleEquipoChange = (dia, e) => {
                   showYearDropdown={false}
                   dropdownMode="select"
                 />
-              </DatePickerWrapper>
-            </Fecha>
-            <h3>Seleccione las horas:</h3>
-            <FormGroup>
-              <Label htmlFor="horaDesde">Desde:</Label>
-              <Select
+              </div>
+            </div>
+
+            <h3 id="horas-subtitulo" className="subtitulo">Seleccione las horas:</h3>
+            <div className="form-group" id="horas-group">
+              <label htmlFor="horaDesde" className="label">Desde:</label>
+              <select
                 id="horaDesde"
+                className="select"
                 value={formData.dia_esp.horaDesde}
                 onChange={(e) => handleHourChange(1, "horaDesde", e.target.value)}
                 required
@@ -553,26 +562,26 @@ const handleEquipoChange = (dia, e) => {
                     {hora}
                   </option>
                 ))}
-              </Select>
+              </select>
 
-              <Label htmlFor="horaHasta">Hasta:</Label>
-              <Select
+              <label htmlFor="horaHasta" className="label">Hasta:</label>
+              <select
                 id="horaHasta"
+                className="select"
                 value={formData.dia_esp.horaHasta}
                 onChange={(e) => handleHourChange(1, "horaHasta", e.target.value)}
               >
                 {horaHastaDispDE.map((hora) => (
-                    <option key={hora} value={hora}>
-                      {hora}
-                    </option>
-                  )) 
-                }
-              </Select>
+                  <option key={hora} value={hora}>
+                    {hora}
+                  </option>
+                ))}
+              </select>
 
-
-              <Label htmlFor="cancha">Selecciona la Cancha:</Label>
-              <Select 
+              <label htmlFor="cancha" className="label">Selecciona la Cancha:</label>
+              <select
                 id="cancha"
+                className="select"
                 name="cancha"
                 value={formData.dia_esp.cancha}
                 onChange={(e) => handleCanchaChange(1, e)}
@@ -582,11 +591,12 @@ const handleEquipoChange = (dia, e) => {
                 {canchasDisponibles.map((c) => (
                   <option key={c._id} value={c.nombre}>{c.nombre}</option>
                 ))}
-              </Select>
+              </select>
 
-              <Label htmlFor="equipo">Selecciona tu Equipo:</Label>
-              <Select
+              <label htmlFor="equipo" className="label">Selecciona tu Equipo:</label>
+              <select
                 id="equipo"
+                className="select"
                 name="equipo"
                 value={formData.dia_esp.equipo}
                 onChange={(e) => handleEquipoChange(1, e)}
@@ -597,45 +607,48 @@ const handleEquipoChange = (dia, e) => {
                 {equipos_Filtrados_DE.map((e) => (
                   <option key={e._id} value={e.nombre}>{e.nombre}</option>
                 ))}
-              </Select>
-            </FormGroup>
+              </select>
+            </div>
           </>
         )}
 
         {!reservarDiaEspecifico && (
           <>
-            <FormGroup>
-              <h3>Seleccione los meses:</h3>
+            <div className="form-group" id="meses-group">
+              <h3 id="meses-subtitulo" className="subtitulo">Seleccione los meses:</h3>
               {mesesDisponibles.map(({ nombre }) => (
-                <LabelCheckbox key={nombre}>
-                  <InputCheckbox
+                <label className="label-checkbox" key={nombre}>
+                  <input
                     type="checkbox"
+                    className="input-checkbox"
                     checked={formData.meses[nombre]}
                     onChange={() => handleMonthChange(nombre)}
                   />
                   {nombre}
-                </LabelCheckbox>
+                </label>
               ))}
-            </FormGroup>
+            </div>
 
-            <FormGroup>
-              <h3>Seleccione los días y horas para cada mes:</h3>
+            <div className="form-group" id="dias-horas-group">
+              <h3 id="dias-horas-subtitulo" className="subtitulo">Seleccione los días y horas para cada mes:</h3>
               {Object.keys(formData.dias).map((dia) => (
-                <div key={dia}>
-                  <LabelCheckbox>
-                    <InputCheckbox
+                <div className="dia-group" key={dia}>
+                  <label className="label-checkbox">
+                    <input
                       type="checkbox"
+                      className="input-checkbox"
                       checked={formData.dias[dia].seleccionado}
                       onChange={() => handleCheckboxChange(dia)}
                     />
                     {dia}
-                  </LabelCheckbox>
+                  </label>
 
                   {formData.dias[dia].seleccionado && (
-                    <FormGroup>
-                      <Label htmlFor={`horaDesde-${dia}`}>Desde:</Label>
-                      <Select
+                    <div className="form-group" id={`hora-group-${dia}`}>
+                      <label htmlFor={`horaDesde-${dia}`} className="label">Desde:</label>
+                      <select
                         id={`horaDesde-${dia}`}
+                        className="select"
                         value={formData.dias[dia].horaDesde}
                         onChange={(e) => handleHourChange(dia, "horaDesde", e.target.value)}
                       >
@@ -644,11 +657,12 @@ const handleEquipoChange = (dia, e) => {
                             {hora}
                           </option>
                         ))}
-                      </Select>
+                      </select>
 
-                      <Label htmlFor={`horaHasta-${dia}`}>Hasta:</Label>
-                      <Select
+                      <label htmlFor={`horaHasta-${dia}`} className="label">Hasta:</label>
+                      <select
                         id={`horaHasta-${dia}`}
+                        className="select"
                         value={formData.dias[dia].horaHasta}
                         onChange={(e) => handleHourChange(dia, "horaHasta", e.target.value)}
                       >
@@ -657,124 +671,50 @@ const handleEquipoChange = (dia, e) => {
                             {hora}
                           </option>
                         ))}
-                      </Select>
-                      <Label htmlFor={`Cancha-${dia}`}>Hasta:</Label>
-                      <Label htmlFor="cancha">Selecciona la Cancha:</Label>
-                      <Select 
-                          id={`cancha-${dia}`} 
-                          name={`cancha-${dia}`} 
-                          value={formData.dias[dia].cancha} 
-                          onChange={(e) => handleCanchaChange(dia, e)}
-                          required
-                      >
-                          <option value="">Selecciona una cancha</option>
-                          {canchasDisponibles.map((c) => (
-                              <option key={c._id} value={c.nombre}>{c.nombre}</option>
-                          ))}
-                      </Select>
-                      <Label htmlFor="equipo">Selecciona tu Equipo:</Label>
-                      <Select
-                        id={`equipo-${dia}`}
-                        name={`equipo-${dia}`}
-                        value={formData.dias[dia].equipo} 
-                        onChange={(e) => handleEquipoChange(dia, e)} 
-                        disabled={!formData.dias[dia].cancha} 
+                      </select>
+
+                      <label htmlFor={`cancha-${dia}`} className="label">Selecciona la Cancha:</label>
+                      <select
+                        id={`cancha-${dia}`}
+                        className="select"
+                        name={`cancha-${dia}`}
+                        value={formData.dias[dia].cancha}
+                        onChange={(e) => handleCanchaChange(dia, e)}
                         required
-                    >
+                      >
+                        <option value="">Selecciona una cancha</option>
+                        {canchasDisponibles.map((c) => (
+                          <option key={c._id} value={c.nombre}>{c.nombre}</option>
+                        ))}
+                      </select>
+
+                      <label htmlFor={`equipo-${dia}`} className="label">Selecciona tu Equipo:</label>
+                      <select
+                        id={`equipo-${dia}`}
+                        className="select"
+                        name={`equipo-${dia}`}
+                        value={formData.dias[dia].equipo}
+                        onChange={(e) => handleEquipoChange(dia, e)}
+                        required
+                        disabled={!formData.dias[dia].cancha}
+                      >
                         <option value="">Selecciona un equipo</option>
                         {equiposFiltrados[dia].map((e) => (
-                            <option key={e._id} value={e.nombre}>{e.nombre}</option>
+                          <option key={e._id} value={e.nombre}>{e.nombre}</option>
                         ))}
-                    </Select>
-                    </FormGroup>
+                      </select>
+                    </div>
                   )}
                 </div>
               ))}
-            </FormGroup>
+            </div>
           </>
         )}
 
-        <Button type="submit">Enviar Solicitud</Button>
+        <button type="submit" className="btn-submit">Enviar Solicitud</button>
       </form>
-    </FormularioContainer>
-  );
-}
-
-const FormularioContainer = styled.div`
-  max-width: 600px;
-  margin: auto;
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  background-color: #f9f9f9;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-`;
-
-const FormGroup = styled.div`
-  margin-bottom: 15px;
-`;
-
-const Label = styled.label`
-  display: block;
-  margin-bottom: 5px;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-`;
-
-const DatePickerWrapper = styled.div`
-  margin: 10px 0;
-`;
-
-const Error = styled.span`
-  color: red;
-  font-size: 14px;
-`;
-
-const LabelCheckbox = styled.label`
-  display: flex;
-  align-items: center;
-`;
-
-const InputCheckbox = styled.input`
-  margin-right: 10px;
-`;
-
-const LabelRadio = styled.label`
-  display: block;
-  margin-bottom: 5px;
-`;
-
-const InputRadio = styled.input`
-  margin-right: 10px;
-`;
-
-const Fecha = styled.div`
-  margin: 15px 0;
-`;
-
-const Button = styled.button`
-  padding: 10px 15px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-
-  &:hover {
-    background-color: #0056b3;
-  }
-`;
+    </div>
+  </div>
+)};
 
 export default ReservaEspecial;

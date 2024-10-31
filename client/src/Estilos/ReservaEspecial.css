@@ -1,0 +1,297 @@
+
+.container-boss {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh; 
+  background: url('../Img/fondo.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed; /* Evita el zoom en el fondo */
+}
+
+  
+  .formulario-container {
+    background: linear-gradient(135deg, #3498DB, #ffffff);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px;
+    margin: 20px;
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    max-width: 600px;
+    width: 90%;
+  }
+  
+  .formulario-container h2 {
+    color: white;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .formulario {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 100%;
+    width: 100%;
+    background-color: rgba(41, 133, 236, 0.8); /* Semi-transparente para un efecto de profundidad */
+    border-radius: 15px;
+    padding: 20px;
+    color: #FFD700;
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .archivo-seleccionado{
+    text-align: center;
+    max-width: 100%; /* Asegura que el contenedor no exceda el ancho */
+    overflow: hidden; /* Oculta el texto que se sale del contenedor */
+    text-overflow: ellipsis; /* Agrega los puntos suspensivos */
+    
+  }
+  .seleccionar-archivo{
+    text-align: center;
+  }
+  .label {
+    font-weight: bold;
+    color: white;
+  }
+  
+    .select {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+        box-sizing: border-box;
+        width: 100%;
+        background-color: #ffffff; /* Fondo blanco para el select */
+    }
+  
+  .btn-seleccionar-archivo,
+  .btn-borrar-archivo {
+    background-color: #FFD700;
+    border: none;
+    border-radius: 5px;
+    color: black;
+    padding: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+  }
+  
+  .btn-seleccionar-archivo:hover,
+  .btn-borrar-archivo:hover {
+    background-color: #1e6bb8;
+    color: white;
+  }
+  
+  .error {
+    margin-top: 20px;
+    background-color: #ff6347;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    width: 100%;
+    max-width: 600px; 
+  }
+  
+  .hora-no-disponible,
+  .cancha-reservada,
+  .equipo-reservado {
+    background-color: rgba(255, 0, 0, 0.5);
+  }
+  
+  .fecha-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  h3.subtitulo {
+    color: white;
+  }
+  
+  .input-radio {
+    margin-right: 5px;
+  }
+  
+  .input-checkbox {
+    margin-right: 5px;
+  }
+  
+  .dia-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px; /* Espacio entre el checkbox y el texto */
+    width: 100%;
+  }
+  
+  .datepicker-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  
+    .react-datepicker {
+      font-size: 1.2rem; 
+      width: 100%;
+    }
+  
+    .react-datepicker__header {
+      padding: 10px 0;
+      background-color: #2985ec;
+      border-bottom: none;
+    }
+  
+    .react-datepicker__current-month,
+    .react-datepicker-time__header,
+    .react-datepicker-year-header {
+      font-size: 1.4rem;
+      color: #FFD700;
+    }
+  
+    .react-datepicker__day-name,
+    .react-datepicker__day,
+    .react-datepicker__time-name {
+      width: calc(90% / 7); 
+      height: 3rem; 
+      line-height: 3rem; 
+      font-size: 1.4rem;
+      text-align: center;
+    }
+  
+    .react-datepicker__day-name {
+      font-weight: bold;
+      color: #FFD700;
+    }
+  
+    .react-datepicker__day {
+      justify-content: center;
+      align-items: center;
+    }
+  
+    .react-datepicker__day--selected,
+    .react-datepicker__day--keyboard-selected {
+      background-color: #FFD700;
+      color: #2985ec;
+    }
+  
+    .react-datepicker__navigation-icon::before {
+      border-color: #FFD700;
+    }
+  
+    .react-datepicker__triangle {
+      display: none;
+    }
+  
+    .react-datepicker__month-container {
+      width: 100%;
+    }
+  
+    .react-datepicker__navigation {
+      top: 10px;
+    }
+  
+    /* Media queries for responsive adjustments */
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .react-datepicker {
+        font-size: 1rem;
+      }
+  
+      .react-datepicker__current-month,
+      .react-datepicker-time__header,
+      .react-datepicker-year-header {
+        font-size: 1.2rem;
+      }
+  
+      .react-datepicker__day-name,
+      .react-datepicker__day,
+      .react-datepicker__time-name {
+        width: calc(90% / 7); 
+        height: 3rem;
+        line-height: 3rem;
+        font-size: 1rem;
+      }
+    }
+  
+    @media (max-width: 767px) {
+      .react-datepicker {
+        font-size: 0.9rem;
+      }
+  
+      .react-datepicker__current-month,
+      .react-datepicker-time__header,
+      .react-datepicker-year-header {
+        font-size: 1rem;
+      }
+  
+      .react-datepicker__day-name,
+      .react-datepicker__day,
+      .react-datepicker__time-name {
+        width: calc(90% / 7); 
+        height: 2.5rem; 
+        line-height: 2.5rem;
+        font-size: 0.9rem;
+      }
+  
+      .react-datepicker__header {
+        padding: 8px 0;
+      }
+  
+      .react-datepicker__navigation {
+        top: 8px;
+      }
+    }
+  
+    @media (max-width: 479px) {
+      .react-datepicker {
+        font-size: 0.8rem;
+      }
+  
+      .react-datepicker__current-month,
+      .react-datepicker-time__header,
+      .react-datepicker-year-header {
+        font-size: 1rem; 
+      }
+  
+      .react-datepicker__day-name,
+      .react-datepicker__day,
+      .react-datepicker__time-name {
+        width: calc(90% / 7); 
+        height: 2rem; 
+        line-height: 2rem; 
+        font-size: 0.8rem; 
+      }
+  
+      .react-datepicker__header {
+        padding: 6px 0; 
+      }
+  
+      .react-datepicker__navigation {
+        top: 6px; 
+      }
+    }
+  }
+  
+  .btn-submit{
+    background-color: #FFD700;
+    border: none;
+    border-radius: 5px;
+    color: black;
+    padding: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+
+  }
+  .btn-submit:hover {
+    background-color: #1e6bb8;
+    color: white;
+  }
