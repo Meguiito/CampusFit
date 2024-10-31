@@ -14,7 +14,7 @@ import UsuariosAdmin from './Paginas/UsuariosAdmin';
 import GestionReservas from './Paginas/GestionReservas';
 import ReservasEspeciales from './Paginas/ReservasEspeciales';
 import { getToken } from './Tokens/authService';
-
+import ReservasAgrupadas from './Paginas/ReservasAgrupadas';
 // Componente para rutas privadas de Admin
 const PrivateAdminRoute = ({ children }) => {
     const token = getToken();
@@ -51,6 +51,7 @@ const Layout = () => {
                 <Route path="/admin/GestionReservas" element={<PrivateAdminRoute><GestionReservas /></PrivateAdminRoute>} />
                 <Route path="/admin/inicio" element={<PrivateAdminRoute><InicioAdmin /></PrivateAdminRoute>} />
                 <Route path="/admin/usuarios" element={<PrivateAdminRoute><UsuariosAdmin /></PrivateAdminRoute>} />
+                <Route path="/admin/reservas-agrupadas" element={<PrivateAdminRoute><ReservasAgrupadas /></PrivateAdminRoute>} />
             </Routes>
         </>
     );

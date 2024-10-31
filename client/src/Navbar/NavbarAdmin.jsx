@@ -23,6 +23,7 @@ function NavbarAdmin() {
             <li><a href="/admin/usuarios">Ver Usuarios</a></li>
             <li><a href="/admin/GestionReservas">Agregar Equipo</a></li>
             <li><a href="/admin/ReservasEspeciales">Reservas Especiales</a></li>
+            <li><a href="/reservas-agrupadas">Visualizar Reservas</a></li>
           </ul>
         </nav>
       </header>
