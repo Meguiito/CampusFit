@@ -310,11 +310,6 @@ def obtener_reservas():
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
 
-
-
-
-
-
 @app.route('/special_request', methods=['POST'])
 @jwt_required()
 def handle_special_request():
@@ -629,45 +624,49 @@ def obtener_reservas_del_dia():
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
 
-@app.route('/eliminar-reserva', methods=['DELETE'])
+@app.route('/admin/reservas-agrupadas', methods=['GET'])
+@jwt_required()
+def obtener_reservas_agrupadas():
+    try:
+        reservas = list(mongo.db.reservas.find())
+        reservas_format = [
+            {
+                "_id": str(reserva["_id"]),
+                "fecha": reserva.get("fecha"),
+                "hora": reserva.get("hora"),
+                "cancha": reserva.get("cancha"),
+                "equipo": reserva.get("equipo"),
+                "email_usuario": reserva.get("email_usuario")
+            }
+            for reserva in reservas
+        ]
+        return jsonify(reservas_format), 200
+    except Exception as e:
+        return jsonify({"error": "Error al obtener las reservas"}), 500
+
+@app.route('/admin/eliminar-reserva', methods=['POST'])
 @jwt_required()
 def eliminar_reserva():
-    try:
-        identity = get_jwt_identity()
-        email = identity.get('email')
-        
-        # Obtiene los datos de la solicitud
-        data = request.get_json()
-        reserva_id = data.get('reserva_id')
-        password = data.get('password')
-        motivo = data.get('motivo')
+    data = request.get_json()
+    reserva_id = data.get("reservaId")
+    password = data.get("password")
+    delete_reason = data.get("deleteReason")
+    user_email = get_jwt_identity()
 
-        # Verifica la existencia del usuario y su contraseña
-        admin_user = mongo.db.Admin.find_one({'email': email})
-        if not admin_user or not bcrypt.checkpw(password.encode('utf-8'), admin_user['password']):
-            return jsonify({"error": "Contraseña incorrecta"}), 401
+    if not (reserva_id and password and delete_reason):
+        return jsonify({"success": False, "message": "Todos los campos son requeridos"}), 400
 
-        # Verifica la existencia de la reserva
-        reserva = mongo.db.Reservas.find_one({"_id": reserva_id})
-        if not reserva:
-            return jsonify({"error": "Reserva no encontrada"}), 404
+    user = mongo.db.users.find_one({"email": user_email})
 
-        # Elimina la reserva
-        mongo.db.Reservas.delete_one({"_id": reserva_id})
-
-        # Almacena el motivo de la eliminación
-        mongo.db.MotivosEliminacion.insert_one({
-            "reserva_id": reserva_id,
-            "email_usuario": email,
-            "motivo": motivo,
-            "fecha_eliminacion": datetime.now().strftime('%d-%m-%Y %H:%M:%S')
-        })
-
-        return jsonify({"message": "Reserva eliminada con éxito"}), 200
-
-    except Exception as e:
-        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
-
+    if user and bcrypt.checkpw(password.encode('utf-8'), user["password"]):
+        try:
+            mongo.db.reservas.delete_one({"_id": reserva_id})
+            # Opcional: Guardar motivo de eliminación en otra colección.
+            return jsonify({"success": True, "message": "Reserva eliminada exitosamente"}), 200
+        except Exception as e:
+            return jsonify({"success": False, "message": str(e)}), 500
+    else:
+        return jsonify({"success": False, "message": "Contraseña incorrecta"}), 403
 
 @app.errorhandler(404)
 def not_found(error=None):
