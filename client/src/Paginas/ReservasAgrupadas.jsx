@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import '../Estilos/ReservasAgrupadas.css';
-import NavbarAdmin from '../Navbar/NavbarAdmin.jsx'; 
-import { isAdmin } from '../Tokens/authService.js'; // Importa la función isAdmin desde tu archivo de autenticación
 
 const ReservasAgrupadas = () => {
     const [reservas, setReservas] = useState([]);
@@ -55,7 +53,6 @@ const ReservasAgrupadas = () => {
 
     return (
         <div className="reservas-agrupadas">
-            {isAdmin() && <NavbarAdmin />} 
             <h1>Administrar Reservas</h1>
             {error && <p className="error-message">{error}</p>}
             <div className="cancha-container">
