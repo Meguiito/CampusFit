@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import '../Estilos/ReservasAgrupadas.css';
 
-
 const ReservasAgrupadas = () => {
     const [reservas, setReservas] = useState([]);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -20,7 +19,14 @@ const ReservasAgrupadas = () => {
             const response = await axios.get('http://localhost:5000/admin/reservas-agrupadas', {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
-            setReservas(response.data);
+            // Agrupar reservas por cancha en el front-end
+            const reservasAgrupadas = response.data.reduce((acc, reserva) => {
+                const { cancha } = reserva;
+                if (!acc[cancha]) acc[cancha] = [];
+                acc[cancha].push(reserva);
+                return acc;
+            }, {});
+            setReservas(reservasAgrupadas);
         } catch (err) {
             setError('Error al obtener las reservas');
         }
@@ -61,7 +67,7 @@ const ReservasAgrupadas = () => {
                     <div key={index} className="cancha-section">
                         <h2>{cancha}</h2>
                         <div className="reservas-list">
-                            {reservas[cancha].map((reserva) => (
+                            {Array.isArray(reservas[cancha]) && reservas[cancha].map((reserva) => (
                                 <div className="card" key={reserva._id}>
                                     <p><strong>Hora:</strong> {reserva.hora}</p>
                                     <p><strong>Equipo:</strong> {reserva.equipo}</p>

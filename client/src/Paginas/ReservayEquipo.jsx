@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import es from 'date-fns/locale/es';
+import "../Estilos/Reservas.css"
 registerLocale('es', es);
 
 function ReservayEquipo() {
@@ -294,378 +294,84 @@ function ReservayEquipo() {
   };
 
   return (
-    <Wrapper>
-      <FormularioContainer>
+    <div className="wrapper">
+      <div className="formulario-container">
         <h2>Reserva tu Hora y Equipo</h2>
-        <form onSubmit={handleSubmit}>
-          <Fecha>
-            <Label>Selecciona el Día:</Label>
-              <DatePickerWrapper>
-                <DatePicker
-                  selected={selectedDate}
-                  onChange={(date) => setSelectedDate(date)}
-                  inline
-                  minDate={fechaMinima} 
-                  maxDate={fechaMaxima} 
-                  filterDate={(date) => {
-                    const day = date.getDay();
-                    return day !== 0 && day !== 6; 
-                  }}
-                  dateFormat="P" 
-                  locale="es" 
-                  required
-                  showMonthDropdown={false}
-                  showYearDropdown={false}
-                  dropdownMode="select"
-                />
-              </DatePickerWrapper>
-          </Fecha>
-          <Hora>
-            <Label htmlFor="hora">Selecciona la Hora:</Label>
-            <Select
+        <form onSubmit={handleSubmit} className="form">
+          <div className="fecha-group">
+            <label>Selecciona el Día:</label>
+            <div className="datepicker-wrapper">
+              <DatePicker
+                selected={selectedDate}
+                onChange={(date) => setSelectedDate(date)}
+                inline
+                minDate={fechaMinima}
+                maxDate={fechaMaxima}
+                filterDate={(date) => {
+                  const day = date.getDay();
+                  return day !== 0 && day !== 6;
+                }}
+                dateFormat="P"
+                locale="es"
+                required
+                showMonthDropdown={false}
+                showYearDropdown={false}
+                dropdownMode="select"
+              />
+            </div>
+          </div>
+          <div className="hora-group">
+            <label htmlFor="hora">Selecciona la Hora:</label>
+            <select
               id="hora"
               name="hora"
               value={time}
               onChange={(e) => setTime(e.target.value)}
+              className="select"
               disabled={!disp}
               required
             >
               <option value="">Selecciona una hora</option>
               {generarOpcionesTiempo()}
-            </Select>
-          </Hora>
-          <Cancha>
-            <Label htmlFor="cancha">Selecciona la Cancha:</Label>
-            <Select
+            </select>
+          </div>
+          <div className="cancha-group">
+            <label htmlFor="cancha">Selecciona la Cancha:</label>
+            <select
               id="cancha"
               name="cancha"
               value={cancha}
               onChange={handleCanchaChange}
+              className="select"
               required
-              disabled={!disp || !time} 
+              disabled={!disp || !time}
             >
               <option value="">Selecciona una cancha</option>
               {generarOpcionesCancha()}
-            </Select>
-          </Cancha>
-          <Equipo>
-            <Label htmlFor="equipo">Selecciona tu Equipo:</Label>
-            <Select
+            </select>
+          </div>
+          <div className="equipo-group">
+            <label htmlFor="equipo">Selecciona tu Equipo:</label>
+            <select
               id="equipo"
               name="equipo"
               value={equipo}
               onChange={(e) => setEquipo(e.target.value)}
+              className="select"
               required
-              disabled={!disp || !time || !canchaTipo} 
+              disabled={!disp || !time || !canchaTipo}
             >
               <option value="">Selecciona un equipo</option>
-              {generarOpcionesEquipo()}              
-            </Select>
-          </Equipo>
-          <Button type="submit">Reservar</Button>
+              {generarOpcionesEquipo()}
+            </select>
+          </div>
+          <button type="submit" className="button">Reservar</button>
         </form>
-        {error && <ErrorNotification>{error}</ErrorNotification>}
-      </FormularioContainer>
-    </Wrapper>
+        {error && <div className="error-notification">{error}</div>}
+      </div>
+    </div>
   );
 }
 
 export default ReservayEquipo;
 
-
-
-
-
-/*---------------------------------------------------------Estilo----------------------------------------------------- */
-
-const Wrapper = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh; 
-  background-color: #f0f2f5;
-`;
-
-const DatePickerWrapper = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  .react-datepicker {
-    font-size: 1.2rem; 
-    width: 100%;
-  }
-
-  .react-datepicker__header {
-    padding: 10px 0;
-    background-color: #2985ec;
-    border-bottom: none;
-  }
-
-  .react-datepicker__current-month,
-  .react-datepicker-time__header,
-  .react-datepicker-year-header {
-    font-size: 1.4rem;
-    color: #FFD700;
-  }
-
-  .react-datepicker__day-name,
-  .react-datepicker__day,
-  .react-datepicker__time-name {
-    width: calc(90% / 7); 
-    height: 3rem; 
-    line-height: 3rem; 
-    font-size: 1.4rem;
-    text-align: center;
-  }
-
-  .react-datepicker__day-name {
-    font-weight: bold;
-    color: #FFD700;
-  }
-
-  .react-datepicker__day {
-    justify-content: center;
-    align-items: center;
-  }
-
-  .react-datepicker__day--selected,
-  .react-datepicker__day--keyboard-selected {
-    background-color: #FFD700;
-    color: #2985ec;
-  }
-
-  .react-datepicker__navigation-icon::before {
-    border-color: #FFD700;
-  }
-
-  .react-datepicker__triangle {
-    display: none;
-  }
-
-  .react-datepicker__month-container {
-    width: 100%;
-  }
-
-  .react-datepicker__navigation {
-    top: 10px;
-  }
-
-  @media (min-width: 768px) and (max-width: 1023px) {
-    .react-datepicker {
-      font-size: 1rem;
-    }
-
-    .react-datepicker__current-month,
-    .react-datepicker-time__header,
-    .react-datepicker-year-header {
-      font-size: 1.2rem;
-    }
-
-    .react-datepicker__day-name,
-    .react-datepicker__day,
-    .react-datepicker__time-name {
-      width: calc(90% / 7); 
-      height: 3rem;
-      line-height: 3rem;
-      font-size: 1rem;
-    }
-  }
-
-  @media (max-width: 767px) {
-    .react-datepicker {
-      font-size: 0.9rem;
-    }
-
-    .react-datepicker__current-month,
-    .react-datepicker-time__header,
-    .react-datepicker-year-header {
-      font-size: 1rem;
-    }
-
-    .react-datepicker__day-name,
-    .react-datepicker__day,
-    .react-datepicker__time-name {
-      width: calc(90% / 7); 
-      height: 2.5rem; 
-      line-height: 2.5rem;
-      font-size: 0.9rem;
-    }
-
-    .react-datepicker__header {
-      padding: 8px 0;
-    }
-
-    .react-datepicker__navigation {
-      top: 8px;
-    }
-  }
-
-  @media (max-width: 479px) {
-    .react-datepicker {
-      font-size: 0.8rem;
-    }
-
-    .react-datepicker__current-month,
-    .react-datepicker-time__header,
-    .react-datepicker-year-header {
-      font-size: 1rem; 
-    }
-
-    .react-datepicker__day-name,
-    .react-datepicker__day,
-    .react-datepicker__time-name {
-      width: calc(90% / 7); 
-      height: 2rem; 
-      line-height: 2rem; 
-      font-size: 0.8rem; 
-    }
-
-    .react-datepicker__header {
-      padding: 6px 0; 
-    }
-
-    .react-datepicker__navigation {
-      top: 6px; 
-    }
-  }
-`;
-
-const FormularioContainer = styled.div`
-  background: linear-gradient(135deg, #3498DB, #ffffff);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 40px;
-  margin: 20px;
-  border-radius: 20px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-  max-width: 600px;
-  width: 90%;
-
-  h2 {
-    color: white;
-    text-align: center;
-    margin-bottom: 20px;
-  }
-
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    max-width: 100%;
-    width: 100%;
-    background-color: #2985ec;
-    border-radius: 15px;
-    padding: 20px;
-    color: #FFD700;
-  }
-`;
-
-const Fecha = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-
-  label {
-    margin-bottom: 5px;
-    font-weight: bold;
-    color: white;
-    font-size: 1.2rem;
-  }
-`;
-
-const Hora = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-
-  label {
-    margin-bottom: 5px;
-    font-weight: bold;
-    color: white;
-  }
-
-  .hora-no-disponible {
-    background-color: rgba(255, 0, 0, 0.5);
-  }
-
-  .cancha-reservada {
-    background-color: rgba(255, 0, 0, 0.5);
-  }
-
-`;
-
-const Cancha = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-
-  label {
-    margin-bottom: 5px;
-    font-weight: bold;
-    color: white;
-  }
-
-  .cancha-reservada {
-    background-color: rgba(255, 0, 0, 0.5);
-  }
-
-`;
-
-const Equipo = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-
-  label {
-    margin-bottom: 5px;
-    font-weight: bold;
-    color: white;
-  }
-
-  .equipo-reservado {
-    background-color: rgba(255, 0, 0, 0.5);
-  }
-`;
-
-const Label = styled.label`
-  font-weight: bold;
-`;
-
-const Select = styled.select`
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 14px;
-  box-sizing: border-box;
-  width: 100%;
-`;
-
-const Button = styled.button`
-  background-color: #FFD700;
-  border: none;
-  border-radius: 5px;
-  color: black;
-  padding: 10px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  width: 100%;
-
-  &:hover {
-    background-color: #1e6bb8;
-    color: white;
-  }
-`;
-
-const ErrorNotification = styled.div`
-  margin-top: 20px;
-  background-color: #ff6347;
-  color: white;
-  padding: 10px;
-  border-radius: 5px;
-  text-align: center;
-  width: 100%;
-  max-width: 600px; 
-`;
