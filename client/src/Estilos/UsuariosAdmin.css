@@ -1,35 +1,88 @@
+/* Contenedor principal de usuarios */
 .Usuarios-container {
-    padding: 20px;
-    background-color: #eaf6ff; /* Fondo suave celeste */
-  }
-  
-  .Usuarios-title {
-    font-size: 2rem;
-    margin-bottom: 20px;
-    color: #3498db; /* Celeste */
-  }
-  
-  .Usuarios-user-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px; /* Espacio entre tarjetas de usuario */
-  }
-  
+  padding: 20px;
+  background-image: url('../Img/fondo.jpg'); /* Fondo general de la sección */
+  background-size: cover;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Mantener centrado horizontalmente */
+}
+
+/* Contenedor para los cards de usuarios */
+.Usuarios-user-list {
+  display: flex;
+  flex-direction: row; /* Cambiar a dirección fila para alinear cards horizontalmente */
+  justify-content: center; /* Centrar los cards horizontalmente */
+  flex-wrap: wrap; /* Permitir que los cards se ajusten en varias líneas si es necesario */
+  width: 100%; /* Asegurarse de que ocupe todo el ancho */
+  margin-top: 20px; /* Espacio arriba */
+  overflow: hidden; /* Evitar que los elementos salgan del contenedor */
+}
+
+/* Tarjeta de usuario */
+.Usuarios-user-card {
+  background-color: white; /* Fondo blanco para las tarjetas */
+  background-image: url('../Img/fondotest.png'); /* Fondo de la tarjeta */
+  background-size: cover;
+  background-position: center;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  width: 550px; /* Ancho para hacerla rectangular */
+  height: 150px; /* Alto para ajuste de proporción */
+  display: flex;
+  flex-direction: column; /* Cambiar a columna para organizar mejor los elementos */
+  align-items: center; /* Centrar los elementos horizontalmente */
+  text-align: center; /* Centrar el texto dentro de la tarjeta */
+  margin: 20px; /* Margen entre las tarjetas */
+  overflow: hidden; /* Evitar que el contenido salga de la tarjeta */
+}
+
+/* Nombre de usuario como título */
+.Usuarios-user-name {
+  font-size: 1.8rem; /* Aumentar tamaño para que se vea como título */
+  color: #2980b9; /* Color de nombre de usuario */
+  font-weight: bold; /* Hacer el texto más grueso */
+  margin-bottom: 10px; /* Espacio debajo del título */
+}
+
+/* Contenedor de números en la tarjeta */
+.Usuarios-numeros {
+  display: flex; /* Usar flexbox para alinear horizontalmente */
+  flex-direction: row; /* Alinear elementos en fila */
+  justify-content: space-around; /* Distribuir espacio entre números */
+  width: 100%; /* Asegurar que ocupe todo el ancho de la tarjeta */
+}
+
+/* Email de usuario */
+.Usuarios-user-email {
+  font-size: 1rem;
+  color: #2c3e50; /* Color de email */
+}
+
+/* Media queries para responsividad */
+@media (max-width: 768px) {
   .Usuarios-user-card {
-    background-color: #ffffff; /* Fondo blanco para las tarjetas */
-    border: 1px solid #3498db; /* Borde celeste */
-    border-radius: 8px;
-    padding: 15px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      padding: 10px; /* Reducir el padding en tarjetas */
   }
-  
+
   .Usuarios-user-name {
-    font-size: 1.5rem;
-    color: #2980b9; /* Color de nombre de usuario */
+      font-size: 1.5rem; /* Ajustar tamaño del nombre de usuario en pantallas pequeñas */
   }
-  
+
   .Usuarios-user-email {
-    font-size: 1rem;
-    color: #2c3e50; /* Color de email */
+      font-size: 0.9rem; /* Reducir el tamaño del email */
   }
-  
+}
+
+@media (max-width: 480px) {
+  .Usuarios-user-list {
+      flex-direction: column; /* Cambiar a columna en pantallas pequeñas */
+  }
+
+  .Usuarios-user-card {
+      width: 100%; /* Hacer las tarjetas más anchas en pantallas pequeñas */
+      margin: 10px 0; /* Margen vertical en lugar de horizontal */
+  }
+}
