@@ -19,7 +19,7 @@ const ReservasAgrupadas = () => {
             const response = await axios.get('http://localhost:5000/admin/reservas-agrupadas', {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
-            // Agrupar reservas por cancha en el front-end
+
             const reservasAgrupadas = response.data.reduce((acc, reserva) => {
                 const { cancha } = reserva;
                 if (!acc[cancha]) acc[cancha] = [];

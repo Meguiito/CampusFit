@@ -7,6 +7,7 @@ function ReservasEspeciales() {
   const [reservasEspeciales, setReservasEspeciales] = useState([]);
   const [reservasFiltradasDGorDE, setReservasFiltradasDGorDE] = useState([]);
   const [usuariosReservasDG, setusuariosReservasDG] = useState([]);
+  const [horaReservaDG, sethoraReservaDG] = useState([])
   const [mesesReservados, setMesesReservados] = useState([]);
   const [diasReservados, setDiasReservados] = useState([]);
   const [horasDesdeReservadas, setHorasDesdeReservadas] = useState([]);
@@ -14,6 +15,7 @@ function ReservasEspeciales() {
   const [canchasReservadas, setCanchasReservadas] = useState([]);
   const [equiposReservados, setEquiposReservados] = useState([]);
   const [usuariosReservasDE, setusuariosReservasDE] = useState([]);
+  const [horaReservaDE, sethoraReservaDE] = useState([])
   const [DEfechasReservadas, setDEfechasReservadas] = useState([]);
   const [DEhorasDesdeReservadas, setDEhorasDesdeReservadas] = useState([]);
   const [DEhorasHastaReservadas, setDEhorasHastaReservadas] = useState([]);
@@ -125,6 +127,9 @@ function ReservasEspeciales() {
         const usuariosActualizados = reservasFiltradas.map(reserva => reserva.user_email);
         setusuariosReservasDG(usuariosActualizados);    
 
+        const horasDGActualizadas = reservasFiltradas.map(reserva => reserva.upload_date);
+        sethoraReservaDG(horasDGActualizadas);   
+
         const mesesReservadosActualizados = reservasFiltradas.map(reserva => 
           Object.keys(reserva.meses)
             .filter(mes => reserva.meses[mes])
@@ -175,6 +180,9 @@ function ReservasEspeciales() {
         const uDEActualizados = reservasFiltradas.map(reserva => reserva.user_email);
         setusuariosReservasDE(uDEActualizados);    
 
+        const horasDEActualizadas = reservasFiltradas.map(reserva => reserva.upload_date);
+        sethoraReservaDE(horasDEActualizadas);
+
         const fechasActualizadas = reservasFiltradas.map(reserva => reserva.dia_esp.fecha);
         setDEfechasReservadas(fechasActualizadas);
   
@@ -214,6 +222,7 @@ function ReservasEspeciales() {
             {usuariosReservasDG.map((usuario, indexUsuario) => (
               <div key={indexUsuario} className="reserva-item">
                 <p><strong>Usuario E-mail:</strong> {usuario}</p>
+                <p><strong>Fecha envío:</strong> {horaReservaDG[indexUsuario]}</p>
                 <p><strong>Mes:</strong> {mesesReservados[indexUsuario].join(', ')}</p>
                 {diasReservados[indexUsuario]?.map((dia, indexDia) => (
                   <div key={indexDia} className="dia-item">
@@ -238,6 +247,7 @@ function ReservasEspeciales() {
             {usuariosReservasDE.map((usuario, indexUsuario) => (
               <div key={indexUsuario} className="reserva-item">
                 <p><strong>Usuario E-mail:</strong> {usuario}</p>
+                <p><strong>Fecha envío:</strong> {horaReservaDE[indexUsuario]}</p>
                 <p><strong>Fecha:</strong> {DEfechasReservadas[indexUsuario]}</p>
                 <p><strong>Hora Desde:</strong> {DEhorasDesdeReservadas[indexUsuario]}</p>
                 <p><strong>Hora Hasta:</strong> {DEhorasHastaReservadas[indexUsuario]}</p>

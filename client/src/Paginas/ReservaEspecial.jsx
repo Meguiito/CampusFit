@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css'; 
 import es from 'date-fns/locale/es';
 import "../Estilos/ReservaEspecial.css"
+import { useNavigate } from 'react-router-dom';
 registerLocale('es', es);
 
 function ReservaEspecial() {
@@ -43,6 +44,8 @@ function ReservaEspecial() {
     return fechaMax;
   };
 
+  const errorRef = useRef(null); 
+  const navigate = useNavigate();
   const fechaMinima = obtenerProximaFechaHabil();
   const fechaMaxima = calcularFechaMaxima(fechaMinima);
   const [diaActual] = useState(new Date());
@@ -112,42 +115,80 @@ function ReservaEspecial() {
     setError(message);
     setTimeout(() => {
       setError("");
-    }, 2000);
-  };
-  
-  const fetchCanchasYEquipos = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setErrorWithTimeout('No se encontró el token de autenticación.');
-      return;
-    }
-
-    try {
-      const response = await fetch('http://localhost:5000/api/canchas_equipo', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCanchasDisponibles(data.canchas_disponibles);
-        setEquiposDisponibles(data.equipos_disponibles);
-      } else {
-        const errorData = await response.json();
-        setErrorWithTimeout(errorData.error || 'Error al obtener los datos.')
-      }
-    } catch (error) {
-      console.error('Error de red:', error);
-      setErrorWithTimeout('Error al conectar con el servidor.')
-    }
+    }, 3000);
   };
 
   useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [error]); 
+  
+
+  useEffect(() => {
+    const fetchCanchasYEquipos = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setErrorWithTimeout('No se encontró el token de autenticación.');
+        return;
+      }
+  
+      try {
+        const response = await fetch('http://localhost:5000/api/canchas_equipo', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+  
+        if (response.ok) {
+          const data = await response.json();
+          setCanchasDisponibles(data.canchas_disponibles);
+          setEquiposDisponibles(data.equipos_disponibles);
+        } else {
+          const errorData = await response.json();
+          setErrorWithTimeout(errorData.error || 'Error al obtener los datos.')
+        }
+      } catch (error) {
+        console.error('Error de red:', error);
+        setErrorWithTimeout('Error al conectar con el servidor.')
+      }
+    };
+
     fetchCanchasYEquipos();
-  });
+  },[]);
+
+  useEffect(() => {
+    const verificarReservas = async () => {
+      const token = localStorage.getItem('token');
+  
+      if(!token){
+        return
+      }
+  
+      try {
+        const response = await fetch('http://localhost:5000/api/verificar_reservas_especiales', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+  
+        if (response.status === 410) {
+          const result = await response.json();;
+          alert(result.error);
+          navigate("/");
+        }
+  
+      } catch (error) {
+        setErrorWithTimeout('Error al conectar con el servidor.');
+      }
+    };
+  
+    verificarReservas();
+  },[navigate]);
 
   useEffect(() => {
     if (selectedDate) {
@@ -180,6 +221,7 @@ function ReservaEspecial() {
     setMesesDisponibles(mesesSeleccionables);
 
   }, [diaActual]);
+
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -420,18 +462,38 @@ const handleEquipoChange = (dia, e) => {
     });
   };
 
+
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     const token = localStorage.getItem('token');
     if (!token) {
       setErrorWithTimeout('No se encontró el token de autenticación.');
+      navigate("/");
       return;
     }
 
+    if(selectedFile === null){
+      setErrorWithTimeout('Por favor, seleccione un archivo PDF.');
+      return;
+    }
+      
     try {
       const formDataENVIO = new FormData();
       if(!reservarDiaEspecifico){
+
+        const mesesSeleccionados = Object.values(formData.meses).some(valor => valor === true);
+        if (!mesesSeleccionados) {
+            setErrorWithTimeout('Por favor, selecciona al menos un mes.');
+            return;
+        }
+        const diasSeleccionados = Object.values(formData.dias).some(dia => dia.seleccionado === true);
+        if (!diasSeleccionados) {
+            setErrorWithTimeout('Por favor, selecciona al menos un dia.');          
+            return;
+        }
+
         formDataENVIO.append('file', selectedFile);
         formDataENVIO.append('meses', JSON.stringify(formData.meses));
         formDataENVIO.append('dias', JSON.stringify(formData.dias));
@@ -440,8 +502,6 @@ const handleEquipoChange = (dia, e) => {
         formDataENVIO.append('file', selectedFile);
         formDataENVIO.append('dia_esp', JSON.stringify(formData.dia_esp));
       }
-
-      console.log("Datos antes del envío:", formDataENVIO);
 
       const response = await fetch("http://localhost:5000/special_request", {
         method: "POST",
@@ -453,6 +513,7 @@ const handleEquipoChange = (dia, e) => {
 
       if (response.ok) {
         alert("La reserva especial fue enviada para su revisión.");
+        navigate("/");
       } else {
         const errorData = await response.json();
         setErrorWithTimeout(errorData.error || "Error en el envío del formulario.");
@@ -468,11 +529,14 @@ return (
   <div id="container-boss" className="container-boss">
     <div id="formulario-container" className="formulario-container">
       <h2 className="titulo">Reserva Especial</h2>
-      {error && <p className="error">{error}</p>}
+      {error && (
+          <p ref={errorRef} className="error">
+            {error}
+          </p>
+        )}
       <form onSubmit={handleSubmit} className="formulario">
         <div className="form-group" id="archivo-group">
-          <label htmlFor="archivo" className="label">Subir archivo (PDF):</label>
-          
+          <label htmlFor="archivo" className="label">Subir archivo (PDF):</label>    
           <div className="pdf">
             <input 
               type="file"
@@ -488,17 +552,21 @@ return (
             <button
               type="button"
               className="btn-seleccionar-archivo"
-              onClick={() => document.getElementById("archivo").click()}
+              onClick={() => {
+                if (selectedFile) {
+                  handleRemoveFile();
+                } else {
+                  document.getElementById("archivo").click();
+                }
+              }}
             >
-              Seleccionar archivo
+              {selectedFile ? "Borrar archivo" : "Seleccionar archivo"}
             </button>
           </div>
+          
           {selectedFile && (
             <div className="archivo-seleccionado">
               <p className="archivo-nombre">Archivo seleccionado: {selectedFile.name}</p>
-              <button className="btn-borrar-archivo" onClick={handleRemoveFile}>
-                Borrar archivo
-              </button>
             </div>
           )}
         </div>
