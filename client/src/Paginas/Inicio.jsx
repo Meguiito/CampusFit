@@ -1,15 +1,22 @@
 import React from 'react'; 
+import { Navigate } from 'react-router-dom';
 import '../Estilos/Inicio.css'; 
 
 function Inicio() {
   const token = localStorage.getItem('token');
+  const isAdmin = localStorage.getItem('isAdmin') === 'true';
+
+  // Redirigir al inicio de admin si el usuario es administrador
+  if (token && isAdmin) {
+    return <Navigate to="/admin/inicio" />;
+  }
 
   return (
     <div>
       <main>
         <div className="cuerpo">
           <div className="circulo">
-            {token ? (
+            {token && !isAdmin? ( // Asegúrate de que la comparación sea correcta
               <div className="reserva-button">
                 <a href="/ReservayEquipo"><span>Reserva tu hora y Equipo</span></a>
               </div>
@@ -88,4 +95,4 @@ function Inicio() {
   );
 }
 
-export default Inicio;
+export default Inicio;  
