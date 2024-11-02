@@ -12,6 +12,7 @@ import atexit
 import json
 from bson import ObjectId
 from gridfs import GridFS
+import pytz
 
 app = Flask(__name__)
 
@@ -30,6 +31,8 @@ app.config['JWT_SECRET_KEY'] = 'franciscobenavides'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  
 
 jwt = JWTManager(app)
+
+chile_timezone = pytz.timezone("America/Santiago")
 
 
 
@@ -94,19 +97,17 @@ def verify_user():
         user = mongo.db.Usuarios.find_one({'email': email})
 
         if user:
-            # Verifica la contraseña
             if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
                 tipo_usuario = "client"
-                isAdmin = False  # Este usuario no es admin
+                isAdmin = False  
             else:
                 return jsonify({"error": "Contraseña incorrecta"}), 401
         else:
-            # Si no se encontró en Usuarios, verifica en Admin
             user = mongo.db.Admin.find_one({'email': email})
             if user:
                 if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
                     tipo_usuario = "admin"
-                    isAdmin = True  # Este usuario es admin
+                    isAdmin = True  
                 else:
                     return jsonify({"error": "Contraseña incorrecta"}), 401
             else:
@@ -126,7 +127,7 @@ def verify_user():
         return jsonify({
             "message": "Verificación exitosa",
             "access_token": access_token,
-            "isAdmin": isAdmin,  # Agregar este campo
+            "isAdmin": isAdmin,  
             "user": {
                 "rut": rut,
                 "username": username,
@@ -171,23 +172,19 @@ def delete_user(username):
 @jwt_required()
 def get_profile():
     try:
-        # Obtener la identidad del token JWT
         identity = get_jwt_identity()
         email = identity.get('email')
 
-        # Buscar el usuario en la colección de Usuarios
         user = mongo.db.Usuarios.find_one({'email': email})
         if user:
             tipo_usuario = "client"
         else:
-            # Si no está en Usuarios, buscar en Admin
             user = mongo.db.Admin.find_one({'email': email})
             if user:
                 tipo_usuario = "admin"
             else:
                 return jsonify({"error": "Usuario no encontrado"}), 404
 
-        # Preparar la respuesta con los datos del usuario
         response = {
             'rut': user.get('rut'),
             'username': user.get('username'),
@@ -204,18 +201,16 @@ def get_profile():
 
 
 
-@app.route('/api/canchas_equipo', methods=['GET'])  # Cambia a GET
+@app.route('/api/canchas_equipo', methods=['GET'])  
 @jwt_required()
 def obtener_canchas():
     try:
-        # Obtener todas las canchas
         canchas = mongo.db.Espacios.find()
 
         canchas_disponibles = []
 
-        # Procesar canchas
         for cancha in canchas:
-            cancha['_id'] = str(cancha['_id'])  # Convertir ObjectId a string
+            cancha['_id'] = str(cancha['_id'])  
             canchas_disponibles.append(cancha)
 
         equipos = mongo.db.Equipo.find()
@@ -223,7 +218,7 @@ def obtener_canchas():
         equipos_disponibles = []
 
         for equipo in equipos:
-            equipo['_id'] = str(equipo['_id'])  # Convertir ObjectId a string
+            equipo['_id'] = str(equipo['_id'])  
             equipos_disponibles.append(equipo)
 
         return jsonify({
@@ -291,6 +286,7 @@ def obtener_equipos_y_canchas_disponibles():
     
 
 
+
     
 @app.route('/api/reservas', methods=['GET'])
 @jwt_required()
@@ -310,16 +306,20 @@ def obtener_reservas():
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
 
+
+
+
+
 @app.route('/special_request', methods=['POST'])
 @jwt_required()
 def handle_special_request():
     try:
         if 'file' not in request.files:
-            return jsonify({"error": "No se encontró el archivo en la solicitud"}), 400
+            return jsonify({"error": "No se seleccionó ningún archivo PDF"}), 400
 
         file = request.files['file']
         if file.filename == '':
-            return jsonify({"error": "No se seleccionó ningún archivo"}), 400
+            return jsonify({"error": "No se encontró el archivo PDF en la solicitud"}), 400
 
         mime_type = magic.from_buffer(file.read(1024), mime=True)
         file.seek(0)
@@ -333,10 +333,24 @@ def handle_special_request():
         dias = request.form.get('dias')
         dia_esp = request.form.get('dia_esp')
 
+        upload_date = datetime.now(chile_timezone)
+        formatted_upload_date = upload_date.strftime("%A %d de %B a las %H:%M")
+
+        formatted_upload_date = formatted_upload_date.replace("Monday", "Lunes").replace("Tuesday", "Martes")\
+                                                     .replace("Wednesday", "Miércoles").replace("Thursday", "Jueves")\
+                                                     .replace("Friday", "Viernes").replace("Saturday", "Sábado")\
+                                                     .replace("Sunday", "Domingo").replace("January", "enero")\
+                                                     .replace("February", "febrero").replace("March", "marzo")\
+                                                     .replace("April", "abril").replace("May", "mayo")\
+                                                     .replace("June", "junio").replace("July", "julio")\
+                                                     .replace("August", "agosto").replace("September", "septiembre")\
+                                                     .replace("October", "octubre").replace("November", "noviembre")\
+                                                     .replace("December", "diciembre")
+
         reserva_data = {
             "filename": file.filename,
             "file_id": str(file_id),
-            "upload_date": datetime.utcnow(),
+            "upload_date": formatted_upload_date,  
             "user_email": identity.get('email'),
             "user_name": identity.get('username')
         }
@@ -358,7 +372,7 @@ def handle_special_request():
 
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
-    
+
 
 
 
@@ -400,7 +414,6 @@ def manejar_pdf(mongo_id, action):
         identity = get_jwt_identity()
         email = identity.get('email')
 
-        # Verifica si el usuario es administrador
         admin_user = mongo.db.Admin.find_one({'email': email})
         if not admin_user:
             return jsonify({"error": "Acceso denegado: solo administradores"}), 403
@@ -418,16 +431,13 @@ def manejar_pdf(mongo_id, action):
         if not file_id:
             return jsonify({"error": "No se encontró el ID del archivo PDF"}), 404
 
-        # Obtén el archivo desde GridFS
         file_data = fs.get(ObjectId(file_id))
         if not file_data:
             return jsonify({"error": "Archivo PDF no encontrado en GridFS"}), 404
 
-        # Si la acción es "ver", envía el archivo para verlo en el navegador
         if action == "ver":
             return send_file(file_data, as_attachment=False, download_name=reserva["filename"])
 
-        # Si la acción es "descargar", envía el archivo como adjunto
         elif action == "descargar":
             return send_file(file_data, as_attachment=True, download_name=reserva["filename"])
 
@@ -531,42 +541,46 @@ def verificar_reservas():
 
 
 
-def eliminar_reservas_antiguas():
+
+
+@app.route('/api/verificar_reservas_especiales', methods=['POST'])
+@jwt_required()
+def verificar_reservas_especiales():
     try:
-        fecha_actual = datetime.now().strftime('%Y-%m-%d')
-        
-        resultado_reservas = mongo.db.Reservas.delete_many({
-            "fecha": {"$lt": fecha_actual}
-        })
-        print(f"Reservas eliminadas de Reservas: {resultado_reservas.deleted_count}")
-        
-        resultado_reservas_especiales = mongo.db.Reservas_especiales.delete_many({
-            "fecha": {"$lt": fecha_actual}
-        })
-        print(f"Reservas eliminadas de Reservas_especiales: {resultado_reservas_especiales.deleted_count}")
-        
+        identity = get_jwt_identity()
+        email = identity.get('email')
+
+
+        total_reservas = mongo.db.Reservas_especiales.count_documents({"user_email": email})
+
+        if total_reservas >= 2:
+            return jsonify({"error": "Has alcanzado el límite de 2 reservas especiales por semestre."}), 410
+       
+        return jsonify({"message": "Reserva disponible."}), 200
+
     except PyMongoError as e:
-        print(f"Error en la base de datos al eliminar reservas antiguas: {str(e)}")
+        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
-        print(f"Error inesperado al eliminar reservas antiguas: {str(e)}")
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
+
+
+
 
 
 @app.route('/api/usuarios', methods=['GET'])
 @jwt_required()
 def get_usuarios():
     try:
-        # Obtener la identidad del token JWT
         identity = get_jwt_identity()
         email = identity.get('email')
 
-        # Verificar si el usuario es admin
         admin_user = mongo.db.Admin.find_one({'email': email})
         if not admin_user:
             return jsonify({"error": "Acceso denegado: solo administradores"}), 403
 
-        # Obtener todos los usuarios
         usuarios = mongo.db.Usuarios.find({}, {"_id": 0, "username": 1, "email": 1, "rut": 1})
-        usuarios_list = list(usuarios)  # Convertir a lista para JSON
+        usuarios_list = list(usuarios)  
 
         return jsonify(usuarios_list), 200
 
@@ -576,15 +590,6 @@ def get_usuarios():
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
 
 
-scheduler.add_job(
-    func=eliminar_reservas_antiguas,
-    trigger='cron',
-    day_of_week='mon',
-    hour=2,
-    minute=0,
-    id='eliminar_reservas_antiguas',
-    replace_existing=True
-)
 
 
 
@@ -606,22 +611,24 @@ def obtener_reservas_del_dia():
             "fecha": fecha_actual
         }).sort("hora", 1)) 
 
-        # Si no hay reservas
         if not reservas:
             return jsonify({"message": "No hay reservas para el día de hoy."}), 200
 
-        # Filtrar los campos que queremos devolver
         reservas_filtradas = [{
             "cancha": reserva.get("cancha"),
             "equipo": reserva.get("equipo"),
             "email_usuario": reserva.get("email_usuario"),
-            "hora": reserva.get("hora")  # Incluyendo la hora de la reserva
+            "hora": reserva.get("hora")  
         } for reserva in reservas]
 
         return jsonify(reservas_filtradas), 200
 
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+    
+
+
+
 
 
 @app.route('/admin/reservas-agrupadas', methods=['GET'])
@@ -643,6 +650,11 @@ def obtener_reservas_agrupadas():
         return jsonify(reservas_format), 200
     except Exception as e:
         return jsonify({"error": "Error al obtener las reservas"}), 500
+    
+
+
+
+
 
 @app.route('/admin/eliminar-reserva', methods=['POST'])
 @jwt_required()
@@ -661,12 +673,52 @@ def eliminar_reserva():
     if user and bcrypt.checkpw(password.encode('utf-8'), user["password"]):
         try:
             mongo.db.reservas.delete_one({"_id": reserva_id})
-            # Opcional: Guardar motivo de eliminación en otra colección.
             return jsonify({"success": True, "message": "Reserva eliminada exitosamente"}), 200
         except Exception as e:
             return jsonify({"success": False, "message": str(e)}), 500
     else:
         return jsonify({"success": False, "message": "Contraseña incorrecta"}), 403
+    
+
+
+
+
+
+def eliminar_reservas_antiguas():
+    try:
+        fecha_actual = datetime.now().strftime('%Y-%m-%d')
+        
+        resultado_reservas = mongo.db.Reservas.delete_many({
+            "fecha": {"$lt": fecha_actual}
+        })
+        print(f"Reservas eliminadas de Reservas: {resultado_reservas.deleted_count}")
+        
+        resultado_reservas_especiales = mongo.db.Reservas_especiales.delete_many({
+            "fecha": {"$lt": fecha_actual}
+        })
+        print(f"Reservas eliminadas de Reservas_especiales: {resultado_reservas_especiales.deleted_count}")
+        
+    except PyMongoError as e:
+        print(f"Error en la base de datos al eliminar reservas antiguas: {str(e)}")
+    except Exception as e:
+        print(f"Error inesperado al eliminar reservas antiguas: {str(e)}")
+
+
+
+
+scheduler.add_job(
+    func=eliminar_reservas_antiguas,
+    trigger='cron',
+    day_of_week='mon',
+    hour=2,
+    minute=0,
+    id='eliminar_reservas_antiguas',
+    replace_existing=True
+)
+
+
+
+
 
 @app.errorhandler(404)
 def not_found(error=None):
@@ -687,6 +739,10 @@ def server_error(error=None):
 @app.errorhandler(Exception)
 def handle_exception(e):
     return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
+
+
+
 
 if __name__ == '__main__':
     try:
