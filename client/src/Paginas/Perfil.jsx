@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { logout, isAdmin } from '../Tokens/authService'; // Asegúrate de que la ruta sea correcta
+import { logout} from '../Tokens/authService';
 
 function Perfil() {
   const navigate = useNavigate();
@@ -39,7 +39,6 @@ function Perfil() {
           logout();
         }
       } else {
-        // Si no hay token, redirigir al inicio de sesión
         navigate('/Login');
       }
     };
@@ -51,12 +50,6 @@ function Perfil() {
     logout();
   };
 
-  const adminSection = isAdmin() ? (
-    <div>
-      <h3>Sección de Administrador</h3>
-      <p>Eres un administrador.</p>
-    </div>
-  ) : null;
 
   if (loading) {
     return (
@@ -90,7 +83,6 @@ function Perfil() {
               <li><strong>E-Mail UCT:</strong> {userData.email}</li>
             </ul>
           </Datos>
-          {adminSection}
         </DatosPersonales>
         <LogoutButton onClick={handleLogout}>Cerrar sesión</LogoutButton>
       </Contenedor>

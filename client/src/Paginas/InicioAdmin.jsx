@@ -47,7 +47,7 @@ const InicioAdmin = () => {
     };
 
     const getCanchaImage = (cancha) => {
-        return canchaImages[cancha] || require('../Img/default.png'); // Imagen por defecto si no hay coincidencia
+        return canchaImages[cancha] || require('../Img/default.png'); 
     };
 
     if (error) {

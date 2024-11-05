@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -46,10 +46,10 @@ function ReservayEquipo() {
 
   const fechaMinima = obtenerProximaFechaHabil();
   const fechaMaxima = calcularFechaMaxima(fechaMinima);
-
+  const errorRef = useRef(null); 
   const [disp, setDis] = useState(null);
   const [selectedDate, setSelectedDate] = useState(obtenerProximaFechaHabil());
-  const [time, setTime] = useState(null);
+  const [time, setTime] = useState('');
   const [error, setError] = useState(null);
   const [cancha, setCancha] = useState('');
   const [canchaTipo, setCanchaTipo] = useState('');
@@ -59,12 +59,26 @@ function ReservayEquipo() {
   const [canchas, setCanchas] = useState([]);
   const [equipos, setEquipos] = useState([]);
   const [horasNoDisponibles, setHorasNoDisponibles] = useState([]);
+
+  const setErrorWithTimeout = (message) => {
+    setError(message);
+    setTimeout(() => {
+      setError("");
+    }, 3000);
+  };
+
+  useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [error]); 
+  
   
   useEffect(() => {
     const fetchCanchasYEquipos = async () => {
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('No se encontró el token de autenticación.');
+        setErrorWithTimeout('No se encontró el token de autenticación.');
         return;
       }
     
@@ -79,15 +93,14 @@ function ReservayEquipo() {
     
         if (response.ok) {
           const data = await response.json();
-          console.log(data);
           setCanchas(data.canchas_disponibles);
           setEquipos(data.equipos_disponibles);
         } else {
           const errorData = await response.json();
-          setError(errorData.error || 'Error al obtener los datos.');
+          setErrorWithTimeout(errorData.error || 'Error al obtener los datos.');
         }
       } catch (error) {
-        setError('Error de red: ' + error.message);
+        setErrorWithTimeout('Error de red: ' + error.message);
       }
     };
 
@@ -120,14 +133,13 @@ function ReservayEquipo() {
             setCanchasReservadas(data.canchas_reservadas);
             setEquiposReservados(data.equipos_reservados);
           } else {
-            console.log(data.horas_no_disponibles)
             setHorasNoDisponibles(data.horas_no_disponibles);
           }
         } else {
-          console.error('Error en la solicitud:', response.statusText);
+          setErrorWithTimeout('Error en la solicitud:', response.statusText);
         }
       } catch (error) {
-        console.error('Error en la solicitud:', error);
+        setErrorWithTimeout('Error en la solicitud:', error);
       }
     };
 
@@ -138,7 +150,6 @@ function ReservayEquipo() {
 
   useEffect(() => {
     const verificarReservas = async () => {
-      setError(null);
       const token = localStorage.getItem('token');
       const formData = {
         fecha: selectedDate.toLocaleDateString('es-CL'),
@@ -159,7 +170,7 @@ function ReservayEquipo() {
         } else if (response.status === 409) {
           const result = await response.json();
           setDis(false);
-          setError(result.error);
+          setErrorWithTimeout(result.error);
         } else if (response.status === 410) {
           const result = await response.json();
           setDis(false);
@@ -168,7 +179,7 @@ function ReservayEquipo() {
         }
 
       } catch (error) {
-        setError('Error al conectar con el servidor.');
+        setErrorWithTimeout('Error al conectar con el servidor.');
       }
     };
 
@@ -204,12 +215,12 @@ function ReservayEquipo() {
         navigate("/TuReservacion"); 
       } else if (response.status === 409) {
         const result = await response.json();
-        setError(result.error); 
+        setErrorWithTimeout(result.error); 
       } else {
-        setError('Ocurrió un error al realizar la reserva.');
+        setErrorWithTimeout('Ocurrió un error al realizar la reserva.');
       }
     } catch (error) {
-      setError('Error al conectar con el servidor.');
+      setErrorWithTimeout('Error al conectar con el servidor.');
     }
   };
 
@@ -297,6 +308,11 @@ function ReservayEquipo() {
     <div className="wrapper">
       <div className="formulario-container">
         <h2>Reserva tu Hora y Equipo</h2>
+        {error && (
+          <p ref={errorRef} className="error">
+            {error}
+          </p>
+        )}
         <form onSubmit={handleSubmit} className="form">
           <div className="fecha-group">
             <label>Selecciona el Día:</label>
@@ -367,7 +383,6 @@ function ReservayEquipo() {
           </div>
           <button type="submit" className="button">Reservar</button>
         </form>
-        {error && <div className="error-notification">{error}</div>}
       </div>
     </div>
   );
