@@ -203,7 +203,6 @@ function ReservasEspeciales() {
   
 
     return (
-<<<<<<< HEAD
       <div className="reservas-especiales-container">
       {error && <div className="error">{error}</div>}
       {loading && <p className="loading-text">Cargando reservas...</p>}
@@ -235,58 +234,6 @@ function ReservasEspeciales() {
                 </div>
               ))}
               <div className="button-group">
-=======
-      <div>
-        {error && <div className="error">{error}</div>}
-        {loading && <p>Cargando reservas...</p>}
-        <h2>Reservas Especiales</h2>
-        <div>
-          <label>
-            Tipo de Reserva:
-            <select value={tipoReserva} onChange={(e) => setTipoReserva(e.target.value)}>
-              <option value="DG">Días en General</option>
-              <option value="DE">Días en Específico</option>
-            </select>
-          </label>
-        </div>
-    
-        {tipoReserva === "DG" ? (
-          <div className="reservas-list">
-            {usuariosReservasDG.map((usuario, indexUsuario) => (
-              <div key={indexUsuario} className="reserva-item">
-                <p><strong>Usuario E-mail:</strong> {usuario}</p>
-                <p><strong>Fecha envío:</strong> {horaReservaDG[indexUsuario]}</p>
-                <p><strong>Mes:</strong> {mesesReservados[indexUsuario].join(', ')}</p>
-                {diasReservados[indexUsuario]?.map((dia, indexDia) => (
-                  <div key={indexDia} className="dia-item">
-                    <p><strong>Día:</strong> {dia}</p>
-                    <p><strong>Hora Desde:</strong> {horasDesdeReservadas[indexUsuario]?.[indexDia]}</p>
-                    <p><strong>Hora Hasta:</strong> {horasHastaReservadas[indexUsuario]?.[indexDia]}</p>
-                    <p><strong>Cancha:</strong> {canchasReservadas[indexUsuario]?.[indexDia]}</p>
-                    <p><strong>Equipo:</strong> {equiposReservados[indexUsuario]?.[indexDia]}</p>
-                  </div>
-                ))}
-                <div>
-                  <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
-                  <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "ver")}>Ver PDF</button>
-                  <button onClick={() => {}}>Aceptar</button>
-                  <button onClick={() => {}}>Rechazar</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="reservas-list">
-            {usuariosReservasDE.map((usuario, indexUsuario) => (
-              <div key={indexUsuario} className="reserva-item">
-                <p><strong>Usuario E-mail:</strong> {usuario}</p>
-                <p><strong>Fecha envío:</strong> {horaReservaDE[indexUsuario]}</p>
-                <p><strong>Fecha:</strong> {DEfechasReservadas[indexUsuario]}</p>
-                <p><strong>Hora Desde:</strong> {DEhorasDesdeReservadas[indexUsuario]}</p>
-                <p><strong>Hora Hasta:</strong> {DEhorasHastaReservadas[indexUsuario]}</p>
-                <p><strong>Cancha:</strong> {DEcanchasReservadas[indexUsuario]}</p>
-                <p><strong>Equipo:</strong> {DEequiposReservados[indexUsuario]}</p>
->>>>>>> 845cc6460fd5f2a0ff7a490d4bef71a31dc9a452
                 <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
                 <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "ver")}>Ver PDF</button>
                 <button onClick={() => {}}>Aceptar</button>
