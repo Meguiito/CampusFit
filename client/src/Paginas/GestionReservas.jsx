@@ -28,6 +28,7 @@ function GestionReservas() {
     <div className="gestion-reservas">
       <h2>Gestionar Reservas</h2>
 
+      <div className='Container'>
       <form onSubmit={(e) => handleSubmit(e, 'canchas', cancha)}>
         <h3>Agregar Cancha</h3>
         <input
@@ -89,8 +90,9 @@ function GestionReservas() {
         />
         <button type="submit">Bloquear Fecha</button>
       </form>
+      </div>
     </div>
-  );
+  ); 
 }
 
 export default GestionReservas;

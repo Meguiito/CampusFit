@@ -1,34 +1,59 @@
 .gestion-reservas {
-    background-color: #e0f7fa; /* Color azul claro */
+    background-image: url('../Img/fondo.jpg'); /* Fondo general de la sección */
+    background-size: cover;
     padding: 20px;
     min-height: 100vh;
     display: flex;
-    flex-direction: column; /* Mantiene el contenido principal en columna */
+    flex-direction: column;
     align-items: center;
   }
   
   .gestion-reservas h2 {
-    color: #004d40; /* Color oscuro para el título */
-  }
-  
+    color: #ffffff;
+    font-size: 2em; 
+}
+
+.Container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: 20px;
+  overflow: hidden;
+  gap: 40px; /* Aumenta el valor para más separación */
+}
+
   .gestion-reservas form {
     background-color: white; /* Fondo blanco para los formularios */
+    background-image: url('../Img/fondotest.png'); /* Fondo de la tarjeta */
+    background-size: cover;
+    background-position: center;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     padding: 15px;
     margin: 20px 0; /* Espaciado entre formularios */
     width: 80%; /* Ancho del formulario */
     max-width: 400px; /* Ancho máximo */
+    display: flex;
+    flex-direction: column; /* Cambiar a columna para organizar mejor los elementos */
+    align-items: center; /* Centrar los elementos horizontalmente */
+    text-align: center; /* Centrar el texto dentro de la tarjeta */
+    overflow: hidden; /* Evitar que el contenido salga de la tarjeta */
   }
   
   .gestion-reservas input {
     width: 94%; /* Campos de entrada a 100% del ancho */
     padding: 10px; /* Espaciado interno */
     margin: 10px 0; /* Espaciado vertical entre campos */
-    border: 1px solid #ccc; /* Borde gris claro */
-    border-radius: 5px; /* Bordes redondeados */
+    border: 1px solid black; /* Borde gris claro */
+    border-radius: 5px; /* Bordes rsedondeados */
   }
   
+  .gestion-reservas input::placeholder {
+    color: black;
+}
+
   .gestion-reservas button {
     background-color: #3498DB; /* Color del botón */
     color: white;

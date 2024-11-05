@@ -1,113 +1,155 @@
-.reservas-especiales {
-  background-color: #e0f7fa; /* Fondo azul claro */
-  padding: 30px;
+/* ReservasEspeciales.css */
+
+.reservas-especiales-container {
+  padding: 20px;
+  background-image: url('../Img/fondo.jpg'); /* Fondo general de la sección */
+  background-size: cover;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: center; /* Mantener centrado horizontalmente */
 }
 
-.reservas-table {
-  width: 100%;
-  max-width: 600px;
-  margin-top: 20px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra suave */
-  padding: 20px;
+.title-reservas {
+  color: #ffffff;
+  font-size: 2em; 
+}
+
+.tipo-reserva {
+  font-size: 1.2rem;
+  padding: 15px;
   display: flex;
   flex-direction: column;
+  align-items: center; /* Centra el contenido horizontalmente */
 }
 
-.reservas-table ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.tipo-reserva label {
+  display: flex;
+  flex-direction: column;
+  font-size: 1.2rem;
+  text-align: center; /* Centra el texto dentro del label */
+}
+
+.tipo-reserva select {
+  font-size: 1rem; /* Aumenté el tamaño de fuente para mejor legibilidad */
+  padding: 8px;
+  width: 180px;
+}
+
+.error {
+  background-color: #ff4c4c;
+  color: #fff;
+  text-align: center;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.reservas-list {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: 20px;
+  overflow: hidden;
+  gap: 40px; /* Aumenta el valor para más separación */
 }
 
 .reserva-item {
+  background-color: white; /* Fondo blanco para los formularios */
+  background-image: url('../Img/fondotest.png'); /* Fondo de la tarjeta */
+  background-size: cover;
+  background-position: center;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   padding: 15px;
-  border-bottom: 1px solid #ddd;
+  margin: 20px 0; /* Espaciado entre formularios */
+  width: 80%; /* Ancho del formulario */
+  max-width: 400px; /* Ancho máximo */
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column; /* Cambiar a columna para organizar mejor los elementos */
+  align-items: center; /* Centrar los elementos horizontalmente */
+  text-align: center; /* Centrar el texto dentro de la tarjeta */
+  overflow: hidden; /* Evitar que el contenido salga de la tarjeta */
+}
+
+.reserva-item p {
+  margin: 5px 0;
+  color: #555;
+}
+
+.dia-item {
   background-color: #f9f9f9;
-  transition: background-color 0.3s ease;
+  padding: 10px;
+  margin: 10px 0;
   border-radius: 5px;
-  margin-bottom: 10px;
+  border-left: 4px solid #4caf50;
 }
 
-.reserva-item:hover {
-  background-color: #f1f1f1; /* Color gris claro en hover */
-}
-
-.reserva-left {
-  flex: 2;
-  text-align: left;
-}
-
-.pdf-button-container {
-  display: flex;
-  justify-content: center;
-  flex: 1;
-  padding: 0 15px;
-}
-
-.reserva-right {
-  flex: 1;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.estado-botones {
-  display: flex;
-  gap: 10px;
-}
-
-.boton-confirmar, .boton-rechazar {
-  background-color: #3498DB; /* Color azul por defecto */
-  color: white;
-  border: none;
-  border-radius: 5px;
-  padding: 10px 15px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.boton-confirmar:hover {
-  background-color: #2e86c1; /* Azul más oscuro en hover */
-}
-
-.boton-rechazar {
-  background-color: #e74c3c; /* Rojo para botón de rechazo */
-}
-
-.boton-rechazar:hover {
-  background-color: #c0392b; /* Rojo más oscuro en hover */
-}
-
-.reservas-button {
-  background-color: #3498DB;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  padding: 10px 15px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.reservas-button:hover {
-  background-color: #004d40; /* Verde oscuro en hover */
+label {
+  font-weight: bold;
+  margin-bottom: 5px; /* Ajustado para mayor separación */
+  color: #333;
 }
 
 select {
-  padding: 5px;
+  padding: 8px;
+  font-size: 16px;
+  margin-top: 5px;
   border-radius: 5px;
   border: 1px solid #ccc;
-  background-color: white;
+  width: 100%;
 }
 
-select:focus {
-  outline: none;
-  border-color: #3498DB; /* Borde azul en foco */
+.button-group {
+  display: flex;
+  justify-content: space-between; /* Distribuye botones uniformemente */
+  margin-top: 10px;
+}
+
+.button-group button {
+  background-color: #4caf50;
+  color: #fff;
+  padding: 8px 12px;
+  margin: 5px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s; /* Añadido efecto de transición */
+}
+
+.button-group button:hover {
+  background-color: #45a049;
+}
+
+.button-group button:disabled {
+  background-color: #ddd;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.button-group button:nth-child(2) {
+  background-color: #2196f3;
+}
+
+.button-group button:nth-child(2):hover {
+  background-color: #1e88e5;
+}
+
+.button-group button:nth-child(3) {
+  background-color: #ffa726;
+}
+
+.button-group button:nth-child(3):hover {
+  background-color: #fb8c00;
+}
+
+.button-group button:nth-child(4) {
+  background-color: #e57373;
+}
+
+.button-group button:nth-child(4):hover {
+  background-color: #e53935;
 }
