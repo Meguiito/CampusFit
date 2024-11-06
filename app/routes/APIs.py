@@ -668,7 +668,7 @@ def eliminar_reserva():
     if not (reserva_id and password and delete_reason):
         return jsonify({"success": False, "message": "Todos los campos son requeridos"}), 400
 
-    user = mongo.db.users.find_one({"email": user_email})
+    user = mongo.db.Usuarios.find_one({"email": user_email})
 
     if user and bcrypt.checkpw(password.encode('utf-8'), user["password"]):
         try:
