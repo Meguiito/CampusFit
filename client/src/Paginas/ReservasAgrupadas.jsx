@@ -46,8 +46,9 @@ const ReservasAgrupadas = () => {
             }, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
-
+    
             if (response.data.success) {
+                alert(`Reserva eliminada exitosamente. Email del usuario: ${response.data.email_usuario}`);
                 fetchReservas();
                 setShowDeleteModal(false);
             } else {
@@ -57,6 +58,7 @@ const ReservasAgrupadas = () => {
             setError('Error al eliminar la reserva');
         }
     };
+    
 
     return (
         <div className="reservas-agrupadas">
