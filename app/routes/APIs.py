@@ -654,8 +654,6 @@ def obtener_reservas_agrupadas():
 
 
 
-
-
 @app.route('/admin/eliminar-reserva', methods=['POST'])
 @jwt_required()
 def eliminar_reserva():
@@ -664,32 +662,32 @@ def eliminar_reserva():
     reserva_id = data.get("reservaId")
     password = data.get("password")
     delete_reason = data.get("deleteReason")
-    admin_email = get_jwt_identity()  # Obtener identidad del JWT
+    
+    # Obtener el email desde el JWT
+    identity = get_jwt_identity()
+    email = identity.get("email")
 
     # Verificar que todos los campos estén presentes
     if not (reserva_id and password and delete_reason):
         return jsonify({"success": False, "message": "Todos los campos son requeridos"}), 400
 
     # Verificar que el usuario autenticado sea el administrador autorizado
-    if admin_email != "admin@uctadmin.cl":
-        return jsonify({"success": False, "message": "Acceso no autorizado"}), 401
-
-    # Log para ver la contraseña recibida
-    print("Contraseña recibida:", password)
+    if email != "admin@uctadmin.cl":
+        return jsonify({"success": False, "message": "Acceso no autorizado"}), 403
 
     # Buscar la cuenta del administrador
-    admin_user = mongo.db.Admin.find_one({"email": admin_email})
-    
-    # Verificación de la contraseña
+    admin_user = mongo.db.Admin.find_one({"email": email})
+
+    # Verificar la contraseña ingresada contra la almacenada
     if not admin_user or not bcrypt.checkpw(password.encode('utf-8'), admin_user["password"]):
-        return jsonify({"success": False, "message": "Contraseña incorrecta"}), 402
+        return jsonify({"success": False, "message": "Contraseña incorrecta"}), 403
 
     # Intentar obtener y eliminar la reserva
     try:
         # Buscar la reserva por ID en la colección "Reservas"
         reserva = mongo.db.Reservas.find_one({"_id": ObjectId(reserva_id)})
         if not reserva:
-            return jsonify({"success": False, "message": "Reserva no encontrada"}), 403
+            return jsonify({"success": False, "message": "Reserva no encontrada"}), 404
 
         # Guardar el correo del usuario que hizo la reserva
         email_usuario = reserva["email_usuario"]
@@ -706,7 +704,6 @@ def eliminar_reserva():
 
     except Exception as e:
         return jsonify({"success": False, "message": f"Error al eliminar la reserva: {str(e)}"}), 500
-
 
 
 
