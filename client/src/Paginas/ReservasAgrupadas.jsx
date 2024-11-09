@@ -39,14 +39,17 @@ const ReservasAgrupadas = () => {
 
     const confirmDelete = async () => {
         try {
+            // Verificar qué valor se está enviando en password
+            console.log("Password ingresada:", password);
+    
             const response = await axios.post('http://localhost:5000/admin/eliminar-reserva', {
                 reservaId: selectedReserva._id,
-                password,
+                password,  // Este debe ser el valor ingresado en el modal de contraseña
                 deleteReason,
             }, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
-    
+        
             if (response.data.success) {
                 alert(`Reserva eliminada exitosamente. Email del usuario: ${response.data.email_usuario}`);
                 fetchReservas();
@@ -58,6 +61,7 @@ const ReservasAgrupadas = () => {
             setError('Error al eliminar la reserva');
         }
     };
+    
     
 
     return (
