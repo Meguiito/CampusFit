@@ -672,20 +672,24 @@ def eliminar_reserva():
 
     # Verificar que el usuario autenticado sea el administrador autorizado
     if admin_email != "admin@uctadmin.cl":
-        return jsonify({"success": False, "message": "Acceso no autorizado"}), 403
+        return jsonify({"success": False, "message": "Acceso no autorizado"}), 401
+
+    # Log para ver la contraseña recibida
+    print("Contraseña recibida:", password)
 
     # Buscar la cuenta del administrador
     admin_user = mongo.db.Admin.find_one({"email": admin_email})
-    # Verificar la contraseña en texto plano "1234567" contra la almacenada
+    
+    # Verificación de la contraseña
     if not admin_user or not bcrypt.checkpw(password.encode('utf-8'), admin_user["password"]):
-        return jsonify({"success": False, "message": "Contraseña incorrecta"}), 403
+        return jsonify({"success": False, "message": "Contraseña incorrecta"}), 402
 
     # Intentar obtener y eliminar la reserva
     try:
         # Buscar la reserva por ID en la colección "Reservas"
         reserva = mongo.db.Reservas.find_one({"_id": ObjectId(reserva_id)})
         if not reserva:
-            return jsonify({"success": False, "message": "Reserva no encontrada"}), 404
+            return jsonify({"success": False, "message": "Reserva no encontrada"}), 403
 
         # Guardar el correo del usuario que hizo la reserva
         email_usuario = reserva["email_usuario"]
@@ -702,6 +706,7 @@ def eliminar_reserva():
 
     except Exception as e:
         return jsonify({"success": False, "message": f"Error al eliminar la reserva: {str(e)}"}), 500
+
 
 
 
