@@ -659,37 +659,45 @@ def obtener_reservas_agrupadas():
 @app.route('/admin/eliminar-reserva', methods=['POST'])
 @jwt_required()
 def eliminar_reserva():
+    # Obtener los datos del cuerpo de la solicitud
     data = request.get_json()
     reserva_id = data.get("reservaId")
     password = data.get("password")
     delete_reason = data.get("deleteReason")
-    admin_email = get_jwt_identity()
+    admin_email = get_jwt_identity()  # Obtener identidad del JWT
 
-    # Verificar que todos los campos requeridos estén presentes
+    # Verificar que todos los campos estén presentes
     if not (reserva_id and password and delete_reason):
         return jsonify({"success": False, "message": "Todos los campos son requeridos"}), 400
 
-    # Verificar que el usuario autenticado sea el administrador
+    # Verificar que el usuario autenticado sea el administrador autorizado
     if admin_email != "admin@uctadmin.cl":
         return jsonify({"success": False, "message": "Acceso no autorizado"}), 403
 
     # Buscar la cuenta del administrador
     admin_user = mongo.db.Admin.find_one({"email": admin_email})
+    # Verificar la contraseña en texto plano "1234567" contra la almacenada
     if not admin_user or not bcrypt.checkpw(password.encode('utf-8'), admin_user["password"]):
         return jsonify({"success": False, "message": "Contraseña incorrecta"}), 403
 
-    # Intentar eliminar la reserva
+    # Intentar obtener y eliminar la reserva
     try:
-        reserva = mongo.db.Reservas.find_one({"_id": reserva_id})
+        # Buscar la reserva por ID en la colección "Reservas"
+        reserva = mongo.db.Reservas.find_one({"_id": ObjectId(reserva_id)})
         if not reserva:
             return jsonify({"success": False, "message": "Reserva no encontrada"}), 404
+
+        # Guardar el correo del usuario que hizo la reserva
+        email_usuario = reserva["email_usuario"]
+
+        # Eliminar la reserva
+        mongo.db.Reservas.delete_one({"_id": ObjectId(reserva_id)})
         
-        # Eliminar la reserva y retornar el correo electrónico del usuario de la reserva
-        mongo.db.Reservas.delete_one({"_id": reserva_id})
+        # Respuesta de éxito con el correo del usuario
         return jsonify({
             "success": True,
             "message": "Reserva eliminada exitosamente",
-            "email_usuario": reserva["email_usuario"]
+            "email_usuario": email_usuario
         }), 200
 
     except Exception as e:
