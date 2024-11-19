@@ -15,51 +15,87 @@
     justify-content: space-around;
     flex-wrap: wrap;
     margin-top: 20px;
-  }
-  
-  .cancha-section {
-    width: 30%;
-    margin: 20px;
-  }
-  
-  .card {
-    background-color: white;
-    border: 1px solid #333;
-    border-radius: 10px;
-    padding: 20px;
-    margin: 10px 0;
-  }
-  
-  .delete-button {
-    background-color: #d9534f;
-    color: white;
-    padding: 5px 10px;
-    border: none;
-    cursor: pointer;
-  }
-  
-  .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.6);
+}
+
+.cancha-section {
+    width: 100%; /* Hacer que cada sección ocupe todo el ancho disponible */
+    max-width: 560px; /* Limitar el ancho máximo de cada sección a 560px */
+    margin: 20px; /* Espaciado alrededor de cada sección */
     display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .modal-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    width: 300px;
-    text-align: center;
-  }
-  
-  .error-message {
-    color: red;
-    text-align: center;
-  }
-  
+    flex-direction: column; /* Asegura que el título esté arriba y las reservas debajo */
+    align-items: center; /* Centrar todo el contenido dentro de la sección */
+}
+
+.cancha-section h2 {
+    text-align: center; /* Centrar el texto del título */
+    color: #ffffff; /* Cambiar el color del título a blanco */
+    margin-bottom: 20px; /* Espaciado debajo del título para separar las reservas */
+}
+
+.reservas-list {
+    display: flex;
+    flex-direction: column; /* Alinear las tarjetas verticalmente dentro de la lista */
+    align-items: center; /* Centrar las tarjetas */
+}
+
+.card {
+  background-color: white;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 10px 0;
+  width: 100%; /* El ancho de la tarjeta será 100% del contenedor */
+  max-width: 560px; /* El ancho máximo de la tarjeta será de 560px en pantallas grandes */
+  box-sizing: border-box;
+}
+
+.card p {
+  margin-bottom: 15px; /* Añadir espacio entre cada párrafo */
+  font-size: 1em; /* Tamaño de fuente uniforme para todos los párrafos */
+}
+
+.card p:last-child {
+  margin-bottom: 0; /* El último párrafo no tendrá margen abajo */
+}
+
+.card strong {
+  display: inline-block;
+  width: 100px; /* Ancho fijo para los labels "Hora", "Equipo" y "Correo" */
+  font-weight: bold;
+}
+
+.delete-button {
+  background-color: #d9534f;
+  color: white;
+  padding: 10px 20px; /* Botón más grande */
+  border: none;
+  cursor: pointer;
+  width: 100%; /* El botón ocupa todo el ancho de la tarjeta */
+  margin-top: 10px;
+  text-align: center;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+  text-align: center;
+}
+
+.error-message {
+  color: red;
+  text-align: center;
+}
