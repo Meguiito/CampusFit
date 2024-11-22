@@ -503,6 +503,131 @@ def crear_reserva():
 
 
 
+@app.route('/aceptar_reserva_especial', methods=['POST'])
+@jwt_required()
+def aceptar_reserva_especial():
+    try:
+        identity = get_jwt_identity()
+        email = identity.get('email')
+
+        admin_user = mongo.db.Admin.find_one({'email': email})
+        if not admin_user:
+            return jsonify({"error": "Acceso denegado: solo administradores"}), 403
+        
+        data = request.get_json()
+        documentos = data.get('documentos', [])
+
+        if not isinstance(documentos, list) or not documentos:
+            return jsonify({"error": "Datos inválidos. Se esperaba una lista de documentos."}), 400
+
+        mongo.db.Reservas.insert_many(documentos)
+
+        return jsonify({"message": "Reservas especiales guardadas con éxito"}), 201
+
+    except PyMongoError as e:
+        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
+
+
+
+
+
+@app.route('/copia_reserva_especial_aceptada', methods=['POST'])
+@jwt_required()
+def copia_reserva_especial_aceptada():
+    try:
+        identity = get_jwt_identity()
+        email = identity.get('email')
+
+        admin_user = mongo.db.Admin.find_one({'email': email})
+        if not admin_user:
+            return jsonify({"error": "Acceso denegado: solo administradores"}), 403
+
+        data = request.get_json()
+
+        if not data:
+            return jsonify({"error": "No se envió un JSON válido."}), 400
+
+        if '_id' not in data:
+            return jsonify({"error": "El JSON no contiene el campo '_id'."}), 400
+
+        try:
+            object_id = ObjectId(data["_id"])
+        except Exception as e:
+            return jsonify({"error": f"El campo '_id' no es un ObjectId válido: {str(e)}"}), 400
+
+        mongo.db.Reservas_especiales_aceptadas.insert_one(data)
+
+        delete_result = mongo.db.Reservas_especiales.delete_one({"_id": object_id})
+
+        if delete_result.deleted_count == 0:
+            return jsonify({
+                "message": "Reserva aceptada y almacenada, pero no se encontró ninguna reserva para eliminar en `Reservas_especiales`.",
+            }), 201
+
+        return jsonify({
+            "message": "Reserva especial aceptada, almacenada y eliminada de `Reservas_especiales`.",
+        }), 201
+
+    except PyMongoError as e:
+        if "duplicate key error" in str(e):
+            return jsonify({"error": "El ID especificado ya existe en la base de datos."}), 400
+        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+    
+
+
+
+
+
+@app.route('/copia_reserva_especial_rechazada', methods=['POST'])
+@jwt_required()
+def copia_reserva_especial_rechazada():
+    try:
+        identity = get_jwt_identity()
+        email = identity.get('email')
+
+        admin_user = mongo.db.Admin.find_one({'email': email})
+        if not admin_user:
+            return jsonify({"error": "Acceso denegado: solo administradores"}), 403
+
+        data = request.get_json()
+
+        if not data:
+            return jsonify({"error": "No se envió un JSON válido."}), 400
+
+        if '_id' not in data:
+            return jsonify({"error": "El JSON no contiene el campo '_id'."}), 400
+
+        try:
+            object_id = ObjectId(data["_id"])
+        except Exception as e:
+            return jsonify({"error": f"El campo '_id' no es un ObjectId válido: {str(e)}"}), 400
+
+        mongo.db.Reservas_especiales_rechazadas.insert_one(data)
+
+        delete_result = mongo.db.Reservas_especiales.delete_one({"_id": object_id})
+
+        if delete_result.deleted_count == 0:
+            return jsonify({
+                "message": "Reserva especial rechazada almacenada, pero no se encontró ninguna reserva para eliminar en `Reservas_especiales`.",
+            }), 201
+
+        return jsonify({
+            "message": "Reserva especial rechazada, almacenada y eliminada de `Reservas_especiales`.",
+        }), 201
+
+    except PyMongoError as e:
+        if "duplicate key error" in str(e):
+            return jsonify({"error": "El ID especificado ya existe en la base de datos."}), 400
+        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+    
+
 
 @app.route('/api/verificar_reservas', methods=['POST'])
 @jwt_required()
@@ -551,9 +676,10 @@ def verificar_reservas_especiales():
         email = identity.get('email')
 
 
-        total_reservas = mongo.db.Reservas_especiales.count_documents({"user_email": email})
-
-        if total_reservas >= 2:
+        re = mongo.db.Reservas_especiales.count_documents({"user_email": email})
+        rea = mongo.db.Reservas_especiales_aceptadas.count_documents({"user_email": email})
+        rer = mongo.db.Reservas_especiales_rechazadas.count_documents({"user_email": email})
+        if re >= 2 or rea >= 2 or rer >= 2:
             return jsonify({"error": "Has alcanzado el límite de 2 reservas especiales por semestre."}), 410
        
         return jsonify({"message": "Reserva disponible."}), 200
