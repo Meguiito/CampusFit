@@ -1,10 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import '../Estilos/UsuariosAdmin.css';
+import axios from 'axios';
 
 function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showPopup, setShowPopup] = useState(false);
 
   // Función para verificar si el usuario es admin
   const fetchProfile = useCallback(async () => {
@@ -28,7 +31,7 @@ function Usuarios() {
       console.error('Error al obtener el perfil del usuario:', error);
       setError('Error al verificar el perfil del usuario');
     }
-  }, []); // No hay dependencias
+  }, []);
 
   // Función para obtener los usuarios desde la base de datos
   const fetchUsuarios = async () => {
@@ -42,16 +45,66 @@ function Usuarios() {
       if (!response.ok) throw new Error('Error al obtener los usuarios');
 
       const data = await response.json();
-      setUsuarios(data); // Asigna los datos recibidos al estado
+      setUsuarios(data);
     } catch (error) {
       console.error('Error al obtener los usuarios:', error);
       setError('Error al obtener la lista de usuarios');
     }
   };
 
+  // Función para abrir el pop-up de sanción
+  const handleSancionarClick = (usuario) => {
+    setSelectedUser(usuario);
+    setShowPopup(true);
+  };
+
+  // Función para cerrar el pop-up
+  const closePopup = () => {
+    setShowPopup(false);
+    setSelectedUser(null);
+  };
+
+  // Función para sancionar al usuario
+  const sancionarUsuario = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`http://localhost:5000/api/sanciones/${selectedUser.email}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const sancionesPrevias = response.data.sanciones || 0;
+
+      // Restricción para usuarios con 5 sanciones
+      if (sancionesPrevias >= 5) {
+        alert('El usuario no puede ser sancionado hasta el próximo año.');
+        closePopup();
+        return;
+      }
+
+      // Calcular fecha de inicio y fin de la sanción
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setDate(startDate.getDate() + (sancionesPrevias + 1) * 7); // 1 semana por sanción previa
+
+      // Registrar sanción
+      await axios.post(
+        'http://localhost:5000/api/sancionar',
+        { email: selectedUser.email, startDate, endDate },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert('Sanción registrada exitosamente.');
+      closePopup();
+    } catch (error) {
+      console.error('Error al sancionar al usuario:', error);
+      alert('Error al sancionar al usuario.');
+      closePopup();
+    }
+  };
+
   useEffect(() => {
     fetchProfile();
-  }, [fetchProfile]); // Añadido fetchProfile como dependencia
+  }, [fetchProfile]);
 
   if (error) {
     return <p className="Usuarios-error">{error}</p>;
@@ -67,8 +120,26 @@ function Usuarios() {
               <h2 className="Usuarios-user-name">{usuario.username}</h2>
               <p className="Usuarios-user-email">Email: {usuario.email}</p>
               <p className="Usuarios-user-rut">RUT: {usuario.rut}</p>
+              <button
+                className="Usuarios-sancionar-button"
+                onClick={() => handleSancionarClick(usuario)}
+              >
+                Sancionar
+              </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {showPopup && (
+        <div className="Usuarios-popup">
+          <div className="Usuarios-popup-content">
+            <h3>¿Está seguro de sancionar al usuario {selectedUser?.username}?</h3>
+            <div className="Usuarios-popup-actions">
+              <button onClick={sancionarUsuario}>Sí, sancionar</button>
+              <button onClick={closePopup}>Cancelar</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
