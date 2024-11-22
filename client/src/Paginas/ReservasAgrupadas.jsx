@@ -39,17 +39,14 @@ const ReservasAgrupadas = () => {
 
     const confirmDelete = async () => {
         try {
-            // Verificar qué valor se está enviando en password
-            console.log("Password ingresada:", password);
+            const response = await axios.post(
+                'http://localhost:5000/admin/eliminar-reserva',
+                { reservaId: selectedReserva._id },
+                {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                }
+            );
     
-            const response = await axios.post('http://localhost:5000/admin/eliminar-reserva', {
-                reservaId: selectedReserva._id,
-                password,  // Este debe ser el valor ingresado en el modal de contraseña
-                deleteReason,
-            }, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            });
-        
             if (response.data.success) {
                 alert(`Reserva eliminada exitosamente. Email del usuario: ${response.data.email_usuario}`);
                 fetchReservas();
@@ -62,8 +59,6 @@ const ReservasAgrupadas = () => {
         }
     };
     
-    
-
     return (
         <div className="reservas-agrupadas">
             <h1>Administrar Reservas</h1>
@@ -73,45 +68,43 @@ const ReservasAgrupadas = () => {
                     <div key={index} className="cancha-section">
                         <h2>{cancha}</h2>
                         <div className="reservas-list">
-                            {Array.isArray(reservas[cancha]) && reservas[cancha].map((reserva) => (
-                                <div className="card" key={reserva._id}>
-                                    <p><strong>Hora:</strong> {reserva.hora}</p>
-                                    <p><strong>Equipo:</strong> {reserva.equipo}</p>
-                                    <p><strong>Email:</strong> {reserva.email_usuario}</p>
-                                    <button 
-                                        className="delete-button" 
-                                        onClick={() => handleDeleteClick(reserva)}
-                                    >Eliminar</button>
-                                </div>
-                            ))}
+                            {Array.isArray(reservas[cancha]) &&
+                                reservas[cancha].map((reserva) => (
+                                    <div className="card" key={reserva._id}>
+                                        <p>
+                                            <strong>Hora:</strong> {reserva.hora}
+                                        </p>
+                                        <p>
+                                            <strong>Equipo:</strong> {reserva.equipo}
+                                        </p>
+                                        <p>
+                                            <strong>Email:</strong> {reserva.email_usuario}
+                                        </p>
+                                        <button
+                                            className="delete-button"
+                                            onClick={() => handleDeleteClick(reserva)}
+                                        >
+                                            Eliminar
+                                        </button>
+                                    </div>
+                                ))}
                         </div>
                     </div>
                 ))}
             </div>
-
+    
             {showDeleteModal && (
                 <div className="modal">
                     <div className="modal-content">
                         <h2>Confirmar Eliminación</h2>
-                        <p>Para eliminar la reserva, ingresa tu contraseña y motivo:</p>
-                        <input 
-                            type="password" 
-                            placeholder="Contraseña" 
-                            value={password} 
-                            onChange={(e) => setPassword(e.target.value)} 
-                        />
-                        <textarea 
-                            placeholder="Motivo de eliminación" 
-                            value={deleteReason} 
-                            onChange={(e) => setDeleteReason(e.target.value)} 
-                        />
-                        <button onClick={confirmDelete}>Confirmar</button>
-                        <button onClick={() => setShowDeleteModal(false)}>Cancelar</button>
+                        <p>¿Estás seguro de eliminar esta reserva?</p>
+                        <button onClick={confirmDelete}>Sí</button>
+                        <button onClick={() => setShowDeleteModal(false)}>No</button>
                     </div>
                 </div>
             )}
         </div>
     );
-};
+    
 
 export default ReservasAgrupadas;
