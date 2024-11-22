@@ -42,16 +42,21 @@
   background-color: white;
   border: 1px solid #333;
   border-radius: 10px;
-  padding: 20px;
-  margin: 10px 0;
+  padding: 20px; /* Espaciado interno para aumentar el tamaño */
+  margin: 15px 0; /* Más espacio entre tarjetas */
   width: 100%; /* El ancho de la tarjeta será 100% del contenedor */
   max-width: 560px; /* El ancho máximo de la tarjeta será de 560px en pantallas grandes */
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column; /* Colocar los elementos en una columna */
+  align-items: flex-start; /* Alinear todo el contenido hacia la izquierda */
+  position: relative; /* Necesario para posicionar el botón */
+  min-height: 180px; /* Asegurar una altura mínima mayor */
 }
 
 .card p {
-  margin-bottom: 15px; /* Añadir espacio entre cada párrafo */
-  font-size: 1em; /* Tamaño de fuente uniforme para todos los párrafos */
+  margin-bottom: 10px; /* Espacio entre párrafos */
+  font-size: 1em; /* Tamaño de fuente uniforme */
 }
 
 .card p:last-child {
@@ -59,20 +64,25 @@
 }
 
 .card strong {
-  display: inline-block;
-  width: 100px; /* Ancho fijo para los labels "Hora", "Equipo" y "Correo" */
   font-weight: bold;
+  margin-right: 10px; /* Espaciado entre el texto destacado y el contenido */
 }
 
 .delete-button {
   background-color: #d9534f;
   color: white;
-  padding: 10px 20px; /* Botón más grande */
+  padding: 10px 20px;
   border: none;
   cursor: pointer;
-  width: 100%; /* El botón ocupa todo el ancho de la tarjeta */
-  margin-top: 10px;
-  text-align: center;
+  position: absolute; /* Posicionamiento absoluto */
+  bottom: 10px; /* Distancia desde la parte inferior */
+  right: 10px; /* Distancia desde la derecha */
+  border-radius: 5px;
+  font-size: 0.9em; /* Tamaño de texto del botón */
+}
+
+.delete-button:hover {
+  background-color: #c9302c; /* Color más oscuro al pasar el cursor */
 }
 
 .modal {
@@ -98,4 +108,13 @@
 .error-message {
   color: red;
   text-align: center;
+}
+
+.image-container-agrupadas {
+  width: 300px; /* Ocupa todo el ancho de la tarjeta */
+  height: 140px; /* Altura fija para las imágenes */
+  background-size: cover;
+  background-position: center;
+  border-radius: 8px;
+  margin-top: 10px;
 }

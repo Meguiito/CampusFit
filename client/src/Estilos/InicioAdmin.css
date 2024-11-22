@@ -25,16 +25,18 @@
   border-radius: 15px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   padding: 20px;
-  width: 500px; /* Ancho para hacerla rectangular */
-  height: 250px; /* Alto para ajuste de proporción */
+  width: 500px; /* Ancho fijo */
+  min-height: 300px; /* Altura mínima para permitir contenido adicional */
   display: flex;
-  align-items: center;
+  flex-wrap: wrap; /* Permitir que los elementos se ajusten */
+  align-items: flex-start; /* Alinear elementos al inicio */
   text-align: left;
   margin: 20px;
+  box-sizing: border-box; /* Incluir padding y borde en el tamaño total */
 }
 
 .card .info {
-  flex: 1; /* Espacio para los textos */
+  flex: 1; /* Espacio flexible para los textos */
 }
 
 .card .info p {
@@ -50,15 +52,14 @@
 }
 
 .card .image-container {
-  width: 200px; /* Tamaño específico para la imagen */
-  height: 200px;
+  width: 200px; /* Ancho fijo para la imagen */
+  height: 60px; /* Alto deseado */
   background-size: cover;
   background-position: center;
   border-radius: 10px;
   margin-left: 20px;
+  flex-shrink: 0; /* Evitar que el tamaño de la imagen se reduzca */
 }
-
-
 
 h1 {
   color: white; /* Letras blancas para el título */

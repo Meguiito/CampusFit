@@ -10,6 +10,16 @@
   align-items: center; /* Mantener centrado horizontalmente */
 }
 
+.reservas-especiales-container .reservas-list {
+  display: flex;
+  flex-direction: row; /* Alinea los elementos horizontalmente */
+  flex-wrap: wrap; /* Permite que los elementos se ajusten a la siguiente fila si es necesario */
+  gap: 20px; /* Espacio entre los elementos */
+  justify-content: center; /* Centra los elementos horizontalmente */
+  align-items: center; /* Centra los elementos verticalmente */
+  width: 100%; /* Asegura que ocupe todo el ancho disponible */
+}
+
 .title-reservas {
   color: #ffffff;
   font-size: 2em; 
@@ -65,8 +75,8 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   padding: 15px;
   margin: 20px 0; /* Espaciado entre formularios */
-  width: 80%; /* Ancho del formulario */
-  max-width: 400px; /* Ancho máximo */
+  width: 100%; /* Ancho del formulario */
+  max-width: 600px; /* Ancho máximo */
   display: flex;
   flex-direction: column; /* Cambiar a columna para organizar mejor los elementos */
   align-items: center; /* Centrar los elementos horizontalmente */
@@ -79,12 +89,29 @@
   color: #555;
 }
 
+.dia-item-container {
+  display: flex;
+  flex-wrap: nowrap; /* Evita que los elementos se envuelvan */
+  gap: 20px; /* Espacio entre los elementos */
+}
+
 .dia-item {
-  background-color: #f9f9f9;
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 5px;
-  border-left: 4px solid #4caf50;
+  display: flex;
+  flex-direction: column; /* Mantiene los detalles dentro del .dia-item en columna */
+  align-items: center; /* Centra los elementos dentro del .dia-item */
+  width: 250px; /* Aumenta el ancho de cada item */
+  height: 280px; /* Aumenta la altura de cada item */
+  padding: 20px; /* Espaciado interno para mayor amplitud */
+  border: 2px solid #ccc; /* Borde más visible */
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Sombras más pronunciadas */
+  background-color: #f9f9f9; /* Fondo más claro para los elementos */
+  transition: transform 0.2s ease-in-out; /* Agrega una animación de transformación */
+}
+
+.dia-item:hover {
+  transform: translateY(-5px); /* Efecto al pasar el mouse */
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2); /* Aumenta la sombra cuando se pasa el mouse */
 }
 
 label {

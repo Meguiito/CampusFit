@@ -10,6 +10,19 @@ const ReservasAgrupadas = () => {
     const [deleteReason, setDeleteReason] = useState('');
     const [error, setError] = useState(null);
 
+    const canchaImages = {
+        'Cancha de futbol 1': require('../Img/futbol1.png'),
+        'Cancha de futbol 2': require('../Img/futbol2.png'),
+        'Cancha de futbol 3': require('../Img/futbol3.png'),
+        'Cancha de tenis 1': require('../Img/tenis1.png'),
+        'Cancha de tenis 2': require('../Img/tenis2.png'),
+        'Cancha de tenis 3': require('../Img/tenis3.png'),
+    };
+
+    const getCanchaImage = (cancha) => {
+        return canchaImages[cancha] || require('../Img/default.png');
+    };
+
     useEffect(() => {
         fetchReservas();
     }, []);
@@ -39,17 +52,14 @@ const ReservasAgrupadas = () => {
 
     const confirmDelete = async () => {
         try {
-            // Verificar qué valor se está enviando en password
-            console.log("Password ingresada:", password);
-    
             const response = await axios.post('http://localhost:5000/admin/eliminar-reserva', {
                 reservaId: selectedReserva._id,
-                password,  // Este debe ser el valor ingresado en el modal de contraseña
+                password,
                 deleteReason,
             }, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
-        
+
             if (response.data.success) {
                 alert(`Reserva eliminada exitosamente. Email del usuario: ${response.data.email_usuario}`);
                 fetchReservas();
@@ -61,8 +71,6 @@ const ReservasAgrupadas = () => {
             setError('Error al eliminar la reserva');
         }
     };
-    
-    
 
     return (
         <div className="reservas-agrupadas">
@@ -75,13 +83,20 @@ const ReservasAgrupadas = () => {
                         <div className="reservas-list">
                             {Array.isArray(reservas[cancha]) && reservas[cancha].map((reserva) => (
                                 <div className="card" key={reserva._id}>
-                                    <p><strong>Hora:</strong> {reserva.hora}</p>
-                                    <p><strong>Equipo:</strong> {reserva.equipo}</p>
-                                    <p><strong>Email:</strong> {reserva.email_usuario}</p>
-                                    <button 
-                                        className="delete-button" 
+                                    <div className="info">
+                                        <p><strong>Hora:</strong> {reserva.hora}</p>
+                                        <p><strong>Equipo:</strong> {reserva.equipo}</p>
+                                        <p><strong>Email:</strong> {reserva.email_usuario}</p>
+                                    </div>
+                                    <div className="image-container-agrupadas" style={{
+                                        backgroundImage: `url(${getCanchaImage(cancha)})`
+                                    }}></div>
+                                    <button
+                                        className="delete-button"
                                         onClick={() => handleDeleteClick(reserva)}
-                                    >Eliminar</button>
+                                    >
+                                        Eliminar
+                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -94,16 +109,16 @@ const ReservasAgrupadas = () => {
                     <div className="modal-content">
                         <h2>Confirmar Eliminación</h2>
                         <p>Para eliminar la reserva, ingresa tu contraseña y motivo:</p>
-                        <input 
-                            type="password" 
-                            placeholder="Contraseña" 
-                            value={password} 
-                            onChange={(e) => setPassword(e.target.value)} 
+                        <input
+                            type="password"
+                            placeholder="Contraseña"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                         />
-                        <textarea 
-                            placeholder="Motivo de eliminación" 
-                            value={deleteReason} 
-                            onChange={(e) => setDeleteReason(e.target.value)} 
+                        <textarea
+                            placeholder="Motivo de eliminación"
+                            value={deleteReason}
+                            onChange={(e) => setDeleteReason(e.target.value)}
                         />
                         <button onClick={confirmDelete}>Confirmar</button>
                         <button onClick={() => setShowDeleteModal(false)}>Cancelar</button>

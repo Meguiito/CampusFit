@@ -407,16 +407,20 @@ function ReservasEspeciales() {
               <div key={indexUsuario} className="reserva-item">
                 <p><strong>Usuario E-mail:</strong> {usuario}</p>
                 <p><strong>Fecha de Envio:</strong> {horaReservaDG[indexUsuario]}</p>
-                <p><strong>Mes:</strong> {mesesReservados[indexUsuario].join(', ')}</p>
-                {diasReservados[indexUsuario]?.map((dia, indexDia) => (
-                  <div key={indexDia} className="dia-item">
-                    <p><strong>Día:</strong> {dia}</p>
-                    <p><strong>Hora Desde:</strong> {horasDesdeReservadas[indexUsuario]?.[indexDia]}</p>
-                    <p><strong>Hora Hasta:</strong> {horasHastaReservadas[indexUsuario]?.[indexDia]}</p>
-                    <p><strong>Cancha:</strong> {canchasReservadas[indexUsuario]?.[indexDia]}</p>
-                    <p><strong>Equipo:</strong> {equiposReservados[indexUsuario]?.[indexDia]}</p>
+                <p><strong>Mes:</strong>{mesesReservados[indexUsuario].join(', ')}</p>
+                {diasReservados[indexUsuario]?.length > 0 && (
+                  <div className="dia-item-container">
+                    {diasReservados[indexUsuario]?.map((dia, indexDia) => (
+                      <div key={indexDia} className="dia-item">
+                        <p><strong>Día:</strong> {dia}</p>
+                        <p><strong>Hora Desde:</strong> {horasDesdeReservadas[indexUsuario]?.[indexDia]}</p>
+                        <p><strong>Hora Hasta:</strong> {horasHastaReservadas[indexUsuario]?.[indexDia]}</p>
+                        <p><strong>Cancha:</strong> {canchasReservadas[indexUsuario]?.[indexDia]}</p>
+                        <p><strong>Equipo:</strong> {equiposReservados[indexUsuario]?.[indexDia]}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
                 <div className="button-group">
                   <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
                   <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "ver")}>Ver PDF</button>
