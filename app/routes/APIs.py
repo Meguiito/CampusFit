@@ -786,29 +786,19 @@ def eliminar_reserva():
     # Obtener los datos del cuerpo de la solicitud
     data = request.get_json()
     reserva_id = data.get("reservaId")
-    password = data.get("password")
-    delete_reason = data.get("deleteReason")
     
     # Obtener el email desde el JWT
     identity = get_jwt_identity()
     email = identity.get("email")
 
-    # Verificar que todos los campos estén presentes
-    if not (reserva_id and password and delete_reason):
-        return jsonify({"success": False, "message": "Todos los campos son requeridos"}), 400
+    # Verificar que el campo reserva_id esté presente
+    if not reserva_id:
+        return jsonify({"success": False, "message": "ID de la reserva es requerido"}), 400
 
     # Verificar que el usuario autenticado sea el administrador autorizado
     if email != "admin@uctadmin.cl":
         return jsonify({"success": False, "message": "Acceso no autorizado"}), 403
 
-    # Buscar la cuenta del administrador
-    admin_user = mongo.db.Admin.find_one({"email": email})
-
-    # Verificar la contraseña ingresada contra la almacenada
-    if not admin_user or not bcrypt.checkpw(password.encode('utf-8'), admin_user["password"]):
-        return jsonify({"success": False, "message": "Contraseña incorrecta"}), 403
-
-    # Intentar obtener y eliminar la reserva
     try:
         # Buscar la reserva por ID en la colección "Reservas"
         reserva = mongo.db.Reservas.find_one({"_id": ObjectId(reserva_id)})
@@ -820,7 +810,7 @@ def eliminar_reserva():
 
         # Eliminar la reserva
         mongo.db.Reservas.delete_one({"_id": ObjectId(reserva_id)})
-        
+
         # Respuesta de éxito con el correo del usuario
         return jsonify({
             "success": True,
@@ -830,7 +820,6 @@ def eliminar_reserva():
 
     except Exception as e:
         return jsonify({"success": False, "message": f"Error al eliminar la reserva: {str(e)}"}), 500
-
 
 
 
