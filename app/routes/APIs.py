@@ -842,7 +842,78 @@ def eliminar_reservas_antiguas():
     except Exception as e:
         print(f"Error inesperado al eliminar reservas antiguas: {str(e)}")
 
+@app.route('/api/sanciones/<email>', methods=['GET'])
+@jwt_required()
+def obtener_sanciones(email):
+    try:
+        sanciones_totales = mongo.db.Sancionados.count_documents({"email": email})
+        sanciones_activas = mongo.db.Sancionados.count_documents({
+            "email": email,
+            "startDate": {"$lte": datetime.utcnow()},
+            "endDate": {"$gte": datetime.utcnow()}
+        })
 
+        return jsonify({
+            "sanciones": sanciones_totales,
+            "sancionesActivas": sanciones_activas
+        }), 200
+    except Exception as e:
+        return jsonify({"error": f"Error al obtener sanciones: {str(e)}"}), 500
+
+@app.route('/api/sancionar', methods=['POST'])
+@jwt_required()
+def sancionar_usuario():
+    try:
+        data = request.json
+        email = data.get('email')
+        start_date = data.get('startDate')
+        end_date = data.get('endDate')
+
+        if not email or not start_date or not end_date:
+            return jsonify({"error": "Todos los campos son obligatorios"}), 400
+
+        # Verificar si el usuario ya tiene 5 sanciones
+        sanciones_totales = mongo.db.Sancionados.count_documents({"email": email})
+        if sanciones_totales >= 5:
+            return jsonify({"error": "El usuario no puede ser sancionado más hasta el próximo año."}), 403
+
+        # Registrar la nueva sanción
+        nueva_sancion = {
+            "email": email,
+            "startDate": datetime.strptime(start_date, "%Y-%m-%d"),
+            "endDate": datetime.strptime(end_date, "%Y-%m-%d"),
+            "createdBy": get_jwt_identity()  # Admin que impuso la sanción
+        }
+        mongo.db.Sancionados.insert_one(nueva_sancion)
+
+        return jsonify({"message": "Sanción registrada exitosamente"}), 201
+    except Exception as e:
+        return jsonify({"error": f"Error al sancionar usuario: {str(e)}"}), 500
+
+@app.route('/api/usuarios/<email>/sancion-activa', methods=['GET'])
+def verificar_sancion_activa(email):
+    try:
+        sancion_activa = mongo.db.Sancionados.find_one({
+            "email": email,
+            "startDate": {"$lte": datetime.utcnow()},
+            "endDate": {"$gte": datetime.utcnow()}
+        })
+
+        return jsonify({"isSanctioned": bool(sancion_activa)}), 200
+    except Exception as e:
+        return jsonify({"error": f"Error al verificar sanción activa: {str(e)}"}), 500
+
+@app.route('/api/sancionados', methods=['GET'])
+@jwt_required()
+def listar_sancionados():
+    try:
+        if get_jwt_identity() != "admin@uctadmin.cl":
+            return jsonify({"error": "No autorizado"}), 403
+
+        sancionados = list(mongo.db.Sancionados.find({}, {"_id": 0}))
+        return jsonify({"sancionados": sancionados}), 200
+    except Exception as e:
+        return jsonify({"error": f"Error al listar sancionados: {str(e)}"}), 500
 
 
 scheduler.add_job(
