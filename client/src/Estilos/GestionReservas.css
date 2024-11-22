@@ -54,6 +54,22 @@
     color: black;
 }
 
+  .gestion-reservas form input {
+    margin-bottom: 12px; /* Espacio entre los inputs (fecha, hora, motivo) */
+  }
+
+  .gestion-reservas label {
+    text-align: left; /* Alinea el texto del label a la izquierda */
+    width: 100%; /* Asegura que el label ocupe todo el ancho disponible */
+    margin-bottom: 5px; /* Espaciado abajo del label para separarlo de los inputs */
+  }
+  
+
+  .gestion-reservas input[type="text"], .gestion-reservas input[type="date"], .gestion-reservas input[type="time"] {
+    margin-bottom: 12px; /* Agrega margen entre los campos de fecha, hora y motivo */
+  }
+
+
   .gestion-reservas button {
     background-color: #3498DB; /* Color del botón */
     color: white;
