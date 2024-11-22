@@ -6,8 +6,6 @@ const ReservasAgrupadas = () => {
     const [reservas, setReservas] = useState([]);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedReserva, setSelectedReserva] = useState(null);
-    const [password, setPassword] = useState('');
-    const [deleteReason, setDeleteReason] = useState('');
     const [error, setError] = useState(null);
 
     const canchaImages = {
@@ -52,13 +50,13 @@ const ReservasAgrupadas = () => {
 
     const confirmDelete = async () => {
         try {
-            const response = await axios.post('http://localhost:5000/admin/eliminar-reserva', {
-                reservaId: selectedReserva._id,
-                password,
-                deleteReason,
-            }, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-            });
+            const response = await axios.post(
+                'http://localhost:5000/admin/eliminar-reserva',
+                { reservaId: selectedReserva._id },
+                {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                }
+            );
 
             if (response.data.success) {
                 alert(`Reserva eliminada exitosamente. Email del usuario: ${response.data.email_usuario}`);
@@ -79,26 +77,31 @@ const ReservasAgrupadas = () => {
             <div className="cancha-container">
                 {Object.keys(reservas).map((cancha, index) => (
                     <div key={index} className="cancha-section">
-                        <h2>{cancha}</h2>
+                        <div className="cancha-header">
+                            <h2>{cancha}</h2>
+                            <img src={getCanchaImage(cancha)} alt={cancha} className="cancha-image" />
+                        </div>
                         <div className="reservas-list">
-                            {Array.isArray(reservas[cancha]) && reservas[cancha].map((reserva) => (
-                                <div className="card" key={reserva._id}>
-                                    <div className="info">
-                                        <p><strong>Hora:</strong> {reserva.hora}</p>
-                                        <p><strong>Equipo:</strong> {reserva.equipo}</p>
-                                        <p><strong>Email:</strong> {reserva.email_usuario}</p>
+                            {Array.isArray(reservas[cancha]) &&
+                                reservas[cancha].map((reserva) => (
+                                    <div className="card" key={reserva._id}>
+                                        <p>
+                                            <strong>Hora:</strong> {reserva.hora}
+                                        </p>
+                                        <p>
+                                            <strong>Equipo:</strong> {reserva.equipo}
+                                        </p>
+                                        <p>
+                                            <strong>Email:</strong> {reserva.email_usuario}
+                                        </p>
+                                        <button
+                                            className="delete-button"
+                                            onClick={() => handleDeleteClick(reserva)}
+                                        >
+                                            Eliminar
+                                        </button>
                                     </div>
-                                    <div className="image-container-agrupadas" style={{
-                                        backgroundImage: `url(${getCanchaImage(cancha)})`
-                                    }}></div>
-                                    <button
-                                        className="delete-button"
-                                        onClick={() => handleDeleteClick(reserva)}
-                                    >
-                                        Eliminar
-                                    </button>
-                                </div>
-                            ))}
+                                ))}
                         </div>
                     </div>
                 ))}
@@ -108,20 +111,9 @@ const ReservasAgrupadas = () => {
                 <div className="modal">
                     <div className="modal-content">
                         <h2>Confirmar Eliminación</h2>
-                        <p>Para eliminar la reserva, ingresa tu contraseña y motivo:</p>
-                        <input
-                            type="password"
-                            placeholder="Contraseña"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                        <textarea
-                            placeholder="Motivo de eliminación"
-                            value={deleteReason}
-                            onChange={(e) => setDeleteReason(e.target.value)}
-                        />
-                        <button onClick={confirmDelete}>Confirmar</button>
-                        <button onClick={() => setShowDeleteModal(false)}>Cancelar</button>
+                        <p>¿Estás seguro de eliminar esta reserva?</p>
+                        <button onClick={confirmDelete}>Sí</button>
+                        <button onClick={() => setShowDeleteModal(false)}>No</button>
                     </div>
                 </div>
             )}

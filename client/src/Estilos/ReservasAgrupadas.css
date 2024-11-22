@@ -1,71 +1,91 @@
 .reservas-agrupadas {
-    background-image: url('../Img/fondo.jpg');
-    background-size: cover;
-    padding: 20px;
-    min-height: 100vh;
-  }
-  
-  h1 {
-    color: white;
-    text-align: center;
-  }
-  
-  .cancha-container {
-    display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-    margin-top: 20px;
+  background-image: url('../Img/fondo.jpg');
+  background-size: cover;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+h1 {
+  color: white;
+  text-align: center;
+}
+
+.cancha-container {
+  display: flex;
+  justify-content: center; /* Centrar todas las secciones en el contenedor */
+  flex-wrap: wrap; /* Permitir que las secciones se ajusten en varias filas */
+  gap: 20px; /* Espaciado entre las secciones */
+  margin-top: 20px;
+  padding: 0 10px; /* Espaciado interno para evitar bordes pegados */
 }
 
 .cancha-section {
-    width: 100%; /* Hacer que cada sección ocupe todo el ancho disponible */
-    max-width: 560px; /* Limitar el ancho máximo de cada sección a 560px */
-    margin: 20px; /* Espaciado alrededor de cada sección */
-    display: flex;
-    flex-direction: column; /* Asegura que el título esté arriba y las reservas debajo */
-    align-items: center; /* Centrar todo el contenido dentro de la sección */
+  width: 100%; /* Ocupa todo el ancho disponible en pantallas pequeñas */
+  max-width: 560px; /* Limitar el ancho máximo de cada sección */
+  margin: 20px auto; /* Centramos cada sección y damos espacio alrededor */
+  display: flex;
+  flex-direction: column; /* Asegura que el título esté arriba y el contenido debajo */
+  align-items: center; /* Centra el contenido horizontalmente */
+  overflow: hidden; /* Evita que cualquier contenido salga del contenedor */
+  position: relative; /* Para posicionamiento relativo de los elementos */
 }
 
 .cancha-section h2 {
-    text-align: center; /* Centrar el texto del título */
-    color: #ffffff; /* Cambiar el color del título a blanco */
-    margin-bottom: 20px; /* Espaciado debajo del título para separar las reservas */
+  text-align: center;
+  color: #ffffff;
+  margin-bottom: 20px;
+}
+
+.image-container-agrupadas {
+  width: 100%; /* La imagen ocupa todo el ancho del contenedor */
+  max-width: 560px; /* Limitar el ancho máximo del contenedor */
+  height: auto; /* Ajustar la altura automáticamente según la proporción */
+  overflow: hidden; /* Evita que la imagen sobresalga del contenedor */
+  border-radius: 8px; /* Opcional: bordes redondeados */
+  margin-bottom: 15px; /* Espaciado entre la imagen y el contenido siguiente */
+}
+
+.cancha-image {
+  width: 100%; /* La imagen ocupará todo el ancho del contenedor padre */
+  max-width: 560px; /* Limitar el tamaño máximo */
+  height: auto; /* Mantener la proporción de la imagen */
+  border-radius: 8px;
 }
 
 .reservas-list {
-    display: flex;
-    flex-direction: column; /* Alinear las tarjetas verticalmente dentro de la lista */
-    align-items: center; /* Centrar las tarjetas */
+  display: flex;
+  flex-direction: column; /* Colocar las tarjetas verticalmente */
+  align-items: center; /* Centrar las tarjetas dentro de la lista */
 }
 
 .card {
   background-color: white;
   border: 1px solid #333;
   border-radius: 10px;
-  padding: 20px; /* Espaciado interno para aumentar el tamaño */
-  margin: 15px 0; /* Más espacio entre tarjetas */
-  width: 100%; /* El ancho de la tarjeta será 100% del contenedor */
-  max-width: 560px; /* El ancho máximo de la tarjeta será de 560px en pantallas grandes */
+  padding: 20px;
+  margin: 15px 0;
+  width: 100%;
+  max-width: 560px; /* Asegurarse de que las tarjetas no excedan el ancho de su sección */
   box-sizing: border-box;
   display: flex;
   flex-direction: column; /* Colocar los elementos en una columna */
-  align-items: flex-start; /* Alinear todo el contenido hacia la izquierda */
+  align-items: flex-start; /* Alinear el contenido hacia la izquierda */
   position: relative; /* Necesario para posicionar el botón */
-  min-height: 180px; /* Asegurar una altura mínima mayor */
+  min-height: 180px;
 }
 
 .card p {
-  margin-bottom: 10px; /* Espacio entre párrafos */
-  font-size: 1em; /* Tamaño de fuente uniforme */
+  margin-bottom: 10px;
+  font-size: 1em;
 }
 
 .card p:last-child {
-  margin-bottom: 0; /* El último párrafo no tendrá margen abajo */
+  margin-bottom: 0;
 }
 
 .card strong {
   font-weight: bold;
-  margin-right: 10px; /* Espaciado entre el texto destacado y el contenido */
+  margin-right: 10px;
 }
 
 .delete-button {
@@ -74,15 +94,15 @@
   padding: 10px 20px;
   border: none;
   cursor: pointer;
-  position: absolute; /* Posicionamiento absoluto */
-  bottom: 10px; /* Distancia desde la parte inferior */
-  right: 10px; /* Distancia desde la derecha */
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
   border-radius: 5px;
-  font-size: 0.9em; /* Tamaño de texto del botón */
+  font-size: 0.9em;
 }
 
 .delete-button:hover {
-  background-color: #c9302c; /* Color más oscuro al pasar el cursor */
+  background-color: #c9302c;
 }
 
 .modal {
@@ -108,13 +128,4 @@
 .error-message {
   color: red;
   text-align: center;
-}
-
-.image-container-agrupadas {
-  width: 300px; /* Ocupa todo el ancho de la tarjeta */
-  height: 140px; /* Altura fija para las imágenes */
-  background-size: cover;
-  background-position: center;
-  border-radius: 8px;
-  margin-top: 10px;
 }
