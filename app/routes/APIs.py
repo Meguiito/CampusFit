@@ -842,6 +842,9 @@ def eliminar_reservas_antiguas():
     except Exception as e:
         print(f"Error inesperado al eliminar reservas antiguas: {str(e)}")
 
+
+
+
 @app.route('/api/sanciones/<email>', methods=['GET'])
 @jwt_required()
 def obtener_sanciones(email):
@@ -864,31 +867,50 @@ def obtener_sanciones(email):
 @jwt_required()
 def sancionar_usuario():
     try:
+        # Obtener la identidad del usuario autenticado
+        identity = get_jwt_identity()
+        email = identity.get('email')
+
+        # Verificar si el usuario es administrador
+        admin_user = mongo.db.Admin.find_one({'email': email})
+        if not admin_user:
+            return jsonify({"error": "Acceso denegado: solo administradores"}), 403
+
+        # Obtener datos del cuerpo de la solicitud
         data = request.json
-        email = data.get('email')
+        usuario_email = data.get('email')
         start_date = data.get('startDate')
         end_date = data.get('endDate')
 
-        if not email or not start_date or not end_date:
-            return jsonify({"error": "Todos los campos son obligatorios"}), 400
+        # Validar datos requeridos
+        if not usuario_email or not start_date or not end_date:
+            return jsonify({"error": "Todos los campos (email, startDate, endDate) son obligatorios."}), 400
 
-        # Verificar si el usuario ya tiene 5 sanciones
-        sanciones_totales = mongo.db.Sancionados.count_documents({"email": email})
+        # Verificar cuántas sanciones tiene el usuario
+        sanciones_totales = mongo.db.Sancionados.count_documents({"email": usuario_email})
         if sanciones_totales >= 5:
             return jsonify({"error": "El usuario no puede ser sancionado más hasta el próximo año."}), 403
 
         # Registrar la nueva sanción
         nueva_sancion = {
-            "email": email,
+            "email": usuario_email,
             "startDate": datetime.strptime(start_date, "%Y-%m-%d"),
-            "endDate": datetime.strptime(end_date, "%Y-%m-%d"),
-            "createdBy": get_jwt_identity()  # Admin que impuso la sanción
+            "endDate": datetime.strptime(end_date, "%Y-%m-%d")
         }
         mongo.db.Sancionados.insert_one(nueva_sancion)
 
         return jsonify({"message": "Sanción registrada exitosamente"}), 201
+
+    except ValueError as ve:
+        # Error en formato de fechas
+        return jsonify({"error": f"Formato de fecha inválido: {str(ve)}"}), 400
+    except PyMongoError as e:
+        # Errores relacionados con MongoDB
+        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
-        return jsonify({"error": f"Error al sancionar usuario: {str(e)}"}), 500
+        # Otros errores inesperados
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
 
 @app.route('/api/usuarios/<email>/sancion-activa', methods=['GET'])
 def verificar_sancion_activa(email):
