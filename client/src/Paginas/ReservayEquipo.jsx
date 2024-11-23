@@ -188,6 +188,7 @@ function ReservayEquipo() {
     }
   }, [selectedDate, navigate]);
 
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError(null);

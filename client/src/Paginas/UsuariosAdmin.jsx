@@ -68,31 +68,37 @@ function Usuarios() {
   const sancionarUsuario = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`http://localhost:5000/api/sanciones/${selectedUser.email}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
+      const response = await axios.get(
+        `http://localhost:5000/api/sanciones/${selectedUser.email}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+  
       const sancionesPrevias = response.data.sanciones || 0;
-
-      // Restricción para usuarios con 5 sanciones
+  
       if (sancionesPrevias >= 5) {
         alert('El usuario no puede ser sancionado hasta el próximo año.');
         closePopup();
         return;
       }
-
-      // Calcular fecha de inicio y fin de la sanción
+  
       const startDate = new Date();
       const endDate = new Date();
-      endDate.setDate(startDate.getDate() + (sancionesPrevias + 1) * 7); // 1 semana por sanción previa
-
+      endDate.setDate(startDate.getDate() + (sancionesPrevias + 1) * 7);
+  
+      // Convertir a ISO 8601
+      const formattedStartDate = startDate.toISOString();
+      const formattedEndDate = endDate.toISOString();
+  
+      // Mostrar los datos en consola para verificar
+      console.log({ email: selectedUser.email, startDate: formattedStartDate, endDate: formattedEndDate });
+  
       // Registrar sanción
       await axios.post(
         'http://localhost:5000/api/sancionar',
-        { email: selectedUser.email, startDate, endDate },
+        { email: selectedUser.email, startDate: formattedStartDate, endDate: formattedEndDate },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
       alert('Sanción registrada exitosamente.');
       closePopup();
     } catch (error) {
@@ -101,6 +107,8 @@ function Usuarios() {
       closePopup();
     }
   };
+  
+  
 
   useEffect(() => {
     fetchProfile();
