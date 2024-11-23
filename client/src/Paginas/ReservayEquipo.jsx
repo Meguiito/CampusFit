@@ -4,10 +4,13 @@ import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import es from 'date-fns/locale/es';
 import "../Estilos/Reservas.css"
+import axios from 'axios';
+
 registerLocale('es', es);
 
 function ReservayEquipo() {
   const navigate = useNavigate(); 
+  const [sanctioned, setSanctioned] = useState({ isSanctioned: false, fechaFin: '' });
   const obtenerProximaFechaHabil = () => {
     const hoy = new Date();
     const dia = hoy.getDay(); 
@@ -81,16 +84,50 @@ function ReservayEquipo() {
         setErrorWithTimeout('No se encontró el token de autenticación.');
         return;
       }
-    
+  
       try {
+        // Obtener los datos del perfil del usuario para obtener el email
+        const profileResponse = await axios.get('http://localhost:5000/profile', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        const email = profileResponse.data.email;
+        if (!email) {
+          setErrorWithTimeout('No se encontró el email del usuario.');
+          return;
+        }
+  
+        // Verificar si el usuario tiene sanción activa
+        try {
+          const sanctionResponse = await axios.get(`http://localhost:5000/api/usuarios/${email}/sancion-activa`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+  
+          if (sanctionResponse.data.isSanctioned) {
+            setSanctioned({
+              isSanctioned: true,
+              fechaFin: sanctionResponse.data.fechaFinSancion,
+            });
+          } else {
+            setSanctioned({ isSanctioned: false, fechaFin: '' });
+          }
+        } catch (err) {
+          console.error('Error al verificar sanción:', err);
+          setErrorWithTimeout('No se pudo verificar la sanción del usuario.');
+          return;
+        }
+  
+        // Obtener las canchas y equipos disponibles
         const response = await fetch('http://localhost:5000/api/canchas_equipo', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
-    
+  
         if (response.ok) {
           const data = await response.json();
           setCanchas(data.canchas_disponibles);
@@ -100,12 +137,14 @@ function ReservayEquipo() {
           setErrorWithTimeout(errorData.error || 'Error al obtener los datos.');
         }
       } catch (error) {
+        console.error('Error al obtener datos:', error);
         setErrorWithTimeout('Error de red: ' + error.message);
       }
     };
-
-    fetchCanchasYEquipos()
-  }, [])
+  
+    fetchCanchasYEquipos();
+  }, []);
+  
 
   useEffect(() => {
     const fetchCanchasYEquiposReservados = async () => {
@@ -192,7 +231,13 @@ function ReservayEquipo() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError(null);
-
+  
+    // Verificar si el usuario está sancionado
+    if (sanctioned.isSanctioned) {
+      setErrorWithTimeout(`No puedes realizar reservas. Tu sanción termina el ${sanctioned.fechaFin}.`);
+      return; // Salir de la función
+    }
+  
     const token = localStorage.getItem('token');
     const formData = {
       fecha: selectedDate.toLocaleDateString('es-CL'), // Formato YYYY-MM-DD
@@ -200,7 +245,7 @@ function ReservayEquipo() {
       cancha: cancha,
       equipo: equipo,
     };
-
+  
     try {
       const response = await fetch('http://localhost:5000/api/reservas', {
         method: 'POST',
@@ -210,7 +255,7 @@ function ReservayEquipo() {
         },
         body: JSON.stringify(formData),
       });
-
+  
       if (response.status === 201) {
         alert("Se ha reservado con éxito");
         navigate("/TuReservacion"); 
@@ -224,6 +269,7 @@ function ReservayEquipo() {
       setErrorWithTimeout('Error al conectar con el servidor.');
     }
   };
+  
 
     const generarOpcionesTiempo = () => {
       const opciones = [];
@@ -314,6 +360,12 @@ function ReservayEquipo() {
             {error}
           </p>
         )}
+        {sanctioned.isSanctioned && (
+            <p style={{ color: 'red' }}>
+                No puedes realizar reservas. Tu sanción termina el {sanctioned.fechaFin}.
+            </p>
+        )}
+
         <form onSubmit={handleSubmit} className="form">
           <div className="fecha-group">
             <label>Selecciona el Día:</label>
