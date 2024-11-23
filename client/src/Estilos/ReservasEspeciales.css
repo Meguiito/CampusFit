@@ -246,3 +246,35 @@ select {
 .modal-content button:hover {
   background-color: #45a049;
 }
+
+/* Texto de carga */
+.loading-text {
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  text-align: center;
+  color: #555555;
+  font-size: 16px;
+  font-weight: 500;
+
+}
+
+/* Mensaje vacío */
+.empty-message {
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  text-align: center;
+  color: #555555;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.empty-message strong {
+  color: #333333;
+}
+
