@@ -1,11 +1,17 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { format, startOfMonth, endOfMonth, addDays } from 'date-fns';
 import '../Estilos/ReservasEspeciales.css';
 import { toZonedTime } from 'date-fns-tz';
 const zonaChile = 'America/Santiago';
 
 function ReservasEspeciales() {
+  const errorRef = useRef(null); 
   const [loading, setLoading] = useState(false);
+  const [res_load, setRes_load] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);  
+  const [currentAction, setCurrentAction] = useState(null);  
+  const [reservaIdToConfirm, setReservaIdToConfirm] = useState(null); 
+  const [reservaIndex, setReservaIndex] = useState(null); 
   const [error, setError] = useState("");
   const [reservasEspeciales, setReservasEspeciales] = useState([]);
   const [reservasFiltradasDGorDE, setReservasFiltradasDGorDE] = useState([]);
@@ -26,10 +32,18 @@ function ReservasEspeciales() {
   const [DEequiposReservados, setDEequiposReservados] = useState([]);
   const [tipoReserva, setTipoReserva] = useState("DG");
 
+
   const setErrorWithTimeout = (message) => {
     setError(message);
-    setTimeout(() => setError(""), 2000);
+    setTimeout(() => setError(""), 5000);
   };
+
+  useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [error]); 
+
   useEffect(() => {
     const fetchReservasEspeciales = async () => {
       setLoading(true);
@@ -69,7 +83,6 @@ function ReservasEspeciales() {
 
   const manejarPDF = async (reservaId, tipo) => {
     const reserva = reservasEspeciales.find(reserva => reserva._id === reservaId);
-    console.log(reserva);
     
     if (reserva && reserva.file_id) {
       const token = localStorage.getItem('token');
@@ -207,40 +220,32 @@ function ReservasEspeciales() {
     const mesNumero = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
       .indexOf(mes.toLowerCase()) + 1;  
   
-    // Obtener el número del día de la semana
     const diaNumero = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"]
       .indexOf(dia.toLowerCase());  
   
-    // Verificar si los parámetros son válidos
     if (mesNumero === 0 || diaNumero === -1) {
       return [];  
     }
   
-    // Obtener la fecha de inicio y fin del mes
     const inicioMes = startOfMonth(new Date(año, mesNumero - 1)); 
     const finMes = endOfMonth(new Date(año, mesNumero - 1)); 
   
-    // Asegurarse de que 'fechaActual' esté en la zona horaria de Chile
     if (!(fechaActual instanceof Date)) {
       console.error("fechaActual debe ser una instancia de Date.");
       return [];
     }
   
-    // Convertir la fecha actual a la zona horaria de Chile
     const fechaActualEnChile = toZonedTime(fechaActual, zonaChile);
   
     let fecha = inicioMes;
     const fechas = [];
   
-    // Iterar sobre el mes y obtener las fechas que corresponden al día de la semana solicitado
     while (fecha <= finMes) {
-      // Verificar si la fecha es el día de la semana solicitado y es mayor o igual a la fecha actual
       if (fecha.getDay() === diaNumero && fecha >= fechaActualEnChile) {
-        // Convertir la fecha a la zona horaria de Chile antes de formatear
         const fechaZonificada = toZonedTime(fecha, zonaChile);
         fechas.push(format(fechaZonificada, "dd-MM-yyyy"));
       }
-      fecha = addDays(fecha, 1);  // Avanzar al siguiente día
+      fecha = addDays(fecha, 1);  
     }
   
     return fechas;  
@@ -248,19 +253,20 @@ function ReservasEspeciales() {
 
 
   const aceptarReserva = async (reservaId, id) => {
-    const reserva = reservasEspeciales.find(reserva => reserva._id === reservaId);
-
+    const reserva = reservasEspeciales.find((reserva) => reserva._id === reservaId);
+  
     if (!reserva) {
-      setErrorWithTimeout('No se encontró la reserva.');
-      return;
-    }
-    
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setErrorWithTimeout('No se encontró el token de autenticación.');
+      setErrorWithTimeout("No se encontró la reserva.");
       return;
     }
   
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setErrorWithTimeout("No se encontró el token de autenticación.");
+      return;
+    }
+  
+    setRes_load(true); 
     try {
       const documentos = [];
       const añoActual = new Date().getFullYear();
@@ -268,82 +274,89 @@ function ReservasEspeciales() {
       if (tipoReserva === "DG") {
         mesesReservados[id].forEach((mes) => {
           diasReservados[id].forEach((dia, index_dia) => {
-            const fechas = obtenerFechasParaDiaSemana(mes, añoActual, dia, fechaActual);
-            const horaInicio = parseInt(horasDesdeReservadas[id][index_dia].split(':')[0]);
-            const horaFin = parseInt(horasHastaReservadas[id][index_dia].split(':')[0]);
+            const fechas = obtenerFechasParaDiaSemana(
+              mes,
+              añoActual,
+              dia,
+              fechaActual
+            );
+            const horaInicio = parseInt(
+              horasDesdeReservadas[id][index_dia].split(":")[0]
+            );
+            const horaFin = parseInt(
+              horasHastaReservadas[id][index_dia].split(":")[0]
+            );
             fechas.forEach((fecha) => {
               for (let hora = horaInicio; hora < horaFin; hora += 2) {
                 documentos.push({
                   fecha: fecha,
-                  hora: `${hora.toString().padStart(2, '0')}:00`,
+                  hora: `${hora.toString().padStart(2, "0")}:00`,
                   cancha: canchasReservadas[id][index_dia],
                   equipo: equiposReservados[id][index_dia],
                   id_reserva_especial: reserva._id,
-                  email_usuario_reserva_especial: reserva.user_email
+                  email_usuario_reserva_especial: reserva.user_email,
                 });
               }
             });
           });
         });
-
       } else if (tipoReserva === "DE") {
-
-        const horaInicio = parseInt(DEhorasDesdeReservadas[id].split(':')[0]);
-        const horaFin = parseInt(DEhorasHastaReservadas[id].split(':')[0]);
+        const horaInicio = parseInt(DEhorasDesdeReservadas[id].split(":")[0]);
+        const horaFin = parseInt(DEhorasHastaReservadas[id].split(":")[0]);
   
         for (let hora = horaInicio; hora < horaFin; hora += 2) {
           documentos.push({
             fecha: DEfechasReservadas[id],
-            hora: `${hora.toString().padStart(2, '0')}:00`,
+            hora: `${hora.toString().padStart(2, "0")}:00`,
             cancha: DEcanchasReservadas[id],
             equipo: DEequiposReservados[id],
             id_reserva_especial: reserva._id,
-            email_usuario_reserva_especial: reserva.user_email
+            email_usuario_reserva_especial: reserva.user_email,
           });
         }
       }
-      
-      const response = await fetch('http://localhost:5000/aceptar_reserva_especial', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ documentos }),
-      });
-      
+  
+      const requestData = {
+        documentos,
+        reserva,
+      };
+  
+      const response = await fetch(
+        "http://localhost:5000/aceptar_reserva_especial",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(requestData),
+        }
+      );
+  
       if (!response.ok) {
         const errorData = await response.json();
-        setErrorWithTimeout(errorData.error || 'Error al aceptar la reserva.');
+        setErrorWithTimeout(
+          errorData.message || "Error al aceptar la reserva."
+        );
+        console.log(errorData);
       } else {
-        setReservasEspeciales(prev => prev.filter(r => r._id !== reservaId));
-      
-        try {
-          const response_2 = await fetch('http://localhost:5000/copia_reserva_especial_aceptada', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify(reserva),
-          });
-      
-          if (!response_2.ok) {
-            const errorData = await response_2.json();
-            setErrorWithTimeout(errorData.error || 'Error al guardar la copia de la reserva.');
-          } else {
-            console.log('Reserva aceptada y copia creada exitosamente.');
-          }
-        } catch (error) {
-          console.error('Error al guardar la copia de la reserva:', error);
-          setErrorWithTimeout('Error al conectar con el servidor para guardar la copia.');
-        }
-      }  
+        const r = await response.json();
+        console.log(r);
+        setReservasEspeciales((prev) =>
+          prev.filter((r) => r._id !== reservaId)
+        );
+        alert("La reserva especial se creó correctamente.");
+      }
     } catch (error) {
-      console.error('Error al aceptar la reserva:', error);
-      setErrorWithTimeout('Error al conectar con el servidor para aceptar la reserva.');
+      console.error("Error al aceptar la reserva:", error);
+      setErrorWithTimeout(
+        "Error al conectar con el servidor para aceptar la reserva."
+      );
+    } finally {
+      setRes_load(false); 
     }
   };
+  
   
 
   const rechazarReserva = async (reservaId) => {
@@ -383,12 +396,34 @@ function ReservasEspeciales() {
     }
   };
   
-
+  const handleAction = (action, reservaId, id) => {
+    setCurrentAction(action); 
+    setReservaIdToConfirm(reservaId);
+    setReservaIndex(id)  
+    setIsModalOpen(true); 
+  };
+  
+  const handleConfirmAction = (confirm) => {
+    if (confirm) {
+      if (currentAction === 'aceptar') {
+        aceptarReserva(reservaIdToConfirm, reservaIndex);
+      } else if (currentAction === 'rechazar') {
+        rechazarReserva(reservaIdToConfirm);
+      }
+    }
+    setIsModalOpen(false); 
+    setReservaIdToConfirm(null);  
+    setReservaIndex(null);
+    setCurrentAction(null); 
+  };
+  
   return (
     <div className="reservas-especiales-container">
-      {error && <div className="error">{error}</div>}
-      {loading && <p className="loading-text">Cargando reservas...</p>}
-  
+      {error && (
+        <p ref={errorRef} className="error">
+          {error}
+        </p>
+      )}
       <h2 className="title-reservas">Reservas Especiales</h2>
       <div className="tipo-reserva">
         <label>
@@ -401,62 +436,71 @@ function ReservasEspeciales() {
       </div>
   
       {tipoReserva === "DG" ? (
-        reservasFiltradasDGorDE.length > 0 ? (
-          <div className="reservas-list">
-            {usuariosReservasDG.map((usuario, indexUsuario) => (
-              <div key={indexUsuario} className="reserva-item">
-                <p><strong>Usuario E-mail:</strong> {usuario}</p>
-                <p><strong>Fecha de Envio:</strong> {horaReservaDG[indexUsuario]}</p>
-                <p><strong>Mes:</strong>{mesesReservados[indexUsuario].join(', ')}</p>
-                {diasReservados[indexUsuario]?.length > 0 && (
-                  <div className="dia-item-container">
-                    {diasReservados[indexUsuario]?.map((dia, indexDia) => (
-                      <div key={indexDia} className="dia-item">
-                        <p><strong>Día:</strong> {dia}</p>
-                        <p><strong>Hora Desde:</strong> {horasDesdeReservadas[indexUsuario]?.[indexDia]}</p>
-                        <p><strong>Hora Hasta:</strong> {horasHastaReservadas[indexUsuario]?.[indexDia]}</p>
-                        <p><strong>Cancha:</strong> {canchasReservadas[indexUsuario]?.[indexDia]}</p>
-                        <p><strong>Equipo:</strong> {equiposReservados[indexUsuario]?.[indexDia]}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="button-group">
-                  <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
-                  <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "ver")}>Ver PDF</button>
-                  <button onClick={() => aceptarReserva(reservasFiltradasDGorDE[indexUsuario]?._id, indexUsuario)}>Aceptar</button>
-                  <button onClick={() => rechazarReserva(reservasFiltradasDGorDE[indexUsuario]?._id)}>Rechazar</button>
+        <div className="reservas-list">
+          {loading && <p className="loading-text">Cargando reservas...</p>}
+          {usuariosReservasDG.map((usuario, indexUsuario) => (
+            <div key={indexUsuario} className="reserva-item">
+              <p><strong>Usuario E-mail:</strong> {usuario}</p>
+              <p><strong>Fecha de Envio:</strong> {horaReservaDG[indexUsuario]}</p>
+              <p><strong>Mes:</strong>{mesesReservados[indexUsuario].join(', ')}</p>
+              {diasReservados[indexUsuario]?.length > 0 && (
+                <div className="dia-item-container">
+                  {diasReservados[indexUsuario]?.map((dia, indexDia) => (
+                    <div key={indexDia} className="dia-item">
+                      <p><strong>Día:</strong> {dia}</p>
+                      <p><strong>Hora Desde:</strong> {horasDesdeReservadas[indexUsuario]?.[indexDia]}</p>
+                      <p><strong>Hora Hasta:</strong> {horasHastaReservadas[indexUsuario]?.[indexDia]}</p>
+                      <p><strong>Cancha:</strong> {canchasReservadas[indexUsuario]?.[indexDia]}</p>
+                      <p><strong>Equipo:</strong> {equiposReservados[indexUsuario]?.[indexDia]}</p>
+                    </div>
+                  ))}
                 </div>
+              )}
+              <div className="button-group">
+                <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
+                <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "ver")}>Ver PDF</button>
+                <button onClick={() => handleAction('aceptar', reservasFiltradasDGorDE[indexUsuario]?._id, indexUsuario)}>Aceptar</button>
+                <button onClick={() => handleAction('rechazar', reservasFiltradasDGorDE[indexUsuario]?._id, indexUsuario)}>Rechazar</button>
               </div>
-            ))}
-          </div>
-        ) : (
-          <p>No hay solicitudes de reservas especiales de tipo Días en General.</p>
-        )
+            </div>
+          ))}
+        </div>
+ 
       ) : (
-        reservasFiltradasDGorDE.length > 0 ? (
-          <div className="reservas-list">
-            {usuariosReservasDE.map((usuario, indexUsuario) => (
-              <div key={indexUsuario} className="reserva-item">
-                <p><strong>Usuario E-mail:</strong> {usuario}</p>
-                <p><strong>Fecha de Envio:</strong> {horaReservaDE[indexUsuario]}</p>
-                <p><strong>Fecha de Reserva:</strong> {DEfechasReservadas[indexUsuario]}</p>
-                <p><strong>Hora Desde:</strong> {DEhorasDesdeReservadas[indexUsuario]}</p>
-                <p><strong>Hora Hasta:</strong> {DEhorasHastaReservadas[indexUsuario]}</p>
-                <p><strong>Cancha:</strong> {DEcanchasReservadas[indexUsuario]}</p>
-                <p><strong>Equipo:</strong> {DEequiposReservados[indexUsuario]}</p>
-                <div className="button-group">
-                  <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
-                  <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "ver")}>Ver PDF</button>
-                  <button onClick={() => aceptarReserva(reservasFiltradasDGorDE[indexUsuario]?._id, indexUsuario)}>Aceptar</button>
-                  <button onClick={() => rechazarReserva(reservasFiltradasDGorDE[indexUsuario]?._id)}>Rechazar</button>
-                </div>
+        <div className="reservas-list">
+          {usuariosReservasDE.map((usuario, indexUsuario) => (
+            <div key={indexUsuario} className="reserva-item">
+              <p><strong>Usuario E-mail:</strong> {usuario}</p>
+              <p><strong>Fecha de Envio:</strong> {horaReservaDE[indexUsuario]}</p>
+              <p><strong>Fecha de Reserva:</strong> {DEfechasReservadas[indexUsuario]}</p>
+              <p><strong>Hora Desde:</strong> {DEhorasDesdeReservadas[indexUsuario]}</p>
+              <p><strong>Hora Hasta:</strong> {DEhorasHastaReservadas[indexUsuario]}</p>
+              <p><strong>Cancha:</strong> {DEcanchasReservadas[indexUsuario]}</p>
+              <p><strong>Equipo:</strong> {DEequiposReservados[indexUsuario]}</p>
+              <div className="button-group">
+                <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
+                <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "ver")}>Ver PDF</button>
+                <button onClick={() => handleAction('aceptar', reservasFiltradasDGorDE[indexUsuario]?._id, indexUsuario)}>Aceptar</button>
+                <button onClick={() => handleAction('rechazar', reservasFiltradasDGorDE[indexUsuario]?._id, indexUsuario)}>Rechazar</button>
               </div>
-            ))}
+            </div>
+          ))}
+        </div>
+      )}
+      {isModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <p>¿Estás seguro de que quieres {currentAction === 'aceptar' ? 'aceptar' : 'rechazar'} esta reserva?</p>
+            <button onClick={() => handleConfirmAction(true)}>Sí</button>
+            <button onClick={() => handleConfirmAction(false)}>No</button>
           </div>
-        ) : (
-          <p>No hay solicitudes de reservas especiales de tipo Días en Específico.</p>
-        )
+        </div>
+      )}
+      {res_load && (
+      <div className="loading-overlay">
+        <div className="spinner"></div>
+        <p>Realizando reserva especial...</p>
+      </div>
       )}
     </div>
   );

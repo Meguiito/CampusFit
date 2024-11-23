@@ -212,7 +212,7 @@ function ReservayEquipo() {
       });
 
       if (response.status === 201) {
-        alert("Se ha reservado con éxito");
+        alert("Se ha reservado con éxito, tu reserva es de 2 horas");
         navigate("/TuReservacion"); 
       } else if (response.status === 409) {
         const result = await response.json();
