@@ -339,9 +339,9 @@ def handle_special_request():
         upload_date = datetime.now(chile_timezone)
         formatted_upload_date = upload_date.strftime("%A %d de %B a las %H:%M")
 
-        formatted_upload_date = formatted_upload_date.replace("Monday", "lunes").replace("Tuesday", "martes")\
-                                                     .replace("Wednesday", "miércoles").replace("Thursday", "jueves")\
-                                                     .replace("Friday", "viernes").replace("Saturday", "sabado")\
+        formatted_upload_date = formatted_upload_date.replace("Monday", "Lunes").replace("Tuesday", "Martes")\
+                                                     .replace("Wednesday", "Miércoles").replace("Thursday", "Jueves")\
+                                                     .replace("Friday", "Viernes").replace("Saturday", "Sabado")\
                                                      .replace("Sunday", "domingo").replace("January", "enero")\
                                                      .replace("February", "febrero").replace("March", "marzo")\
                                                      .replace("April", "abril").replace("May", "mayo")\
@@ -380,7 +380,6 @@ def handle_special_request():
 
 
 
-
 @app.route('/get_special_requests', methods=['GET'])
 @jwt_required()
 def get_special_requests():
@@ -410,6 +409,64 @@ def get_special_requests():
 
 
 
+@app.route('/obtener_reservas_especiales_aceptadas', methods=['GET'])
+@jwt_required()
+def obtener_reservas_especiales_aceptadas():
+    try:
+        identity = get_jwt_identity()
+        email = identity.get('email')
+
+        admin_user = mongo.db.Admin.find_one({'email': email})
+        if not admin_user:
+            return jsonify({"error": "Acceso denegado: solo administradores"}), 403
+
+
+        reservas_especiales_aceptadas = mongo.db.Reservas_especiales_aceptadas.find()
+
+        reservas_list = []
+        for reserva in reservas_especiales_aceptadas:
+            reserva['_id'] = str(reserva['_id'])  
+            reservas_list.append(reserva)
+
+        return jsonify(reservas_list), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
+
+
+
+
+
+@app.route('/obtener_reservas_especiales_rechazadas', methods=['GET'])
+@jwt_required()
+def obtener_reservas_especiales_rechazadas():
+    try:
+        identity = get_jwt_identity()
+        email = identity.get('email')
+
+        admin_user = mongo.db.Admin.find_one({'email': email})
+        if not admin_user:
+            return jsonify({"error": "Acceso denegado: solo administradores"}), 403
+
+
+        reservas_especiales_rechazadas = mongo.db.Reservas_especiales_rechazadas.find()
+
+        reservas_list = []
+        for reserva in reservas_especiales_rechazadas:
+            reserva['_id'] = str(reserva['_id'])  
+            reservas_list.append(reserva)
+
+        return jsonify(reservas_list), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
+
+
+
+
+
 @app.route('/manejar_pdf/<mongo_id>/<action>', methods=['GET'])
 @jwt_required()
 def manejar_pdf(mongo_id, action):
@@ -421,35 +478,45 @@ def manejar_pdf(mongo_id, action):
         if not admin_user:
             return jsonify({"error": "Acceso denegado: solo administradores"}), 403
 
+        object_id = None
         try:
             object_id = ObjectId(mongo_id)
         except Exception:
-            return jsonify({"error": "ID de reserva inválido"}), 400
+            pass  
 
-        reserva = mongo.db.Reservas_especiales.find_one({"_id": object_id})
+        reserva = False
+        colecciones = [
+            mongo.db.Reservas_especiales_aceptadas,
+            mongo.db.Reservas_especiales_rechazadas,
+        ]
+        reserva = mongo.db.Reservas_especiales.find_one({"_id": object_id}) 
+        if not reserva:
+            for coleccion in colecciones:
+                reserva = coleccion.find_one({"_id": mongo_id}) 
+                if reserva:
+                    break  
+
         if not reserva:
             return jsonify({"error": "Reserva especial no encontrada"}), 404
-
+        
         file_id = reserva.get("file_id")
         if not file_id:
             return jsonify({"error": "No se encontró el ID del archivo PDF"}), 404
 
-        file_data = fs.get(ObjectId(file_id))
-        if not file_data:
+        try:
+            file_data = fs.get(ObjectId(file_id))
+        except Exception:
             return jsonify({"error": "Archivo PDF no encontrado en GridFS"}), 404
 
         if action == "ver":
             return send_file(file_data, as_attachment=False, download_name=reserva["filename"])
-
         elif action == "descargar":
             return send_file(file_data, as_attachment=True, download_name=reserva["filename"])
-
         else:
             return jsonify({"error": "Acción no válida"}), 400
 
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
-
 
 
 
@@ -544,7 +611,7 @@ def aceptar_reserva_especial():
 
             try:
                 fecha_obj = datetime.strptime(fecha_str, '%d-%m-%Y')
-                dia_semana = fecha_obj.strftime('%A')
+                dia_semana = fecha_obj.strftime('%A').lower()
                 dia = fecha_obj.day
                 mes = fecha_obj.strftime('%B')  
             except ValueError:
@@ -566,11 +633,11 @@ def aceptar_reserva_especial():
 
             if reserva_conflictiva:
                 mensajes_conflicto.append(
-                    f"Conflicto: El día {dia_semana} {dia} de {mes} la cancha {cancha} ya está reservada a las {hora}."
+                    f"Conflicto: El día {dia_semana} {dia} de {mes} la cancha '{cancha}' ya está reservada a las {hora}."
                 )
             elif reserva_conflictiva_2:
                 mensajes_conflicto.append(
-                    f"Conflicto: El día {dia_semana} {dia} de {mes} el equipo {equipo} ya está reservado a las {hora}."
+                    f"Conflicto: El día {dia_semana} {dia} de {mes} el equipo '{equipo}' ya está reservado a las {hora}."
                 )
             else:
                 reservas_no_conflictivas.append(documento)
@@ -727,6 +794,55 @@ def copia_reserva_especial_rechazada():
     
 
 
+
+
+
+@app.route('/eliminar_reserva_especial', methods=['POST'])
+@jwt_required()
+def eliminar_reserva_especial():
+    try:
+        identity = get_jwt_identity()
+        email = identity.get('email')
+        admin_user = mongo.db.Admin.find_one({'email': email})
+        if not admin_user:
+            return jsonify({"error": "Acceso denegado: solo administradores"}), 403
+        
+        reserva_especial = request.get_json()
+        id_reserva_especial = reserva_especial.get("_id")
+
+        if not id_reserva_especial:
+            return jsonify({"error": "No se proporcionó el ID de la reserva especial."}), 400
+        
+        reservas_a_eliminar = mongo.db.Reservas.find({'id_reserva_especial': id_reserva_especial})
+        reservas_borradas = []
+        if reservas_a_eliminar:
+            for reserva in reservas_a_eliminar:
+                reservas_borradas.append(reserva)
+                mongo.db.Reservas_borradas.insert_one(reserva)  
+
+        mongo.db.Reservas.delete_many({'id_reserva_especial': id_reserva_especial})
+
+        mongo.db.Reservas_especiales_aceptadas.delete_one({'_id': id_reserva_especial})
+
+        return jsonify({
+            "message": "Reserva especial y las reservas normales asociadas fueron eliminadas con éxito",
+        }), 200
+
+    except Exception as e:
+        try:
+            if reservas_borradas:
+                for reserva in reservas_borradas:
+                    if not mongo.db.Reservas.find_one({'_id': reserva['_id']}):
+                        mongo.db.Reservas.insert_one(reserva)
+
+            if 'reserva_especial' in locals() and not mongo.db.Reservas_especiales_aceptadas.find_one({'_id': reserva_especial['_id']}):
+                mongo.db.Reservas_especiales_aceptadas.insert_one(reserva_especial)
+
+            return jsonify({"error": f"Error inesperado: {str(e)}. Rollback realizado."}), 500
+        except Exception as rollback_error:
+            return jsonify({"error": f"Error en el rollback: {str(rollback_error)}"}), 500
+
+
     
 
 
@@ -780,7 +896,7 @@ def verificar_reservas_especiales():
         re = mongo.db.Reservas_especiales.count_documents({"user_email": email})
         rea = mongo.db.Reservas_especiales_aceptadas.count_documents({"user_email": email})
         rer = mongo.db.Reservas_especiales_rechazadas.count_documents({"user_email": email})
-        if re >= 2 or rea >= 2 or rer >= 2:
+        if (re + rea + rer) >= 2:
             return jsonify({"error": "Has alcanzado el límite de 2 reservas especiales por semestre."}), 410
        
         return jsonify({"message": "Reserva disponible."}), 200
@@ -789,7 +905,6 @@ def verificar_reservas_especiales():
         return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
-
 
 
 
