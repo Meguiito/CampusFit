@@ -4,7 +4,7 @@ from flask_cors import CORS
 import bcrypt
 import os
 import magic
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,timezone
 from pymongo.errors import PyMongoError, ServerSelectionTimeoutError
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -865,52 +865,30 @@ def obtener_sanciones(email):
 
 @app.route('/api/sancionar', methods=['POST'])
 @jwt_required()
-def sancionar_usuario():
+def sancionar():
     try:
-        # Obtener la identidad del usuario autenticado
-        identity = get_jwt_identity()
-        email = identity.get('email')
+        data = request.get_json()
+        email = data.get('email')
+        start_date_str = data.get('startDate')
+        end_date_str = data.get('endDate')
 
-        # Verificar si el usuario es administrador
-        admin_user = mongo.db.Admin.find_one({'email': email})
-        if not admin_user:
-            return jsonify({"error": "Acceso denegado: solo administradores"}), 403
+        # Convertir las fechas desde ISO 8601 a objetos datetime
+        start_date = datetime.fromisoformat(start_date_str.replace("Z", "+00:00"))
+        end_date = datetime.fromisoformat(end_date_str.replace("Z", "+00:00"))
 
-        # Obtener datos del cuerpo de la solicitud
-        data = request.json
-        usuario_email = data.get('email')
-        start_date = data.get('startDate')
-        end_date = data.get('endDate')
+        # Aquí puedes hacer las validaciones, como comprobar la existencia de sanciones, etc.
 
-        # Validar datos requeridos
-        if not usuario_email or not start_date or not end_date:
-            return jsonify({"error": "Todos los campos (email, startDate, endDate) son obligatorios."}), 400
+        # Ejemplo: guardar en MongoDB
+        mongo.db.Sancionados.insert_one({
+            "email": email,
+            "startDate": start_date,
+            "endDate": end_date
+        })
 
-        # Verificar cuántas sanciones tiene el usuario
-        sanciones_totales = mongo.db.Sancionados.count_documents({"email": usuario_email})
-        if sanciones_totales >= 5:
-            return jsonify({"error": "El usuario no puede ser sancionado más hasta el próximo año."}), 403
-
-        # Registrar la nueva sanción
-        nueva_sancion = {
-            "email": usuario_email,
-            "startDate": datetime.strptime(start_date, "%Y-%m-%d"),
-            "endDate": datetime.strptime(end_date, "%Y-%m-%d")
-        }
-        mongo.db.Sancionados.insert_one(nueva_sancion)
-
-        return jsonify({"message": "Sanción registrada exitosamente"}), 201
-
-    except ValueError as ve:
-        # Error en formato de fechas
-        return jsonify({"error": f"Formato de fecha inválido: {str(ve)}"}), 400
-    except PyMongoError as e:
-        # Errores relacionados con MongoDB
-        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
+        return jsonify({"message": "Sanción registrada exitosamente"}), 200
     except Exception as e:
-        # Otros errores inesperados
-        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
-
+        return jsonify({"error": f"Error inesperado: {str(e)}"}), 400
+    
 
 @app.route('/api/usuarios/<email>/sancion-activa', methods=['GET'])
 def verificar_sancion_activa(email):
@@ -921,9 +899,16 @@ def verificar_sancion_activa(email):
             "endDate": {"$gte": datetime.utcnow()}
         })
 
-        return jsonify({"isSanctioned": bool(sancion_activa)}), 200
+        if sancion_activa:
+            return jsonify({
+                "isSanctioned": True,
+                "fechaFinSancion": sancion_activa['endDate'].strftime('%Y-%m-%d')  # Formato de fecha
+            }), 200
+
+        return jsonify({"isSanctioned": False}), 200
     except Exception as e:
         return jsonify({"error": f"Error al verificar sanción activa: {str(e)}"}), 500
+
 
 @app.route('/api/sancionados', methods=['GET'])
 @jwt_required()
@@ -981,9 +966,6 @@ if __name__ == '__main__':
         app.run(debug=True)
     except ServerSelectionTimeoutError as e:
         print(f"Error de conexión a MongoDB: {e}")
-
-
-
 
 
 
