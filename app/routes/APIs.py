@@ -14,6 +14,8 @@ from bson import ObjectId
 from gridfs import GridFS
 import pytz
 import locale
+from flask_mail import Mail, Message
+
 
 app = Flask(__name__)
 
@@ -1023,20 +1025,27 @@ def eliminar_reserva():
 
         # Guardar el correo del usuario que hizo la reserva
         email_usuario = reserva["email_usuario"]
+        fecha_reserva = reserva["fecha"]  # Asegúrate de que el campo 'fecha' exista en la reserva
 
         # Eliminar la reserva
         mongo.db.Reservas.delete_one({"_id": ObjectId(reserva_id)})
 
+        # Enviar notificación al usuario
+        try:
+            notificacion_general(2, email_usuario, fecha_reserva)
+        except Exception as e:
+            # Loguear el error, pero no interrumpir la ejecución principal
+            print(f"Error al enviar notificación: {str(e)}")
+
         # Respuesta de éxito con el correo del usuario
         return jsonify({
             "success": True,
-            "message": "Reserva eliminada exitosamente",
+            "message": "Reserva eliminada exitosamente y notificación enviada",
             "email_usuario": email_usuario
         }), 200
 
     except Exception as e:
         return jsonify({"success": False, "message": f"Error al eliminar la reserva: {str(e)}"}), 500
-
 
 
 def eliminar_reservas_antiguas():
@@ -1078,11 +1087,12 @@ def obtener_sanciones(email):
         }), 200
     except Exception as e:
         return jsonify({"error": f"Error al obtener sanciones: {str(e)}"}), 500
-
+    
 @app.route('/api/sancionar', methods=['POST'])
 @jwt_required()
 def sancionar():
     try:
+        # Obtener los datos del cuerpo de la solicitud
         data = request.get_json()
         email = data.get('email')
         start_date_str = data.get('startDate')
@@ -1094,17 +1104,20 @@ def sancionar():
 
         # Aquí puedes hacer las validaciones, como comprobar la existencia de sanciones, etc.
 
-        # Ejemplo: guardar en MongoDB
+        # Guardar la sanción en MongoDB
         mongo.db.Sancionados.insert_one({
             "email": email,
             "startDate": start_date,
             "endDate": end_date
         })
 
-        return jsonify({"message": "Sanción registrada exitosamente"}), 200
+        # Enviar notificación al usuario sobre la sanción
+        notificacion_general(1, email, end_date.strftime('%Y-%m-%d'))
+
+        # Responder al cliente con éxito
+        return jsonify({"message": "Sanción registrada exitosamente y notificación enviada"}), 200
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 400
-    
 
 @app.route('/api/usuarios/<email>/sancion-activa', methods=['GET'])
 def verificar_sancion_activa(email):
@@ -1152,6 +1165,50 @@ scheduler.add_job(
 
 
 
+#-----------------------------------------------------------------------------------------------------#
+
+app.config['MAIL_SERVER'] = 'smtp.sendgrid.net'
+app.config['MAIL_PORT'] = 587  # Para conexiones TLS
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'apikey'  # Este es el usuario fijo de SendGrid
+app.config['MAIL_PASSWORD'] = 'apinotis'
+
+mail = Mail(app)
+
+def enviar_notificacion(correo_destino, asunto, mensaje):
+    """Envía un correo electrónico a un destinatario específico."""
+    with app.app_context():
+        msg = Message(
+            subject=asunto,
+            recipients=[correo_destino],  # El destinatario
+            body=mensaje,  # El contenido del mensaje
+            sender='botnotificacionescampusfit@gmail.com'  # Remitente
+        )
+        # Asignando el correo de respuesta
+        msg.reply_to = 'fvaldes2023@alu.uct.cl'
+        mail.send(msg)
+
+
+def notificacion_general(caso, email, fecha):
+    """Envía una notificación general al usuario dependiendo del caso."""
+    # Definir los mensajes según el caso
+    if caso == 1:
+        asunto = "Notificación de sanción"
+        mensaje = f"Usuario {email}, fuiste sancionado hasta el {fecha}. Si sientes que es de manera injusta o injustificada, acércate a la oficina de deportes para conversar tu situación."
+    
+    elif caso == 2:
+        asunto = "Notificación de eliminación de reserva"
+        mensaje = f"Usuario {email}, tu reserva del día {fecha} fue eliminada por el administrador. Si sientes que es injustificada, acércate a la oficina de deportes."
+    
+    elif caso == 3:
+        asunto = "Notificación de reserva eliminada por evento"
+        mensaje = f"Usuario {email}, tu reserva del {fecha} fue eliminada debido a un evento que se llevará a cabo en ese lugar en la misma fecha. Lamentamos lo sucedido."
+
+    else:
+        raise ValueError("El caso debe ser 1, 2 o 3.")
+    
+    # Llamamos a la función de envío de correo que ya has configurado
+    enviar_notificacion(email, asunto, mensaje)
 
 @app.errorhandler(404)
 def not_found(error=None):
