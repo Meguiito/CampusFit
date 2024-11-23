@@ -13,6 +13,7 @@ import json
 from bson import ObjectId
 from gridfs import GridFS
 import pytz
+import locale
 
 app = Flask(__name__)
 
@@ -33,6 +34,8 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 jwt = JWTManager(app)
 
 chile_timezone = pytz.timezone("America/Santiago")
+
+locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
 
 
 
@@ -336,10 +339,10 @@ def handle_special_request():
         upload_date = datetime.now(chile_timezone)
         formatted_upload_date = upload_date.strftime("%A %d de %B a las %H:%M")
 
-        formatted_upload_date = formatted_upload_date.replace("Monday", "Lunes").replace("Tuesday", "Martes")\
-                                                     .replace("Wednesday", "Miércoles").replace("Thursday", "Jueves")\
-                                                     .replace("Friday", "Viernes").replace("Saturday", "Sábado")\
-                                                     .replace("Sunday", "Domingo").replace("January", "enero")\
+        formatted_upload_date = formatted_upload_date.replace("Monday", "lunes").replace("Tuesday", "martes")\
+                                                     .replace("Wednesday", "miércoles").replace("Thursday", "jueves")\
+                                                     .replace("Friday", "viernes").replace("Saturday", "sabado")\
+                                                     .replace("Sunday", "domingo").replace("January", "enero")\
                                                      .replace("February", "febrero").replace("March", "marzo")\
                                                      .replace("April", "abril").replace("May", "mayo")\
                                                      .replace("June", "junio").replace("July", "julio")\
@@ -509,75 +512,170 @@ def aceptar_reserva_especial():
     try:
         identity = get_jwt_identity()
         email = identity.get('email')
-
-        admin_user = mongo.db.Admin.find_one({'email': email})
-        if not admin_user:
-            return jsonify({"error": "Acceso denegado: solo administradores"}), 403
-        
-        data = request.get_json()
-        documentos = data.get('documentos', [])
-
-        if not isinstance(documentos, list) or not documentos:
-            return jsonify({"error": "Datos inválidos. Se esperaba una lista de documentos."}), 400
-
-        mongo.db.Reservas.insert_many(documentos)
-
-        return jsonify({"message": "Reservas especiales guardadas con éxito"}), 201
-
-    except PyMongoError as e:
-        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
-    except Exception as e:
-        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
-
-
-
-
-
-
-@app.route('/copia_reserva_especial_aceptada', methods=['POST'])
-@jwt_required()
-def copia_reserva_especial_aceptada():
-    try:
-        identity = get_jwt_identity()
-        email = identity.get('email')
-
         admin_user = mongo.db.Admin.find_one({'email': email})
         if not admin_user:
             return jsonify({"error": "Acceso denegado: solo administradores"}), 403
 
         data = request.get_json()
+        documentos = data.get('documentos')
+        reserva = data.get('reserva')
 
-        if not data:
-            return jsonify({"error": "No se envió un JSON válido."}), 400
+        if not isinstance(documentos, list):
+            return jsonify({"error": "Datos inválidos. 'documentos' debe ser una lista."}), 400
+        if not documentos:
+            return jsonify({"error": "Datos inválidos. La lista 'documentos' no debe estar vacía."}), 400
+        if not isinstance(reserva, dict) or not reserva:
+            return jsonify({"error": "Datos inválidos. 'reserva' debe ser un diccionario no vacío."}), 400
 
-        if '_id' not in data:
-            return jsonify({"error": "El JSON no contiene el campo '_id'."}), 400
+        mensajes_conflicto = []
+        reservas_no_conflictivas = []
+        reservas_borradas = []
+        reservas_especiales_agregadas = []
+
+        for documento in documentos:
+            fecha_str = documento.get('fecha')
+            hora = documento.get('hora')
+            cancha = documento.get('cancha')
+            equipo = documento.get('equipo')
+            
+
+            if not fecha_str or not hora or not cancha or not equipo:
+                return jsonify({"error": "Cada documento debe incluir 'fecha', 'hora', 'cancha' y 'equipo'"}), 400
+
+            try:
+                fecha_obj = datetime.strptime(fecha_str, '%d-%m-%Y')
+                dia_semana = fecha_obj.strftime('%A')
+                dia = fecha_obj.day
+                mes = fecha_obj.strftime('%B')  
+            except ValueError:
+                return jsonify({"error": f"Formato de fecha inválido: {fecha_str}. Se espera 'DD-MM-YYYY'"}), 400
+            
+            reserva_conflictiva = mongo.db.Reservas.find_one({
+                'fecha': fecha_str,
+                'hora': hora,
+                'cancha': cancha,
+                'id_reserva_especial': {'$exists': True}
+            })
+
+            reserva_conflictiva_2 = mongo.db.Reservas.find_one({
+                'fecha': fecha_str,
+                'hora': hora,
+                'equipo': equipo,
+                'id_reserva_especial': {'$exists': True}
+            })
+
+            if reserva_conflictiva:
+                mensajes_conflicto.append(
+                    f"Conflicto: El día {dia_semana} {dia} de {mes} la cancha {cancha} ya está reservada a las {hora}."
+                )
+            elif reserva_conflictiva_2:
+                mensajes_conflicto.append(
+                    f"Conflicto: El día {dia_semana} {dia} de {mes} el equipo {equipo} ya está reservado a las {hora}."
+                )
+            else:
+                reservas_no_conflictivas.append(documento)
+
+        if mensajes_conflicto:
+            return jsonify({
+                "message": "No se pudieron procesar las reservas debido a conflictos con otras reservas.",
+                "conflictos": mensajes_conflicto
+            }), 400
 
         try:
-            object_id = ObjectId(data["_id"])
+            for documento in reservas_no_conflictivas:
+                fecha_str = documento.get('fecha')
+                hora = documento.get('hora')
+                cancha = documento.get('cancha')
+
+                reservas_a_borrar = mongo.db.Reservas.find({
+                    'fecha': fecha_str,
+                    'hora': hora,
+                    'cancha': cancha,
+                    'id_reserva_especial': {'$exists': False}
+                })
+
+                for reserva_borrada in reservas_a_borrar:
+                    reserva_borrada['_id'] = str(reserva_borrada['_id'])
+                    reservas_borradas.append(reserva_borrada)
+
+                mongo.db.Reservas.delete_many({
+                    'fecha': fecha_str,
+                    'hora': hora,
+                    'cancha': cancha,
+                    'id_reserva_especial': {'$exists': False}
+                })
+
+                mongo.db.Reservas.insert_one(documento)
+                reservas_especiales_agregadas.append(documento)
+
         except Exception as e:
-            return jsonify({"error": f"El campo '_id' no es un ObjectId válido: {str(e)}"}), 400
+            for reserva_normal in reservas_borradas:
+                mongo.db.Reservas.insert_one(reserva_normal)
 
-        mongo.db.Reservas_especiales_aceptadas.insert_one(data)
+            for reserva_especial in reservas_especiales_agregadas:
+                mongo.db.Reservas.delete_one({
+                    'fecha': reserva_especial['fecha'],
+                    'hora': reserva_especial['hora'],
+                    'cancha': reserva_especial['cancha'],
+                    'id_reserva_especial': {'$exists': True}
+                })
 
-        delete_result = mongo.db.Reservas_especiales.delete_one({"_id": object_id})
-
-        if delete_result.deleted_count == 0:
             return jsonify({
-                "message": "Reserva aceptada y almacenada, pero no se encontró ninguna reserva para eliminar en `Reservas_especiales`.",
-            }), 201
+                "error": f"Error al procesar reservas: {str(e)}. Se ha realizado un rollback."
+            }), 500
+
+        resultado_proceso = procesar_reserva_especial(reserva)
+        if resultado_proceso != True:
+            for reserva_normal in reservas_borradas:
+                mongo.db.Reservas.insert_one(reserva_normal)
+
+            for reserva_especial in reservas_especiales_agregadas:
+                mongo.db.Reservas.delete_one({
+                    'fecha': reserva_especial['fecha'],
+                    'hora': reserva_especial['hora'],
+                    'cancha': reserva_especial['cancha'],
+                    'id_reserva_especial': {'$exists': True}
+                })
+
+            return jsonify({
+                "error": f"Error al procesar la reserva especial: {resultado_proceso}. Se ha realizado un rollback."
+            }), 500
 
         return jsonify({
-            "message": "Reserva especial aceptada, almacenada y eliminada de `Reservas_especiales`.",
+            "message": "Reservas especiales guardadas con éxito",
+            "Reservas normales borradas": reservas_borradas,
         }), 201
 
     except PyMongoError as e:
-        if "duplicate key error" in str(e):
-            return jsonify({"error": "El ID especificado ya existe en la base de datos."}), 400
         return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
-    
+
+
+
+
+def procesar_reserva_especial(reserva):
+    try:
+        if '_id' not in reserva:
+            return "El JSON no contiene el campo '_id'." 
+
+        mongo.db.Reservas_especiales_aceptadas.insert_one(reserva)
+
+        try:
+            object_id = ObjectId(reserva["_id"])
+        except Exception as e:
+            return f"El campo '_id' no es un ObjectId válido: {str(e)}"  
+
+        delete_result = mongo.db.Reservas_especiales.delete_one({"_id": object_id})
+        if delete_result.deleted_count == 0:
+            return "No se encontró ninguna reserva para eliminar en `Reservas_especiales`." 
+
+        return True  
+
+    except PyMongoError as e:
+        return f"Error en la base de datos: {str(e)}"
+    except Exception as e:
+        return f"Error inesperado: {str(e)}"
 
 
 
@@ -617,7 +715,7 @@ def copia_reserva_especial_rechazada():
             }), 201
 
         return jsonify({
-            "message": "Reserva especial rechazada, almacenada y eliminada de `Reservas_especiales`.",
+            "message": "Reserva especial rechazada almacenada y eliminada de `Reservas_especiales`.",
         }), 201
 
     except PyMongoError as e:
@@ -626,6 +724,9 @@ def copia_reserva_especial_rechazada():
         return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+    
+
+
     
 
 
