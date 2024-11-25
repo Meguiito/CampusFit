@@ -15,8 +15,8 @@ from gridfs import GridFS
 import pytz
 import locale
 from flask_mail import Mail, Message
-
-
+from pymongo import MongoClient
+import io
 app = Flask(__name__)
 
 CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}) 
@@ -607,7 +607,6 @@ def aceptar_reserva_especial():
             cancha = documento.get('cancha')
             equipo = documento.get('equipo')
             
-
             if not fecha_str or not hora or not cancha or not equipo:
                 return jsonify({"error": "Cada documento debe incluir 'fecha', 'hora', 'cancha' y 'equipo'"}), 400
 
@@ -693,6 +692,7 @@ def aceptar_reserva_especial():
                 "error": f"Error al procesar reservas: {str(e)}. Se ha realizado un rollback."
             }), 500
 
+        # Procesar reserva especial aprobada
         resultado_proceso = procesar_reserva_especial(reserva)
         if resultado_proceso != True:
             for reserva_normal in reservas_borradas:
@@ -710,8 +710,27 @@ def aceptar_reserva_especial():
                 "error": f"Error al procesar la reserva especial: {resultado_proceso}. Se ha realizado un rollback."
             }), 500
 
+        # Obtener el email del usuario y la fecha de subida de la reserva
+        email_usuario = reserva.get('user_email')
+        upload_date = reserva.get('upload_date')
+
+        if not email_usuario or not upload_date:
+            return jsonify({"error": "La reserva no contiene los datos necesarios para enviar la notificación."}), 400
+
+        # Enviar notificación de reserva especial aceptada
+        try:
+            notificacion_reserva_especial(
+                caso=1,
+                email=email_usuario,
+                fecha_solicitud=upload_date
+            )
+        except Exception as e:
+            return jsonify({
+                "error": f"Reserva aprobada, pero falló el envío de notificación: {str(e)}"
+            }), 500
+
         return jsonify({
-            "message": "Reservas especiales guardadas con éxito",
+            "message": "Reserva especial aprobada, reservas normales guardadas y notificación enviada.",
             "Reservas normales borradas": reservas_borradas,
         }), 201
 
@@ -719,6 +738,7 @@ def aceptar_reserva_especial():
         return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
 
 
 
@@ -754,37 +774,55 @@ def procesar_reserva_especial(reserva):
 @jwt_required()
 def copia_reserva_especial_rechazada():
     try:
+        # Verificar si el usuario es administrador
         identity = get_jwt_identity()
         email = identity.get('email')
-
         admin_user = mongo.db.Admin.find_one({'email': email})
         if not admin_user:
             return jsonify({"error": "Acceso denegado: solo administradores"}), 403
 
+        # Procesar el cuerpo de la solicitud
         data = request.get_json()
+        if not data or '_id' not in data:
+            return jsonify({"error": "El JSON enviado no contiene un campo '_id' válido."}), 400
 
-        if not data:
-            return jsonify({"error": "No se envió un JSON válido."}), 400
-
-        if '_id' not in data:
-            return jsonify({"error": "El JSON no contiene el campo '_id'."}), 400
-
+        # Validar el ObjectId
         try:
             object_id = ObjectId(data["_id"])
         except Exception as e:
             return jsonify({"error": f"El campo '_id' no es un ObjectId válido: {str(e)}"}), 400
 
+        # Insertar en la colección de rechazados
         mongo.db.Reservas_especiales_rechazadas.insert_one(data)
 
-        delete_result = mongo.db.Reservas_especiales.delete_one({"_id": object_id})
-
-        if delete_result.deleted_count == 0:
+        # Buscar y eliminar la reserva especial original
+        reserva = mongo.db.Reservas_especiales.find_one_and_delete({"_id": object_id})
+        if not reserva:
             return jsonify({
                 "message": "Reserva especial rechazada almacenada, pero no se encontró ninguna reserva para eliminar en `Reservas_especiales`.",
             }), 201
 
+        # Obtener datos de la reserva para enviar la notificación
+        email_usuario = reserva.get('user_email')
+        upload_date = reserva.get('upload_date')
+
+        if not email_usuario or not upload_date:
+            return jsonify({"error": "La reserva no contiene los datos necesarios para enviar la notificación."}), 400
+
+        # Enviar notificación de reserva rechazada
+        try:
+            notificacion_reserva_especial(
+                caso=2,
+                email=email_usuario,
+                fecha_solicitud=upload_date
+            )
+        except Exception as e:
+            return jsonify({
+                "error": f"Reserva rechazada, pero falló el envío de notificación: {str(e)}"
+            }), 500
+
         return jsonify({
-            "message": "Reserva especial rechazada almacenada y eliminada de `Reservas_especiales`.",
+            "message": "Reserva especial rechazada almacenada, eliminada de `Reservas_especiales`, y notificación enviada."
         }), 201
 
     except PyMongoError as e:
@@ -793,9 +831,6 @@ def copia_reserva_especial_rechazada():
         return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
-    
-
-
 
 
 
@@ -1171,7 +1206,7 @@ app.config['MAIL_SERVER'] = 'smtp.sendgrid.net'
 app.config['MAIL_PORT'] = 587  # Para conexiones TLS
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'apikey'  # Este es el usuario fijo de SendGrid
-app.config['MAIL_PASSWORD'] = 'apinotis'
+app.config['MAIL_PASSWORD'] = 'txtapi'
 
 mail = Mail(app)
 
@@ -1203,12 +1238,44 @@ def notificacion_general(caso, email, fecha):
     elif caso == 3:
         asunto = "Notificación de reserva eliminada por evento"
         mensaje = f"Usuario {email}, tu reserva del {fecha} fue eliminada debido a un evento que se llevará a cabo en ese lugar en la misma fecha. Lamentamos lo sucedido."
-
     else:
         raise ValueError("El caso debe ser 1, 2 o 3.")
     
     # Llamamos a la función de envío de correo que ya has configurado
     enviar_notificacion(email, asunto, mensaje)
+
+
+def notificacion_reserva_especial(caso, email, fecha_solicitud):
+    """
+    Envía una notificación específica para reservas especiales dependiendo del caso.
+
+    Parámetros:
+    - caso (int): 1 para aprobada, 2 para rechazada.
+    - email (str): Correo electrónico del usuario.
+    - fecha_solicitud (str): Fecha de subida de la solicitud (formato: "lunes 25 de noviembre a las 00:58").
+    """
+    if caso == 1:
+        asunto = "Reserva Especial Aprobada"
+        mensaje = (
+            f"Usuario {email}, su reserva especial solicitada el {fecha_solicitud} "
+            f"fue aprobada con éxito. ¡Esperamos que disfrute la experiencia en las zonas deportivas de la UCT!"
+        )
+    elif caso == 2:
+        asunto = "Reserva Especial Rechazada"
+        mensaje = (
+            f"Usuario {email}, lamentamos informarle que su reserva especial solicitada el {fecha_solicitud} "
+            f"fue rechazada por el administrador. Si tiene dudas o reclamos, puede acercarse a las oficinas "
+            f"del administrador para aclararlas."
+        )
+    else:
+        raise ValueError("El caso debe ser 1 o 2.")
+
+    # Llamar a la función de envío de correo ya configurada
+    enviar_notificacion(email, asunto, mensaje)
+
+
+
+
 
 @app.errorhandler(404)
 def not_found(error=None):
