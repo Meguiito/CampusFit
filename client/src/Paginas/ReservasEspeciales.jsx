@@ -70,6 +70,7 @@ function ReservasEspeciales() {
   const [DEequiposReservadosRR, setDEequiposReservadosRR] = useState([]);
   const [tipoReserva, setTipoReserva] = useState("DG");
   const [tipoReservaRARR, setTipoReservaRARR] = useState("DG");
+  
 
   const setErrorWithTimeout = (message) => {
     setError(message);
@@ -706,8 +707,10 @@ function ReservasEspeciales() {
     setReservaIndex(null);
     setCurrentAction(null); 
   };
+
   
   return (
+  <div className='boss'>
     <div className="reservas-especiales-container">
       {error && (
         <p ref={errorRef} className="error">
@@ -716,16 +719,36 @@ function ReservasEspeciales() {
       )}
       <h2 className="title-reservas">Reservas Especiales</h2>
       <div className="tipo-reserva">
-        <label>
-          Tipo de Reserva:
-          <select value={tipoReserva} onChange={(e) => setTipoReserva(e.target.value)}>
-            <option value="DG">Solicitudes Días en General</option>
-            <option value="DE">Solicitudes Días en Específico</option>
-            <option value="RA">Reservas Especiales Aprobadas</option>
-            <option value="RR">Reservas Especiales Rechazadas</option>
-          </select>
-        </label>
+      <label>Tipo de Reserva:</label>
+      <div>
+      <button
+            onClick={() => setTipoReserva("DG")}
+            className={tipoReserva === "DG" ? "selected" : ""}
+          >
+            Solicitudes Días en General
+          </button>
+          <button
+            onClick={() => setTipoReserva("DE")}
+            className={tipoReserva === "DE" ? "selected" : ""}
+          >
+            Solicitudes Días en Específico
+          </button>
+          <button
+            onClick={() => setTipoReserva("RA")}
+            className={tipoReserva === "RA" ? "selected" : ""}
+          >
+            Reservas Especiales Aprobadas
+          </button>
+          <button
+            onClick={() => setTipoReserva("RR")}
+            className={tipoReserva === "RR" ? "selected" : ""}
+          >
+            Reservas Especiales Rechazadas
+          </button>
+
       </div>
+    </div>
+
   
       {isSuccessModalOpen && (
         <div className="modal-overlay">
@@ -735,28 +758,30 @@ function ReservasEspeciales() {
           </div>
         </div>
       )}
-
+  
       {res_load && (
         <div className="loading-overlay">
           <div className="spinner"></div>
           <p>{msjres_load}</p>
         </div>
       )}
-
+  
       {loading && (<p className="loading-text">Cargando reservas...</p>)}
-
+  
+      {/* Mensajes de vacíos */}
       {!loading && reservasFiltradasDGorDE.length === 0 && tipoReserva === "DG" && (
         <div className="empty-message">
           <p className="no-reservas-text">No hay solicitudes de reservas especiales de días en general.</p>
         </div>
       )}
-
+  
       {!loading && reservasFiltradasDGorDE.length === 0 && tipoReserva === "DE" && (
         <div className="empty-message">
           <p className="no-reservas-text">No hay solicitudes de reservas especiales de días en específico.</p>
         </div>
       )}
-      
+  
+      {/* Mostrar Reservas Especiales dependiendo del tipo */}
       {!loading && reservasFiltradasDGorDE.length > 0 && (tipoReserva === "DG" || tipoReserva === "DE") && (
         <div className="reservas-list">
           {tipoReserva === "DG" ? (
@@ -778,11 +803,12 @@ function ReservasEspeciales() {
                     ))}
                   </div>
                 )}
+                {/* Botones de Acción */}
                 <div className="button-group">
-                  <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
-                  <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "ver")}>Ver PDF</button>
-                  <button onClick={() => handleAction('aceptar', reservasFiltradasDGorDE[indexUsuario]?._id, indexUsuario)}>Aceptar</button>
-                  <button onClick={() => handleAction('rechazar', reservasFiltradasDGorDE[indexUsuario]?._id, indexUsuario)}>Rechazar</button>
+                  <button className="action-btn download" onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
+                  <button className="action-btn view" onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "ver")}>Ver PDF</button>
+                  <button className="action-btn accept" onClick={() => handleAction('aceptar', reservasFiltradasDGorDE[indexUsuario]?._id, indexUsuario)}>Aceptar</button>
+                  <button className="action-btn reject" onClick={() => handleAction('rechazar', reservasFiltradasDGorDE[indexUsuario]?._id, indexUsuario)}>Rechazar</button>
                 </div>
               </div>
             ))
@@ -796,158 +822,165 @@ function ReservasEspeciales() {
                 <p><strong>Hora Hasta:</strong> {DEhorasHastaReservadas[indexUsuario]}</p>
                 <p><strong>Cancha:</strong> {DEcanchasReservadas[indexUsuario]}</p>
                 <p><strong>Equipo:</strong> {DEequiposReservados[indexUsuario]}</p>
+                {/* Botones de Acción */}
                 <div className="button-group">
-                  <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
-                  <button onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "ver")}>Ver PDF</button>
-                  <button onClick={() => handleAction('aceptar', reservasFiltradasDGorDE[indexUsuario]?._id, indexUsuario)}>Aceptar</button>
-                  <button onClick={() => handleAction('rechazar', reservasFiltradasDGorDE[indexUsuario]?._id, indexUsuario)}>Rechazar</button>
+                  <button className="action-btn download" onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
+                  <button className="action-btn view" onClick={() => manejarPDF(reservasFiltradasDGorDE[indexUsuario]?._id, "ver")}>Ver PDF</button>
+                  <button className="action-btn accept" onClick={() => handleAction('aceptar', reservasFiltradasDGorDE[indexUsuario]?._id, indexUsuario)}>Aceptar</button>
+                  <button className="action-btn reject" onClick={() => handleAction('rechazar', reservasFiltradasDGorDE[indexUsuario]?._id, indexUsuario)}>Rechazar</button>
                 </div>
               </div>
             ))
           )}
         </div>
       )}
+  
+      {/* Similar configuración para las reservas aprobadas (RA) y rechazadas (RR) */}
 
-      {!loading && tipoReserva === "RA" && (
-        <div>
-          <h3>Reservas Aprobadas</h3>
-          <label>
-            Tipo de Reserva:
-            <select value={tipoReservaRARR} onChange={(e) => setTipoReservaRARR(e.target.value)}>
-              <option value="DG">Días en General</option>
-              <option value="DE">Días en Específico</option>
-            </select>
-          </label>
+{tipoReserva === "RA" && (
+  <div>
+    <h3 className='h3RA'>Reservas Aprobadas</h3>
+    <label>
+      Tipo de Reserva:
+      <select value={tipoReservaRARR} onChange={(e) => setTipoReservaRARR(e.target.value)}>
+        <option value="DG">Días en General</option>
+        <option value="DE">Días en Específico</option>
+      </select>
+    </label>
 
-          {reservasFiltradasRA.length === 0 && tipoReservaRARR === "DG" && (
-            <div className="empty-message">
-              <p className="no-reservas-text">No hay reservas de dias en general aprobadas.</p>
+    {reservasFiltradasRA.length === 0 && tipoReservaRARR === "DG" && (
+      <div className="empty-message">
+        <p className="no-reservas-text">No hay reservas de días en general aprobadas.</p>
+      </div>
+    )}
+
+    {reservasFiltradasRA.length === 0 && tipoReservaRARR === "DE" && (
+      <div className="empty-message">
+        <p className="no-reservas-text">No hay reservas de días en específico aprobadas.</p>
+      </div>
+    )}
+
+    {tipoReservaRARR === "DG" && reservasFiltradasRA.length > 0 && (
+      usuariosReservasDGRA.map((usuario, indexUsuario) => (
+        <div key={indexUsuario} className="reserva-item">
+          <p><strong>Usuario E-mail:</strong> {usuario}</p>
+          <p><strong>Fecha de Envio:</strong> {horaReservaDGRA[indexUsuario]}</p>
+          <p><strong>Mes:</strong> {mesesReservadosRA[indexUsuario].join(", ")}</p>
+          {diasReservadosRA[indexUsuario]?.length > 0 && (
+            <div className="dia-item-container">
+              {diasReservadosRA[indexUsuario].map((dia, indexDia) => (
+                <div key={indexDia} className="dia-item">
+                  <p><strong>Día:</strong> {dia}</p>
+                  <p><strong>Hora Desde:</strong> {horasDesdeReservadasRA[indexUsuario]?.[indexDia]}</p>
+                  <p><strong>Hora Hasta:</strong> {horasHastaReservadasRA[indexUsuario]?.[indexDia]}</p>
+                  <p><strong>Cancha:</strong> {canchasReservadasRA[indexUsuario]?.[indexDia]}</p>
+                  <p><strong>Equipo:</strong> {equiposReservadosRA[indexUsuario]?.[indexDia]}</p>
+                </div>
+              ))}
             </div>
           )}
-
-          {reservasFiltradasRA.length === 0 && tipoReservaRARR === "DE" && (
-            <div className="empty-message">
-              <p className="no-reservas-text">No hay reservas de dias en específico aprobadas.</p>
-            </div>
-          )}
-
-          {tipoReservaRARR === "DG" && reservasEspecialesRA.length > 0 && (
-            usuariosReservasDGRA.map((usuario, indexUsuario) => (
-              <div key={indexUsuario} className="reserva-item">
-                <p><strong>Usuario E-mail:</strong> {usuario}</p>
-                <p><strong>Fecha de Envio:</strong> {horaReservaDGRA[indexUsuario]}</p>
-                <p><strong>Mes:</strong> {mesesReservadosRA[indexUsuario].join(", ")}</p>
-                {diasReservadosRA[indexUsuario]?.length > 0 && (
-                  <div className="dia-item-container">
-                    {diasReservadosRA[indexUsuario].map((dia, indexDia) => (
-                      <div key={indexDia} className="dia-item">
-                        <p><strong>Día:</strong> {dia}</p>
-                        <p><strong>Hora Desde:</strong> {horasDesdeReservadasRA[indexUsuario]?.[indexDia]}</p>
-                        <p><strong>Hora Hasta:</strong> {horasHastaReservadasRA[indexUsuario]?.[indexDia]}</p>
-                        <p><strong>Cancha:</strong> {canchasReservadasRA[indexUsuario]?.[indexDia]}</p>
-                        <p><strong>Equipo:</strong> {equiposReservadosRA[indexUsuario]?.[indexDia]}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="button-group">
-                  <button onClick={() => manejarPDF(reservasFiltradasRA[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
-                  <button onClick={() => manejarPDF(reservasFiltradasRA[indexUsuario]?._id, "ver")}>Ver PDF</button>
-                  <button onClick={() => handleAction('eliminar', reservasFiltradasRA[indexUsuario]?._id, indexUsuario)}>Eliminar Reserva</button>
-                </div>
-              </div>
-            ))
-          )} 
-          {tipoReservaRARR === "DE" && reservasEspecialesRA.length > 0 &&(
-            usuariosReservasRADE.map((usuario, indexUsuario) => (
-              <div key={indexUsuario} className="reserva-item">
-                <p><strong>Usuario E-mail:</strong> {usuario}</p>
-                <p><strong>Fecha de Envio:</strong> {horaReservaRADE[indexUsuario]}</p>
-                <p><strong>Fecha de Reserva:</strong> {DEfechasReservadasRA[indexUsuario]}</p>
-                <p><strong>Hora Desde:</strong> {DEhorasDesdeReservadasRA[indexUsuario]}</p>
-                <p><strong>Hora Hasta:</strong> {DEhorasHastaReservadasRA[indexUsuario]}</p>
-                <p><strong>Cancha:</strong> {DEcanchasReservadasRA[indexUsuario]}</p>
-                <p><strong>Equipo:</strong> {DEequiposReservadosRA[indexUsuario]}</p>
-                <div className="button-group">
-                  <button onClick={() => manejarPDF(reservasFiltradasRA[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
-                  <button onClick={() => manejarPDF(reservasFiltradasRA[indexUsuario]?._id, "ver")}>Ver PDF</button>
-                  <button onClick={() => handleAction('eliminar', reservasFiltradasRA[indexUsuario]?._id, indexUsuario)}>Eliminar Reserva</button>
-                </div>
-              </div>
-            ))
-          )}
+          <div className="button-group">
+            <button onClick={() => manejarPDF(reservasFiltradasRA[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
+            <button onClick={() => manejarPDF(reservasFiltradasRA[indexUsuario]?._id, "ver")}>Ver PDF</button>
+            <button onClick={() => handleAction('eliminar', reservasFiltradasRA[indexUsuario]?._id, indexUsuario)}>Eliminar Reserva</button>
+          </div>
         </div>
-      )}
+      ))
+    )}
 
-      {!loading && tipoReserva === "RR" && (
-        <div>
-          <h3>Reservas Rechazadas</h3>
-          <label>
-            Tipo de Reserva:
-            <select value={tipoReservaRARR} onChange={(e) => setTipoReservaRARR(e.target.value)}>
-              <option value="DG">Días en General</option>
-              <option value="DE">Días en Específico</option>
-            </select>
-          </label>
-
-          {reservasFiltradasRR.length === 0 && tipoReservaRARR === "DG" && (
-            <div className="empty-message">
-              <p className="no-reservas-text">No hay reservas de dias en general rechazadas.</p>
-            </div>
-          )}
-
-          {reservasFiltradasRR.length === 0 && tipoReservaRARR === "DE" && (
-            <div className="empty-message">
-              <p className="no-reservas-text">No hay reservas de dias en específico rechazadas.</p>
-            </div>
-          )}
-
-          {tipoReservaRARR === "DG" && reservasEspecialesRR.length > 0 && (
-            usuariosReservasDGRR.map((usuario, indexUsuario) => (
-              <div key={indexUsuario} className="reserva-item">
-                <p><strong>Usuario E-mail:</strong> {usuario}</p>
-                <p><strong>Fecha de Envio:</strong> {horaReservaDGRR[indexUsuario]}</p>
-                <p><strong>Mes:</strong> {mesesReservadosRR[indexUsuario].join(", ")}</p>
-                {diasReservadosRR[indexUsuario]?.length > 0 && (
-                  <div className="dia-item-container">
-                    {diasReservadosRR[indexUsuario].map((dia, indexDia) => (
-                      <div key={indexDia} className="dia-item">
-                        <p><strong>Día:</strong> {dia}</p>
-                        <p><strong>Hora Desde:</strong> {horasDesdeReservadasRR[indexUsuario]?.[indexDia]}</p>
-                        <p><strong>Hora Hasta:</strong> {horasHastaReservadasRR[indexUsuario]?.[indexDia]}</p>
-                        <p><strong>Cancha:</strong> {canchasReservadasRR[indexUsuario]?.[indexDia]}</p>
-                        <p><strong>Equipo:</strong> {equiposReservadosRR[indexUsuario]?.[indexDia]}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="button-group">
-                  <button onClick={() => manejarPDF(reservasFiltradasRR[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
-                  <button onClick={() => manejarPDF(reservasFiltradasRR[indexUsuario]?._id, "ver")}>Ver PDF</button>
-                </div>
-              </div>
-            ))
-          )} 
-          {tipoReservaRARR === "DE" && reservasEspecialesRR.length > 0 && (
-            usuariosReservasRRDE.map((usuario, indexUsuario) => (
-              <div key={indexUsuario} className="reserva-item">
-                <p><strong>Usuario E-mail:</strong> {usuario}</p>
-                <p><strong>Fecha de Envio:</strong> {horaReservaRRDE[indexUsuario]}</p>
-                <p><strong>Fecha de Reserva:</strong> {DEfechasReservadasRR[indexUsuario]}</p>
-                <p><strong>Hora Desde:</strong> {DEhorasDesdeReservadasRR[indexUsuario]}</p>
-                <p><strong>Hora Hasta:</strong> {DEhorasHastaReservadasRR[indexUsuario]}</p>
-                <p><strong>Cancha:</strong> {DEcanchasReservadasRR[indexUsuario]}</p>
-                <p><strong>Equipo:</strong> {DEequiposReservadosRR[indexUsuario]}</p>
-                <div className="button-group">
-                  <button onClick={() => manejarPDF(reservasFiltradasRR[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
-                  <button onClick={() => manejarPDF(reservasFiltradasRR[indexUsuario]?._id, "ver")}>Ver PDF</button>
-                </div>
-              </div>
-            ))
-          )}
+    {tipoReservaRARR === "DE" && reservasFiltradasRA.length > 0 && (
+      usuariosReservasRADE.map((usuario, indexUsuario) => (
+        <div key={indexUsuario} className="reserva-item">
+          <p><strong>Usuario E-mail:</strong> {usuario}</p>
+          <p><strong>Fecha de Envio:</strong> {horaReservaRADE[indexUsuario]}</p>
+          <p><strong>Fecha de Reserva:</strong> {DEfechasReservadasRA[indexUsuario]}</p>
+          <p><strong>Hora Desde:</strong> {DEhorasDesdeReservadasRA[indexUsuario]}</p>
+          <p><strong>Hora Hasta:</strong> {DEhorasHastaReservadasRA[indexUsuario]}</p>
+          <p><strong>Cancha:</strong> {DEcanchasReservadasRA[indexUsuario]}</p>
+          <p><strong>Equipo:</strong> {DEequiposReservadosRA[indexUsuario]}</p>
+          <div className="button-group">
+            <button onClick={() => manejarPDF(reservasFiltradasRA[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
+            <button onClick={() => manejarPDF(reservasFiltradasRA[indexUsuario]?._id, "ver")}>Ver PDF</button>
+            <button onClick={() => handleAction('eliminar', reservasFiltradasRA[indexUsuario]?._id, indexUsuario)}>Eliminar Reserva</button>
+          </div>
         </div>
-      )}
+      ))
+    )}
+  </div>
+)}
 
+    {tipoReserva === "RR" && (
+      <div>
+        <h3 className='h3RA'>Reservas Rechazadas</h3>
+        <label>
+          Tipo de Reserva:
+          <select value={tipoReservaRARR} onChange={(e) => setTipoReservaRARR(e.target.value)}>
+            <option value="DG">Días en General</option>
+            <option value="DE">Días en Específico</option>
+          </select>
+        </label>
+
+        {reservasFiltradasRR.length === 0 && tipoReservaRARR === "DG" && (
+          <div className="empty-message">
+            <p className="no-reservas-text">No hay reservas de días en general rechazadas.</p>
+          </div>
+        )}
+
+        {reservasFiltradasRR.length === 0 && tipoReservaRARR === "DE" && (
+          <div className="empty-message">
+            <p className="no-reservas-text">No hay reservas de días en específico rechazadas.</p>
+          </div>
+        )}
+
+    {tipoReservaRARR === "DG" && reservasFiltradasRR.length > 0 && (
+      usuariosReservasDGRR.map((usuario, indexUsuario) => (
+        <div key={indexUsuario} className="reserva-item">
+          <p><strong>Usuario E-mail:</strong> {usuario}</p>
+          <p><strong>Fecha de Envio:</strong> {horaReservaDGRR[indexUsuario]}</p>
+          <p><strong>Mes:</strong> {mesesReservadosRR[indexUsuario].join(", ")}</p>
+          {diasReservadosRR[indexUsuario]?.length > 0 && (
+            <div className="dia-item-container">
+              {diasReservadosRR[indexUsuario].map((dia, indexDia) => (
+                <div key={indexDia} className="dia-item">
+                  <p><strong>Día:</strong> {dia}</p>
+                  <p><strong>Hora Desde:</strong> {horasDesdeReservadasRR[indexUsuario]?.[indexDia]}</p>
+                  <p><strong>Hora Hasta:</strong> {horasHastaReservadasRR[indexUsuario]?.[indexDia]}</p>
+                  <p><strong>Cancha:</strong> {canchasReservadasRR[indexUsuario]?.[indexDia]}</p>
+                  <p><strong>Equipo:</strong> {equiposReservadosRR[indexUsuario]?.[indexDia]}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="button-group">
+            <button onClick={() => manejarPDF(reservasFiltradasRR[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
+            <button onClick={() => manejarPDF(reservasFiltradasRR[indexUsuario]?._id, "ver")}>Ver PDF</button>
+          </div>
+        </div>
+      ))
+    )}
+
+    {tipoReservaRARR === "DE" && reservasFiltradasRR.length > 0 && (
+      usuariosReservasRRDE.map((usuario, indexUsuario) => (
+        <div key={indexUsuario} className="reserva-item">
+          <p><strong>Usuario E-mail:</strong> {usuario}</p>
+          <p><strong>Fecha de Envio:</strong> {horaReservaRRDE[indexUsuario]}</p>
+          <p><strong>Fecha de Reserva:</strong> {DEfechasReservadasRR[indexUsuario]}</p>
+          <p><strong>Hora Desde:</strong> {DEhorasDesdeReservadasRR[indexUsuario]}</p>
+          <p><strong>Hora Hasta:</strong> {DEhorasHastaReservadasRR[indexUsuario]}</p>
+          <p><strong>Cancha:</strong> {DEcanchasReservadasRR[indexUsuario]}</p>
+          <p><strong>Equipo:</strong> {DEequiposReservadosRR[indexUsuario]}</p>
+          <div className="button-group">
+            <button onClick={() => manejarPDF(reservasFiltradasRR[indexUsuario]?._id, "descargar")}>Descargar PDF</button>
+            <button onClick={() => manejarPDF(reservasFiltradasRR[indexUsuario]?._id, "ver")}>Ver PDF</button>
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+)}
+
+      
+      {/* Modal Confirmación Acción */}
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -958,7 +991,8 @@ function ReservasEspeciales() {
         </div>
       )}
     </div>
+  </div>
   );
-};
+}  
 
 export default ReservasEspeciales;

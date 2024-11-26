@@ -1,0 +1,72 @@
+/* TuReservacion.css */
+#tu-reservacion {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px;
+    background: linear-gradient(135deg, #3498DB, #ffffff);
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    margin: 20px auto;
+    transition: transform 0.3s ease;
+  }
+  
+  #tu-reservacion h2 {
+    color: #ffffff;
+    margin-bottom: 20px;
+    font-size: 2rem;
+    text-align: center;
+  }
+  
+  .contenedor {
+    max-width: 90%;
+    align-items: center;
+  }
+  
+  /* Contenedor de tarjetas */
+/* Contenedor de tarjetas */
+.reservacion {
+    display: flex;
+    flex-wrap: wrap; /* Permite que las tarjetas pasen a la siguiente fila si no caben */
+    gap: 150px; /* Espaciado entre tarjetas horizontal y vertical */
+    justify-content: flex-start; /* Alinea las tarjetas hacia el inicio */
+    padding: 20px 0;
+  }
+  
+  /* Estilo de cada tarjeta */
+  .tarjeta {
+    width: 340px; /* Cada tarjeta ocupa un tercio del contenedor menos el espacio de separación */
+    min-width: 300px; /* Ancho mínimo para tarjetas más pequeñas */
+    max-width: 400px; /* Ancho máximo para tarjetas más grandes */
+    background-color: rgba(41, 133, 236, 0.8);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  /* Efecto hover para las tarjetas */
+  .tarjeta:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Estilo del contenido de las tarjetas */
+  .detalle {
+    font-size: 1.1rem;
+    color: white;
+    line-height: 1.5;
+  }
+  
+  .detalle strong {
+    color: #FFD700;
+  }
+  
+  
+  .error-notification {
+    color: red;
+    background-color: lightyellow;
+    padding: 10px;
+    border-radius: 5px;
+  }
+  
