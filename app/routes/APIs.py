@@ -599,14 +599,13 @@ def aceptar_reserva_especial():
         mensajes_conflicto = []
         reservas_no_conflictivas = []
         reservas_borradas = []
-        reservas_especiales_agregadas = []
 
         for documento in documentos:
             fecha_str = documento.get('fecha')
             hora = documento.get('hora')
             cancha = documento.get('cancha')
             equipo = documento.get('equipo')
-            
+
             if not fecha_str or not hora or not cancha or not equipo:
                 return jsonify({"error": "Cada documento debe incluir 'fecha', 'hora', 'cancha' y 'equipo'"}), 400
 
@@ -614,10 +613,10 @@ def aceptar_reserva_especial():
                 fecha_obj = datetime.strptime(fecha_str, '%d-%m-%Y')
                 dia_semana = fecha_obj.strftime('%A').lower()
                 dia = fecha_obj.day
-                mes = fecha_obj.strftime('%B')  
+                mes = fecha_obj.strftime('%B')
             except ValueError:
                 return jsonify({"error": f"Formato de fecha inválido: {fecha_str}. Se espera 'DD-MM-YYYY'"}), 400
-            
+
             reserva_conflictiva = mongo.db.Reservas.find_one({
                 'fecha': fecha_str,
                 'hora': hora,
@@ -649,75 +648,57 @@ def aceptar_reserva_especial():
                 "conflictos": mensajes_conflicto
             }), 400
 
-        try:
-            for documento in reservas_no_conflictivas:
-                fecha_str = documento.get('fecha')
-                hora = documento.get('hora')
-                cancha = documento.get('cancha')
+        # Proceso de eliminación de reservas normales y notificación
+        for documento in reservas_no_conflictivas:
+            fecha_str = documento.get('fecha')
+            hora = documento.get('hora')
+            cancha = documento.get('cancha')
 
-                reservas_a_borrar = mongo.db.Reservas.find({
-                    'fecha': fecha_str,
-                    'hora': hora,
-                    'cancha': cancha,
-                    'id_reserva_especial': {'$exists': False}
-                })
+            reservas_a_borrar = mongo.db.Reservas.find({
+                'fecha': fecha_str,
+                'hora': hora,
+                'cancha': cancha,
+                'id_reserva_especial': {'$exists': False}
+            })
 
-                for reserva_borrada in reservas_a_borrar:
-                    reserva_borrada['_id'] = str(reserva_borrada['_id'])
-                    reservas_borradas.append(reserva_borrada)
+            for reserva_borrada in reservas_a_borrar:
+                reservas_borradas.append(reserva_borrada)
+                try:
+                    # Enviar notificación al usuario afectado
+                    email_usuario = reserva_borrada.get('email')
+                    if email_usuario:
+                        notificacion_general(caso=3, email=email_usuario, fecha=fecha_str)
+                except Exception as e:
+                    return jsonify({
+                        "error": f"Error al enviar notificación a {reserva_borrada.get('email')}: {str(e)}"
+                    }), 500
 
-                mongo.db.Reservas.delete_many({
-                    'fecha': fecha_str,
-                    'hora': hora,
-                    'cancha': cancha,
-                    'id_reserva_especial': {'$exists': False}
-                })
+            mongo.db.Reservas.delete_many({
+                'fecha': fecha_str,
+                'hora': hora,
+                'cancha': cancha,
+                'id_reserva_especial': {'$exists': False}
+            })
 
-                mongo.db.Reservas.insert_one(documento)
-                reservas_especiales_agregadas.append(documento)
-
-        except Exception as e:
-            for reserva_normal in reservas_borradas:
-                mongo.db.Reservas.insert_one(reserva_normal)
-
-            for reserva_especial in reservas_especiales_agregadas:
-                mongo.db.Reservas.delete_one({
-                    'fecha': reserva_especial['fecha'],
-                    'hora': reserva_especial['hora'],
-                    'cancha': reserva_especial['cancha'],
-                    'id_reserva_especial': {'$exists': True}
-                })
-
-            return jsonify({
-                "error": f"Error al procesar reservas: {str(e)}. Se ha realizado un rollback."
-            }), 500
+            mongo.db.Reservas.insert_one(documento)
 
         # Procesar reserva especial aprobada
         resultado_proceso = procesar_reserva_especial(reserva)
         if resultado_proceso != True:
-            for reserva_normal in reservas_borradas:
-                mongo.db.Reservas.insert_one(reserva_normal)
-
-            for reserva_especial in reservas_especiales_agregadas:
-                mongo.db.Reservas.delete_one({
-                    'fecha': reserva_especial['fecha'],
-                    'hora': reserva_especial['hora'],
-                    'cancha': reserva_especial['cancha'],
-                    'id_reserva_especial': {'$exists': True}
-                })
+            for reserva_borrada in reservas_borradas:
+                mongo.db.Reservas.insert_one(reserva_borrada)
 
             return jsonify({
                 "error": f"Error al procesar la reserva especial: {resultado_proceso}. Se ha realizado un rollback."
             }), 500
 
-        # Obtener el email del usuario y la fecha de subida de la reserva
+        # Enviar notificación de aprobación al solicitante de la reserva especial
         email_usuario = reserva.get('user_email')
         upload_date = reserva.get('upload_date')
 
         if not email_usuario or not upload_date:
             return jsonify({"error": "La reserva no contiene los datos necesarios para enviar la notificación."}), 400
 
-        # Enviar notificación de reserva especial aceptada
         try:
             notificacion_reserva_especial(
                 caso=1,
@@ -977,33 +958,44 @@ def get_usuarios():
 @jwt_required()
 def obtener_reservas_del_dia():
     try:
+        # Obtener la identidad del token
         identity = get_jwt_identity()
         email = identity.get('email')
 
+        # Verificar si el usuario es un administrador
         admin_user = mongo.db.Admin.find_one({'email': email})
         if not admin_user:
             return jsonify({"error": "Acceso denegado: solo administradores"}), 403
 
+        # Obtener la fecha actual en el formato necesario
         fecha_actual = datetime.now().strftime('%d-%m-%Y')
 
+        # Filtrar las reservas para la fecha actual
         reservas = list(mongo.db.Reservas.find({
-            "fecha": fecha_actual
-        }).sort("hora", 1)) 
+            "fecha": fecha_actual,
+            "$or": [
+                {"email": {"$exists": True}},  # Condición para 'email'
+                {"email_usuario_reserva_especial": {"$exists": True}}  # Condición para 'email_usuario_reserva_especial'
+            ]
+        }).sort("hora", 1))  # Ordenar por la hora
 
+        # Si no hay reservas para la fecha, devolver mensaje adecuado
         if not reservas:
             return jsonify({"message": "No hay reservas para el día de hoy."}), 200
 
+        # Filtrar y estructurar las reservas encontradas
         reservas_filtradas = [{
             "cancha": reserva.get("cancha"),
             "equipo": reserva.get("equipo"),
-            "email_usuario": reserva.get("email_usuario"),
-            "hora": reserva.get("hora")  
+            "email": reserva.get("email") or reserva.get("email_usuario_reserva_especial"),  # Obtener el email adecuado
+            "hora": reserva.get("hora")
         } for reserva in reservas]
 
         return jsonify(reservas_filtradas), 200
 
     except Exception as e:
         return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
+
     
 
 
@@ -1014,7 +1006,12 @@ def obtener_reservas_del_dia():
 @jwt_required()
 def obtener_reservas_agrupadas():
     try:
-        reservas = list(mongo.db.Reservas.find())
+        # Filtrar las reservas que NO tengan el campo 'email_usuario_reserva_especial'
+        reservas = list(mongo.db.Reservas.find({
+            "email_usuario_reserva_especial": {"$exists": False}  # Filtra las reservas sin este campo
+        }))
+
+        # Formatear las reservas para la respuesta
         reservas_format = [
             {
                 "_id": str(reserva["_id"]),
@@ -1026,9 +1023,12 @@ def obtener_reservas_agrupadas():
             }
             for reserva in reservas
         ]
+
         return jsonify(reservas_format), 200
+
     except Exception as e:
-        return jsonify({"error": "Error al obtener las reservas"}), 500
+        return jsonify({"error": f"Error al obtener las reservas: {str(e)}"}), 500
+
     
 
 
@@ -1206,7 +1206,7 @@ app.config['MAIL_SERVER'] = 'smtp.sendgrid.net'
 app.config['MAIL_PORT'] = 587  # Para conexiones TLS
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'apikey'  # Este es el usuario fijo de SendGrid
-app.config['MAIL_PASSWORD'] = 'txtapi'
+app.config['MAIL_PASSWORD'] = 'apiki'
 
 mail = Mail(app)
 
@@ -1306,6 +1306,7 @@ if __name__ == '__main__':
         app.run(debug=True)
     except ServerSelectionTimeoutError as e:
         print(f"Error de conexión a MongoDB: {e}")
+
 
 
 
