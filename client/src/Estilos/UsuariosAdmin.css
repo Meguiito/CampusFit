@@ -2,7 +2,10 @@
 .Usuarios-container {
   padding: 20px;
   background-image: url('../Img/fondo.jpg'); /* Fondo general de la sección */
+  background-position: center;
   background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
