@@ -351,6 +351,7 @@ def handle_special_request():
                                                      .replace("August", "agosto").replace("September", "septiembre")\
                                                      .replace("October", "octubre").replace("November", "noviembre")\
                                                      .replace("December", "diciembre")
+        formatted_upload_date = formatted_upload_date.encode('utf-8').decode('utf-8')
 
         reserva_data = {
             "filename": file.filename,
