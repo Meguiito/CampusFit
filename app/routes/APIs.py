@@ -352,7 +352,6 @@ def handle_special_request():
                                                      .replace("October", "octubre").replace("November", "noviembre")\
                                                      .replace("December", "diciembre")
         formatted_upload_date = formatted_upload_date.encode('utf-8').decode('utf-8')
-
         reserva_data = {
             "filename": file.filename,
             "file_id": str(file_id),
@@ -584,22 +583,24 @@ def aceptar_reserva_especial():
         email = identity.get('email')
         admin_user = mongo.db.Admin.find_one({'email': email})
         if not admin_user:
-            return jsonify({"error": "Acceso denegado: solo administradores"}), 403
+            return jsonify({"error": "Acceso denegado: solo administradores", "code": 101}), 403
 
         data = request.get_json()
         documentos = data.get('documentos')
-        reserva = data.get('reserva')
+        reserva_especial = data.get('reserva')
 
+        # Validaciones iniciales
         if not isinstance(documentos, list):
-            return jsonify({"error": "Datos inválidos. 'documentos' debe ser una lista."}), 400
+            return jsonify({"error": "Datos inválidos. 'documentos' debe ser una lista.", "code": 102}), 400
         if not documentos:
-            return jsonify({"error": "Datos inválidos. La lista 'documentos' no debe estar vacía."}), 400
-        if not isinstance(reserva, dict) or not reserva:
-            return jsonify({"error": "Datos inválidos. 'reserva' debe ser un diccionario no vacío."}), 400
+            return jsonify({"error": "Datos inválidos. La lista 'documentos' no debe estar vacía.", "code": 103}), 400
+        if not isinstance(reserva_especial, dict) or not reserva_especial:
+            return jsonify({"error": "Datos inválidos. 'reserva' debe ser un diccionario no vacío.", "code": 104}), 400
 
         mensajes_conflicto = []
         reservas_no_conflictivas = []
         reservas_borradas = []
+        reservas_especiales_agregadas = []
 
         for documento in documentos:
             fecha_str = documento.get('fecha')
@@ -608,16 +609,9 @@ def aceptar_reserva_especial():
             equipo = documento.get('equipo')
 
             if not fecha_str or not hora or not cancha or not equipo:
-                return jsonify({"error": "Cada documento debe incluir 'fecha', 'hora', 'cancha' y 'equipo'"}), 400
+                return jsonify({"error": "Cada documento debe incluir 'fecha', 'hora', 'cancha' y 'equipo'", "code": 105}), 400
 
-            try:
-                fecha_obj = datetime.strptime(fecha_str, '%d-%m-%Y')
-                dia_semana = fecha_obj.strftime('%A').lower()
-                dia = fecha_obj.day
-                mes = fecha_obj.strftime('%B')
-            except ValueError:
-                return jsonify({"error": f"Formato de fecha inválido: {fecha_str}. Se espera 'DD-MM-YYYY'"}), 400
-
+            # Verificar conflictos
             reserva_conflictiva = mongo.db.Reservas.find_one({
                 'fecha': fecha_str,
                 'hora': hora,
@@ -634,11 +628,11 @@ def aceptar_reserva_especial():
 
             if reserva_conflictiva:
                 mensajes_conflicto.append(
-                    f"Conflicto: El día {dia_semana} {dia} de {mes} la cancha '{cancha}' ya está reservada a las {hora}."
+                    f"Conflicto: El día {fecha_str}, la cancha '{cancha}' ya está reservada a las {hora}."
                 )
             elif reserva_conflictiva_2:
                 mensajes_conflicto.append(
-                    f"Conflicto: El día {dia_semana} {dia} de {mes} el equipo '{equipo}' ya está reservado a las {hora}."
+                    f"Conflicto: El día {fecha_str}, el equipo '{equipo}' ya está reservado a las {hora}."
                 )
             else:
                 reservas_no_conflictivas.append(documento)
@@ -646,59 +640,71 @@ def aceptar_reserva_especial():
         if mensajes_conflicto:
             return jsonify({
                 "message": "No se pudieron procesar las reservas debido a conflictos con otras reservas.",
-                "conflictos": mensajes_conflicto
+                "conflictos": mensajes_conflicto,
+                "code": 106
             }), 400
 
-        # Proceso de eliminación de reservas normales y notificación
-        for documento in reservas_no_conflictivas:
-            fecha_str = documento.get('fecha')
-            hora = documento.get('hora')
-            cancha = documento.get('cancha')
+        # Procesar reservas no conflictivas
+        try:
+            for documento in reservas_no_conflictivas:
+                fecha_str = documento.get('fecha')
+                hora = documento.get('hora')
+                cancha = documento.get('cancha')
 
-            reservas_a_borrar = mongo.db.Reservas.find({
-                'fecha': fecha_str,
-                'hora': hora,
-                'cancha': cancha,
-                'id_reserva_especial': {'$exists': False}
-            })
+                # Buscar y eliminar reservas conflictivas normales
+                reservas_a_borrar = mongo.db.Reservas.find({
+                    'fecha': fecha_str,
+                    'hora': hora,
+                    'cancha': cancha,
+                    'id_reserva_especial': {'$exists': False}
+                })
 
-            for reserva_borrada in reservas_a_borrar:
-                reservas_borradas.append(reserva_borrada)
-                try:
-                    # Enviar notificación al usuario afectado
-                    email_usuario = reserva_borrada.get('email')
-                    if email_usuario:
-                        notificacion_general(caso=3, email=email_usuario, fecha=fecha_str)
-                except Exception as e:
-                    return jsonify({
-                        "error": f"Error al enviar notificación a {reserva_borrada.get('email')}: {str(e)}"
-                    }), 500
+                for reserva_borrada in reservas_a_borrar:
+                    reserva_borrada['_id'] = str(reserva_borrada['_id'])
+                    reservas_borradas.append(reserva_borrada)
 
-            mongo.db.Reservas.delete_many({
-                'fecha': fecha_str,
-                'hora': hora,
-                'cancha': cancha,
-                'id_reserva_especial': {'$exists': False}
-            })
+                    # Notificar a usuarios cuyas reservas normales fueron eliminadas (caso 3)
+                    notificacion_general(
+                        caso=3,
+                        email=reserva_borrada['email_usuario'],
+                        fecha=fecha_str
+                    )
 
-            mongo.db.Reservas.insert_one(documento)
+                mongo.db.Reservas.delete_many({
+                    'fecha': fecha_str,
+                    'hora': hora,
+                    'cancha': cancha,
+                    'id_reserva_especial': {'$exists': False}
+                })
 
-        # Procesar reserva especial aprobada
-        resultado_proceso = procesar_reserva_especial(reserva)
-        if resultado_proceso != True:
-            for reserva_borrada in reservas_borradas:
-                mongo.db.Reservas.insert_one(reserva_borrada)
+                # Insertar nueva reserva especial
+                mongo.db.Reservas.insert_one(documento)
+                reservas_especiales_agregadas.append(documento)
+
+        except Exception as e:
+            # Rollback en caso de error
+            for reserva_normal in reservas_borradas:
+                mongo.db.Reservas.insert_one(reserva_normal)
+
+            for reserva_especial in reservas_especiales_agregadas:
+                mongo.db.Reservas.delete_one({
+                    'fecha': reserva_especial['fecha'],
+                    'hora': reserva_especial['hora'],
+                    'cancha': reserva_especial['cancha'],
+                    'id_reserva_especial': {'$exists': True}
+                })
 
             return jsonify({
-                "error": f"Error al procesar la reserva especial: {resultado_proceso}. Se ha realizado un rollback."
+                "error": f"Error al procesar reservas: {str(e)}. Se ha realizado un rollback.",
+                "code": 107
             }), 500
 
-        # Enviar notificación de aprobación al solicitante de la reserva especial
-        email_usuario = reserva.get('user_email')
-        upload_date = reserva.get('upload_date')
+        # Procesar reserva especial aprobada (caso 1)
+        email_usuario = reserva_especial.get('user_email')
+        upload_date = reserva_especial.get('upload_date')
 
         if not email_usuario or not upload_date:
-            return jsonify({"error": "La reserva no contiene los datos necesarios para enviar la notificación."}), 400
+            return jsonify({"error": "La reserva especial no contiene los datos necesarios para la notificación.", "code": 108}), 400
 
         try:
             notificacion_reserva_especial(
@@ -708,19 +714,19 @@ def aceptar_reserva_especial():
             )
         except Exception as e:
             return jsonify({
-                "error": f"Reserva aprobada, pero falló el envío de notificación: {str(e)}"
+                "error": f"Reserva especial aprobada, pero falló el envío de notificación: {str(e)}",
+                "code": 109
             }), 500
 
         return jsonify({
-            "message": "Reserva especial aprobada, reservas normales guardadas y notificación enviada.",
+            "message": "Reserva especial aprobada, reservas normales eliminadas y notificaciones enviadas.",
             "Reservas normales borradas": reservas_borradas,
         }), 201
 
     except PyMongoError as e:
-        return jsonify({"error": f"Error en la base de datos: {str(e)}"}), 500
+        return jsonify({"error": f"Error en la base de datos: {str(e)}", "code": 110}), 500
     except Exception as e:
-        return jsonify({"error": f"Error inesperado: {str(e)}"}), 500
-
+        return jsonify({"error": f"Error inesperado: {str(e)}", "code": 111}), 500
 
 
 
@@ -1307,7 +1313,6 @@ if __name__ == '__main__':
         app.run(debug=True)
     except ServerSelectionTimeoutError as e:
         print(f"Error de conexión a MongoDB: {e}")
-
 
 
 
