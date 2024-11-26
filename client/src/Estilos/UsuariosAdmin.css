@@ -30,7 +30,7 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   padding: 10px;
   width: 550px; /* Ancho para hacerla rectangular */
-  height: 150px; /* Alto para ajuste de proporción */
+  height: auto; /* Alto para ajuste de proporción */
   display: flex;
   flex-direction: column; /* Cambiar a columna para organizar mejor los elementos */
   align-items: center; /* Centrar los elementos horizontalmente */
