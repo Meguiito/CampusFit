@@ -5,6 +5,7 @@
     align-items: center;
     padding: 40px;
     background: linear-gradient(135deg, #3498DB, #ffffff);
+    min-height: 60vh;
     border-radius: 20px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     margin: 20px auto;
@@ -35,6 +36,7 @@
   
   /* Estilo de cada tarjeta */
   .tarjeta {
+    margin-top: 20px;
     width: 340px; /* Cada tarjeta ocupa un tercio del contenedor menos el espacio de separación */
     min-width: 300px; /* Ancho mínimo para tarjetas más pequeñas */
     max-width: 400px; /* Ancho máximo para tarjetas más grandes */
