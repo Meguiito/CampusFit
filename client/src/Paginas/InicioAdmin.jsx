@@ -69,7 +69,7 @@ const InicioAdmin = () => {
                                 <div className="info">
                                     <p><strong>Cancha:</strong> {reserva.cancha}</p>
                                     <p><strong>Equipo:</strong> {reserva.equipo}</p>
-                                    <p><strong>Email:</strong> {reserva.email_usuario}</p>
+                                    <p><strong>Email:</strong> {reserva.email || 'No disponible'}</p> {/* Agregamos un fallback en caso de que email sea null */}
                                     <p><strong>Hora:</strong> {reserva.hora}</p>
                                 </div>
                                 <div className="image-container" style={{
@@ -77,6 +77,7 @@ const InicioAdmin = () => {
                                 }}></div>
                             </div>
                         ))
+                        
                     )}
                 </div>
             )}

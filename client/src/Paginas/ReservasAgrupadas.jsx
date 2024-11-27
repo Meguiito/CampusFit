@@ -83,26 +83,30 @@ const ReservasAgrupadas = () => {
                         </div>
                         <div className="reservas-list">
                             {Array.isArray(reservas[cancha]) &&
-                                reservas[cancha].map((reserva) => (
-                                    <div className="card" key={reserva._id}>
-                                        <p>
-                                            <strong>Hora:</strong> {reserva.hora}
-                                        </p>
-                                        <p>
-                                            <strong>Equipo:</strong> {reserva.equipo}
-                                        </p>
-                                        <p>
-                                            <strong>Email:</strong> {reserva.email_usuario}
-                                        </p>
-                                        <button
-                                            className="delete-button"
-                                            onClick={() => handleDeleteClick(reserva)}
-                                        >
-                                            Eliminar
-                                        </button>
-                                    </div>
-                                ))}
-                        </div>
+                             reservas[cancha].map((reserva) => (
+                                <div className="card" key={reserva._id}>
+                                    <p>
+                                    <strong>Fecha:</strong> {reserva.fecha || 'No disponible'}
+                                    </p>
+                                    <p>
+                                    <strong>Hora:</strong> {reserva.hora}
+                                    </p>
+                                    <p>
+                                    <strong>Equipo:</strong> {reserva.equipo}
+                                    </p>
+                                    <p>
+                                    <strong>Email:</strong> {reserva.email_usuario}
+                                    </p>
+                                <button
+                                    className="delete-button"
+                                    onClick={() => handleDeleteClick(reserva)}
+                                >
+                                    Eliminar
+                                </button>
+            </div>
+        ))}
+</div>
+
                     </div>
                 ))}
             </div>

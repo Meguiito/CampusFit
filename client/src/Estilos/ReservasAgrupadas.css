@@ -50,11 +50,12 @@ h1 {
 }
 
 .cancha-image {
-  width: 100%; /* La imagen ocupará todo el ancho del contenedor padre */
-  max-width: 560px; /* Limitar el tamaño máximo */
-  height: auto; /* Mantener la proporción de la imagen */
-  border-radius: 8px;
+  width: 500px; /* Ancho fijo en píxeles */
+  height: 350px; /* Alto fijo en píxeles */
+  object-fit: cover; /* Ajusta la imagen para que llene el área definida */
+  border-radius: 8px; /* Bordes redondeados opcionales */
 }
+
 
 .reservas-list {
   display: flex;
