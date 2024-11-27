@@ -723,7 +723,7 @@ function ReservasEspeciales() {
       )}
       <h2 className="title-reservas">Reservas Especiales</h2>
       <div className="tipo-reserva">
-      <label>Tipo de Reserva:</label>
+      <label>Tipos de Reserva:</label>
       <div>
       <button
             onClick={() => setTipoReserva("DG")}
@@ -787,7 +787,7 @@ function ReservasEspeciales() {
   
       {/* Mostrar Reservas Especiales dependiendo del tipo */}
       {!loading && reservasFiltradasDGorDE.length > 0 && (tipoReserva === "DG" || tipoReserva === "DE") && (
-        <div className="reservas-list">
+        <div className="reservas-item">
           {tipoReserva === "DG" ? (
             usuariosReservasDG.map((usuario, indexUsuario) => (
               <div key={indexUsuario} className="reserva-item">
@@ -843,9 +843,7 @@ function ReservasEspeciales() {
 
 {tipoReserva === "RA" && (
   <div>
-    <h3 className='h3RA'>Reservas Aprobadas</h3>
     <label>
-      Tipo de Reserva:
       <select value={tipoReservaRARR} onChange={(e) => setTipoReservaRARR(e.target.value)}>
         <option value="DG">Días en General</option>
         <option value="DE">Días en Específico</option>
@@ -915,9 +913,7 @@ function ReservasEspeciales() {
 
     {tipoReserva === "RR" && (
       <div>
-        <h3 className='h3RA'>Reservas Rechazadas</h3>
         <label>
-          Tipo de Reserva:
           <select value={tipoReservaRARR} onChange={(e) => setTipoReservaRARR(e.target.value)}>
             <option value="DG">Días en General</option>
             <option value="DE">Días en Específico</option>

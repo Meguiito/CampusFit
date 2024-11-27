@@ -19,9 +19,8 @@
   display: flex;
   flex-direction: row;
   gap: 30px; /* Espacio entre las tarjetas */
-  padding: 10px 0;
+  padding: 10px;
   width: 100%;
-  min-width: auto; /* Se adapta según el contenido */
   margin-top: 20px;
   white-space: nowrap;
 }
@@ -35,13 +34,14 @@
   border-radius: 12px; /* Bordes más redondeados */
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
   margin: 20px 0;
+  padding: 15px;
   width: 100%; /* Aumenta el tamaño de las tarjetas */
   display: flex;
   flex-direction: column;
   align-items: center;
   overflow: hidden;
   background-repeat: no-repeat; /* No repetir la imagen de fondo */
-  max-height: 450px; /* Ajusta la altura de las tarjetas */
+  min-height: auto; /* Ajusta la altura de las tarjetas */
 }
 
 /* Estilo adicional cuando se pasa el mouse por encima de una tarjeta */
@@ -148,16 +148,24 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
   margin: 5px;
-  width: 240px;
+  width: 230px;
   height: 280px;
-  padding: 20px;
+  padding: 10px;
   border: 2px solid #ccc;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   background-color: #f9f9f9;
   transition: transform 0.2s ease-in-out;
+
+  /* Permitir que el texto se ajuste a varias líneas */
+  white-space: normal;  /* El texto se ajusta en varias líneas */
+  word-wrap: break-word;  /* Rompe palabras largas si es necesario */
+  overflow: visible;  /* Permite que el contenido fluya hacia abajo */
 }
+
+
 
 .dia-item:hover {
   transform: translateY(-5px);
@@ -174,10 +182,15 @@ select {
   padding: 8px;
   font-size: 16px;
   margin-top: 5px;
+  margin-bottom: 20px;
+  margin-left: auto;
+  margin-right: auto;  /* Esto centra el select horizontalmente */
   border-radius: 5px;
   border: 1px solid #ccc;
-  width: 100%;
+  width: 500px;
+  display: block; /* Esto asegura que el margen auto funcione */
 }
+
 
 .button-group {
   display: flex;
@@ -197,9 +210,15 @@ select {
   transition: background-color 0.3s; /* Añadido efecto de transición */
 }
 
-.h3RA{
+.h3RA {
+  min-width: auto;
+  padding: 10px; /* Controla el espacio interno */
+  border-radius: 10px;
+  text-align: center;
   color: white;
+  font-size: 25px;
 }
+
 
 .button-group button:hover {
   background-color: #45a049;
