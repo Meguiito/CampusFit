@@ -9,6 +9,7 @@ function TuReservacion() {
   const [reservas, setReservas] = useState([]);
   const [error, setError] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const [llamada, setLlamada] = useState(true)
 
   useEffect(() => {
     const fetchReservas = async () => {
@@ -31,10 +32,7 @@ function TuReservacion() {
 
         if (response.ok) {
           const data = await response.json();
-          console.log('Datos de reservas', data);
           setReservas(data.reservas || []);
-        } else if (response.status === 409) {
-          setError('Ya existe una reserva para la misma fecha y hora.');
         } else {
           const errorData = await response.json();
           setError(errorData.error || 'Error al obtener las reservas.');
@@ -48,7 +46,38 @@ function TuReservacion() {
     };
 
     fetchReservas();
-  }, []);
+  }, [llamada]);
+
+
+  const eliminarReserva = async (reservaId) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("Usuario no autenticado.");
+      return;
+    }
+  
+    try {
+      const response = await fetch("http://localhost:5000/eliminar-reserva", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reservaId }),
+      });
+  
+      const data = await response.json();
+      if (response.ok) {
+        alert(data.message);
+        setLlamada(!llamada);
+      } else {
+        console.error(data.message);
+      }
+    } catch (error) {
+      console.error("Error al eliminar la reserva:", error);
+    }
+  };
+  
 
   return (
     <main id="tu-reservacion">
@@ -56,11 +85,11 @@ function TuReservacion() {
         <h2>Tu Reservación</h2>
         {cargando && <p>Cargando reservas...</p>}
         {error && <ErrorNotification>{error}</ErrorNotification>}
-  
+
         {reservas.length > 0 ? (
           <div className="reservacion">
-            {reservas.map((reserva, index) => (
-              <div className="tarjeta" key={index}>
+            {reservas.map((reserva) => (
+              <div className="tarjeta" key={reserva._id}>
                 <div className="detalle">
                   <strong>Día:</strong> {reserva.fecha}
                   <br />
@@ -70,6 +99,12 @@ function TuReservacion() {
                   <br />
                   <strong>Equipo:</strong> {reserva.equipo}
                   <br />
+                  <button
+                    className="btn-desagendar"
+                    onClick={() => eliminarReserva(reserva._id)}
+                  >
+                    Desagendar
+                  </button>
                 </div>
               </div>
             ))}
@@ -80,6 +115,6 @@ function TuReservacion() {
       </div>
     </main>
   );
-}  
+}
 
 export default TuReservacion;

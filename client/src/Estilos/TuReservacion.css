@@ -72,3 +72,29 @@
     border-radius: 5px;
   }
   
+  /* Estilo para el botón "Desagendar" */
+.btn-desagendar {
+  background-color: #ff4d4d; /* Rojo claro */
+  color: white; /* Texto en blanco */
+  border: none; /* Sin bordes */
+  border-radius: 8px; /* Bordes redondeados */
+  margin-top: 10px;
+  padding: 10px 20px; /* Espaciado interno */
+  font-size: 14px; /* Tamaño de fuente */
+  font-weight: bold; /* Texto en negrita */
+  cursor: pointer; /* Cambiar cursor al pasar el mouse */
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Efectos de transición */
+}
+
+/* Efecto hover (al pasar el mouse) */
+.btn-desagendar:hover {
+  background-color: #e60000; /* Rojo más oscuro */
+  transform: scale(1.05); /* Agrandar ligeramente */
+}
+
+/* Efecto active (al hacer clic) */
+.btn-desagendar:active {
+  background-color: #cc0000; /* Rojo aún más oscuro */
+  transform: scale(0.95); /* Reducir ligeramente */
+}
+

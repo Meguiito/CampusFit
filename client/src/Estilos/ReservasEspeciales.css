@@ -21,6 +21,7 @@
   gap: 30px; /* Espacio entre las tarjetas */
   padding: 10px 0;
   width: 100%;
+  min-width: auto; /* Se adapta según el contenido */
   margin-top: 20px;
   white-space: nowrap;
 }
@@ -147,7 +148,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 270px;
+  margin: 5px;
+  width: 240px;
   height: 280px;
   padding: 20px;
   border: 2px solid #ccc;

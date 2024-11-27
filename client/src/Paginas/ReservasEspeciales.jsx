@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { format, startOfMonth, endOfMonth, addDays } from 'date-fns';
+import { startOfDay, startOfMonth, endOfMonth, addDays } from 'date-fns';
 import '../Estilos/ReservasEspeciales.css';
-import { toZonedTime } from 'date-fns-tz';
+import { toZonedTime, format } from 'date-fns-tz';
 const zonaChile = 'America/Santiago';
 
 function ReservasEspeciales() {
@@ -458,7 +458,6 @@ function ReservasEspeciales() {
 
   
   const obtenerFechasParaDiaSemana = (mes, año, dia, fechaActual) => {
-
     const mesNumero = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
       .indexOf(mes.toLowerCase()) + 1;  
   
@@ -469,8 +468,11 @@ function ReservasEspeciales() {
       return [];  
     }
   
-    const inicioMes = startOfMonth(new Date(año, mesNumero - 1)); 
-    const finMes = endOfMonth(new Date(año, mesNumero - 1)); 
+    const inicioMesFalso = startOfMonth(new Date(año, mesNumero - 1));
+  
+    const inicioMes = toZonedTime(inicioMesFalso, zonaChile);
+    
+    const finMes = toZonedTime(endOfMonth(inicioMesFalso), zonaChile);
   
     if (!(fechaActual instanceof Date)) {
       console.error("fechaActual debe ser una instancia de Date.");
@@ -478,12 +480,13 @@ function ReservasEspeciales() {
     }
   
     const fechaActualEnChile = toZonedTime(fechaActual, zonaChile);
-  
+    const fechaActualInicioDelDia = startOfDay(fechaActualEnChile);
+
     let fecha = inicioMes;
     const fechas = [];
-  
+
     while (fecha <= finMes) {
-      if (fecha.getDay() === diaNumero && fecha >= fechaActualEnChile) {
+      if (fecha.getDay() === diaNumero && fecha >= fechaActualInicioDelDia) {
         const fechaZonificada = toZonedTime(fecha, zonaChile);
         fechas.push(format(fechaZonificada, "dd-MM-yyyy"));
       }
@@ -580,6 +583,7 @@ function ReservasEspeciales() {
         setErrorWithTimeout(
           errorData.message || "Error al aceptar la reserva."
         );
+        console.log(documentos);
         console.log(errorData);
       } else {
         setModalMessage("La reserva especial fue aceptada con éxito.");
@@ -789,7 +793,7 @@ function ReservasEspeciales() {
               <div key={indexUsuario} className="reserva-item">
                 <p><strong>Usuario E-mail:</strong> {usuario}</p>
                 <p><strong>Fecha de Envio:</strong> {horaReservaDG[indexUsuario]}</p>
-                <p><strong>Mes:</strong>{mesesReservados[indexUsuario].join(', ')}</p>
+                <p><strong>Mes:</strong> {mesesReservados[indexUsuario].join(', ')}</p>
                 {diasReservados[indexUsuario]?.length > 0 && (
                   <div className="dia-item-container">
                     {diasReservados[indexUsuario].map((dia, indexDia) => (
