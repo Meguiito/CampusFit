@@ -1275,7 +1275,7 @@ app.config['MAIL_SERVER'] = 'smtp.sendgrid.net'
 app.config['MAIL_PORT'] = 587  # Para conexiones TLS
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'apikey'  # Este es el usuario fijo de SendGrid
-app.config['MAIL_PASSWORD'] = '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'
+app.config['MAIL_PASSWORD'] = 'key'
 
 mail = Mail(app)
 
