@@ -37,9 +37,6 @@ jwt = JWTManager(app)
 
 chile_timezone = pytz.timezone("America/Santiago")
 
-locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
-
-
 
 
 
@@ -343,7 +340,7 @@ def handle_special_request():
 
         formatted_upload_date = formatted_upload_date.replace("Monday", "Lunes").replace("Tuesday", "Martes")\
                                                      .replace("Wednesday", "Miércoles").replace("Thursday", "Jueves")\
-                                                     .replace("Friday", "Viernes").replace("Saturday", "Sabado")\
+                                                     .replace("Friday", "Viernes").replace("Saturday", "Sábado")\
                                                      .replace("Sunday", "domingo").replace("January", "enero")\
                                                      .replace("February", "febrero").replace("March", "marzo")\
                                                      .replace("April", "abril").replace("May", "mayo")\
@@ -698,8 +695,25 @@ def aceptar_reserva_especial():
                 "error": f"Error al procesar reservas: {str(e)}. Se ha realizado un rollback.",
                 "code": 107
             }), 500
+            
+        resultado_proceso = procesar_reserva_especial(reserva_especial)
+        if resultado_proceso != True:
+            for reserva_normal in reservas_borradas:
+                mongo.db.Reservas.insert_one(reserva_normal)
 
-        # Procesar reserva especial aprobada (caso 1)
+            for reserva_especial in reservas_especiales_agregadas:
+                mongo.db.Reservas.delete_one({
+                    'fecha': reserva_especial['fecha'],
+                    'hora': reserva_especial['hora'],
+                    'cancha': reserva_especial['cancha'],
+                    'id_reserva_especial': {'$exists': True}
+                })
+
+            return jsonify({
+                "error": f"Error al procesar la reserva especial: {resultado_proceso}. Se ha realizado un rollback."
+            }), 500
+        
+
         email_usuario = reserva_especial.get('user_email')
         upload_date = reserva_especial.get('upload_date')
 
@@ -848,6 +862,24 @@ def eliminar_reserva_especial():
         mongo.db.Reservas.delete_many({'id_reserva_especial': id_reserva_especial})
 
         mongo.db.Reservas_especiales_aceptadas.delete_one({'_id': id_reserva_especial})
+
+        email_usuario = reserva_especial.get('user_email')
+        upload_date = reserva_especial.get('upload_date')
+
+        if not email_usuario or not upload_date:
+            return jsonify({"error": "La reserva especial no contiene los datos necesarios para la notificación.", "code": 108}), 400
+
+        try:
+            notificacion_reserva_especial(
+                caso=3,
+                email=email_usuario,
+                fecha_solicitud=upload_date
+            )
+        except Exception as e:
+            return jsonify({
+                "error": f"Reserva especial eliminada, pero falló el envío de notificación: {str(e)}",
+                "code": 109
+            }), 500
 
         return jsonify({
             "message": "Reserva especial y las reservas normales asociadas fueron eliminadas con éxito",
@@ -1038,6 +1070,36 @@ def obtener_reservas_agrupadas():
 
     
 
+@app.route('/eliminar-reserva', methods=['POST'])
+@jwt_required()
+def eliminar_reserva_usuario():
+    # Obtener los datos del cuerpo de la solicitud
+    data = request.get_json()
+    reserva_id = data.get("reservaId")
+    
+    # Obtener el email desde el JWT
+    identity = get_jwt_identity()
+    email = identity.get("email")
+
+    # Verificar que el campo reserva_id esté presente
+    if not reserva_id:
+        return jsonify({"success": False, "message": "ID de la reserva es requerido"}), 400
+
+    try:
+        reserva = mongo.db.Reservas.find_one({"_id": ObjectId(reserva_id), "email_usuario": email})
+        if not reserva:
+            return jsonify({"success": False, "message": "Reserva no encontrada o no pertenece al usuario"}), 404
+
+        mongo.db.Reservas.delete_one({"_id": ObjectId(reserva_id)})
+
+        return jsonify({
+            "success": True,
+            "message": "Reserva desagendada exitosamente"
+        }), 200
+
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error al eliminar la reserva: {str(e)}"}), 500
+
 
 
 @app.route('/admin/eliminar-reserva', methods=['POST'])
@@ -1213,7 +1275,7 @@ app.config['MAIL_SERVER'] = 'smtp.sendgrid.net'
 app.config['MAIL_PORT'] = 587  # Para conexiones TLS
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'apikey'  # Este es el usuario fijo de SendGrid
-app.config['MAIL_PASSWORD'] = 'apiki'
+app.config['MAIL_PASSWORD'] = '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'
 
 mail = Mail(app)
 
@@ -1272,6 +1334,13 @@ def notificacion_reserva_especial(caso, email, fecha_solicitud):
         mensaje = (
             f"Usuario {email}, lamentamos informarle que su reserva especial solicitada el {fecha_solicitud} "
             f"fue rechazada por el administrador. Si tiene dudas o reclamos, puede acercarse a las oficinas "
+            f"del administrador para aclararlas."
+        )
+    elif caso == 3:
+        asunto = "Reserva Especial Eliminada"
+        mensaje = (
+            f"Usuario {email}, lamentamos informarle que su reserva especial realizada el {fecha_solicitud} "
+            f"fue eliminada por el administrador. Si tiene dudas o reclamos, puede acercarse a las oficinas "
             f"del administrador para aclararlas."
         )
     else:
